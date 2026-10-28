@@ -9,6 +9,7 @@ import { store } from './core/store.js';
 import { ui } from './core/ui.js';
 import { h, $, clear, fmt } from './core/dom.js';
 import { icon } from './core/icons.js';
+import { createEpoch } from './core/task.js';
 
 const VIEW_FILES = {
   items: './views/library.js',
@@ -22,6 +23,8 @@ const DOMAIN_ORDER = ['items', 'lab', 'builds', 'codex'];
 const root = $('#view-root');
 let mounted = null;
 const moduleCache = new Map();
+/* 派发代际：只有最新一次 dispatch 有权挂载视图，晚返回的旧 dispatch 直接放弃 */
+const epoch = createEpoch();
 
 /* ----------------------------- 状态条 ----------------------------- */
 function updateCounters() {
@@ -68,30 +71,63 @@ async function loadView(domain) {
   return mod;
 }
 
+/** 进入干净错误态：丢弃已卸载的视图句柄，保证「重试」从零 mount 一次 */
+function failDispatch(err, domain, ctx) {
+  if (mounted) {
+    try { mounted.view.unmount?.(); } catch (e) { console.error('[view unmount]', e); }
+    mounted = null;
+  }
+  clear(root);
+  root.append(errorPanel(err, () => { moduleCache.delete(domain); dispatch(ctx); }));
+}
+
 async function dispatch(ctx) {
   const domain = ctx.domain;
-  try {
-    if (mounted && mounted.domain === domain && typeof mounted.view.onRoute === 'function') {
+  // 同一领域：当前视图仍然有效时交给它处理路由，不必重新挂载。
+  // 该分支必须自带 try/catch —— dispatch 是 async，这里抛错会变成未处理拒绝。
+  if (mounted && epoch.isCurrent(mounted.token)
+    && mounted.domain === domain && typeof mounted.view.onRoute === 'function') {
+    try {
       mounted.view.onRoute(ctx);
       syncNav(domain);
       return;
+    } catch (err) {
+      console.error('[dispatch] onRoute', err);
+      failDispatch(err, domain, ctx);
+      return;
     }
+  }
+  const token = epoch.next();
+  try {
     if (mounted) {
       try { mounted.view.unmount?.(); } catch (e) { console.error('[view unmount]', e); }
       mounted = null;
-      clear(root);
     }
+    // 无论是否有旧视图都清空容器：错误态重试/并发派发后必须从干净 DOM 开始
+    clear(root);
     const mod = await loadView(domain);
+    // 等待模块期间可能已有更新的 dispatch：过期就放弃，绝不能把旧视图挂到新页面上
+    if (!epoch.isCurrent(token)) return;
     if (!mod || typeof mod.mount !== 'function') throw new Error(`视图 ${domain} 未导出 mount()`);
     const viewRoot = h('div', { class: 'view fade-in' });
     root.append(viewRoot);
     const handle = mod.mount(viewRoot, ctx);
-    mounted = { domain, view: handle || {}, root: viewRoot };
+    if (!epoch.isCurrent(token)) {
+      // mount 同步执行期间路由又变了：撤销本次挂载，交给最新 dispatch
+      try { handle?.unmount?.(); } catch (e) { console.error('[view unmount]', e); }
+      viewRoot.remove();
+      return;
+    }
+    mounted = { domain, view: handle || {}, root: viewRoot, token };
     syncNav(domain);
   } catch (err) {
+    if (!epoch.isCurrent(token)) {
+      // 过期派发的失败不应污染当前视图
+      console.error('[dispatch]', err);
+      return;
+    }
     console.error('[dispatch]', err);
-    clear(root);
-    root.append(errorPanel(err, () => { moduleCache.delete(domain); dispatch(ctx); }));
+    failDispatch(err, domain, ctx);
   }
 }
 
@@ -143,6 +179,10 @@ function wireShell() {
   store.on('owned', updateCounters);
   store.on('fav', updateCounters);
   store.on('build', updateCounters);
+  // 持久化写入失败要可见（store 按 key 节流后 emit，见 core/store.js 契约）
+  store.on('storage-error', () => {
+    ui.toast('本地存储写入失败：本次更改可能不会被保存', 'err', { timeout: 5000 });
+  });
   updateCounters();
 
   document.addEventListener('keydown', (e) => {

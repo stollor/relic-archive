@@ -28,6 +28,7 @@ let ARTICLE_BY_ID = new Map();
 let CAT_BY_ID = new Map();
 let ORDER = [];         // 扁平条目顺序（用于上一篇/下一篇）
 let currentId = '';
+let INSTANCE = 0;       // 视图实例代号：异步回调落地前校验「我还是当前实例」
 
 /* --------------------------------- 内联标记 -------------------------------- */
 /** 支持 **加粗**、`等宽`、[文字](#/路由) 三种标记，其余按纯文本处理 */
@@ -345,11 +346,13 @@ function neighbours(id) {
 
 /* 标题延后一拍写入：外壳在 onRoute 之后会同步 syncNav 覆盖 title */
 function deferTitle(t) {
-  queueMicrotask(() => router.setTitle(t));
+  const mine = INSTANCE;
+  queueMicrotask(() => { if (mine === INSTANCE && EL) router.setTitle(t); });
 }
 
 /* ---------------------------------- 路由 ---------------------------------- */
 function show(ctx) {
+  if (!EL) return;
   const id = (ctx && ctx.sub) || '';
   currentId = id;
   if (!DATA) return;
@@ -397,6 +400,7 @@ function toggleToc() {
 
 /* ---------------------------------- mount --------------------------------- */
 export function mount(rootEl, ctx) {
+  const mine = ++INSTANCE;
   clear(rootEl);
   rootEl.classList.add('codex-root');
 
@@ -435,8 +439,8 @@ export function mount(rootEl, ctx) {
     h('div', { class: 'sk' }, h('div', { class: 'sk__line' }), h('div', { class: 'sk__line sk__line--short' })),
     h('div', { class: 'sk' }, h('div', { class: 'sk__line' }), h('div', { class: 'sk__line' }), h('div', { class: 'sk__line sk__line--short' }))));
 
-  const offRoute = router.onChange((c) => { if (c.domain === 'codex') show(c); });
-
+  // 路由由 main.js 派发到当前视图的 onRoute（此前这里额外 router.onChange 订阅会导致
+  // 每次路由变化 show 两次）；保留 onRoute 单一路径即可覆盖深链/前进后退。
   const onDocClick = (e) => {
     if (!EL || !EL.sideShell.classList.contains('is-open')) return;
     if (EL.sideShell.contains(e.target) || EL.tocBtn.contains(e.target)) return;
@@ -448,10 +452,12 @@ export function mount(rootEl, ctx) {
 
   load()
     .then(() => {
+      if (mine !== INSTANCE || !EL) return;   // 数据返回前已离开本视图：不得再写 DOM
       buildToc();
       show(ctx && ctx.domain === 'codex' ? ctx : router.getRoute() || { sub: '' });
     })
     .catch((err) => {
+      if (mine !== INSTANCE || !EL) return;
       console.error('[codex] 数据加载失败', err);
       clear(body);
       body.append(h('div', { class: 'empty codex-empty' },
@@ -467,10 +473,11 @@ export function mount(rootEl, ctx) {
 
   return {
     onRoute(next) {
-      if (next && next.domain === 'codex') show(next);
+      if (mine === INSTANCE && next && next.domain === 'codex') show(next);
     },
     unmount() {
-      offRoute();
+      if (!EL) return;   // 幂等
+      INSTANCE += 1;     // 让挂起的 load 回调立即失效
       document.removeEventListener('click', onDocClick);
       document.removeEventListener('keydown', onKey);
       EL = null;

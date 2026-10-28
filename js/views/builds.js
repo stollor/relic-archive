@@ -91,9 +91,13 @@ let PENDING = null;
 let EL = null;                 // { root, body, titleSlot }
 let ORDER = [];                // 按 order 升序的 7 套
 let BY_KEY = new Map();
+let INSTANCE = 0;              // 视图实例代号：异步回调落地前校验「我还是当前实例」
 
 /* --------------------------------- 小工具 -------------------------------- */
-function deferTitle(t) { queueMicrotask(() => router.setTitle(t)); }
+function deferTitle(t) {
+  const mine = INSTANCE;
+  queueMicrotask(() => { if (mine === INSTANCE && EL) router.setTitle(t); });
+}
 
 /** 整页只允许一个 h1：列表页 subnav 用 h1，详情页 subnav 降级为 div（正文有 h1） */
 function setSubnavTitle(hasArticleH1) {
@@ -795,9 +799,12 @@ function renderError(err) {
       class: 'btn btn--ghost', type: 'button',
       on: {
         click: () => {
+          const mine = INSTANCE;
           PENDING = null;
           renderLoading();
-          load().then(() => { if (EL) show(router.getRoute()); }).catch((e) => { if (EL) renderError(e); });
+          load()
+            .then(() => { if (mine === INSTANCE && EL) show(router.getRoute()); })
+            .catch((e) => { if (mine === INSTANCE && EL) renderError(e); });
         },
       },
     }, icon('refresh', { size: 15 }), '重新加载')));
@@ -839,6 +846,7 @@ function show(ctx) {
 
 /* ---------------------------------- mount --------------------------------- */
 export function mount(rootEl, ctx) {
+  const mine = ++INSTANCE;
   clear(rootEl);
   rootEl.classList.add('builds-root');
 
@@ -859,13 +867,13 @@ export function mount(rootEl, ctx) {
 
   load()
     .then(() => {
-      if (!EL) return;
+      if (mine !== INSTANCE || !EL) return;   // 已卸载/已被新实例取代：不得再写旧或新 DOM
       const cur = router.getRoute();
       const next = cur && cur.domain === 'builds' ? cur : (ctx && ctx.domain === 'builds' ? ctx : { domain: 'builds', sub: '' });
       show(next);
     })
     .catch((err) => {
-      if (!EL) return;
+      if (mine !== INSTANCE || !EL) return;
       console.error('[builds] 数据加载失败', err);
       renderError(err);
       deferTitle('流派 · 加载失败');
@@ -873,9 +881,11 @@ export function mount(rootEl, ctx) {
 
   return {
     onRoute(next) {
-      if (next && next.domain === 'builds') show(next);
+      if (mine === INSTANCE && next && next.domain === 'builds') show(next);
     },
     unmount() {
+      if (!EL) return;   // 幂等
+      INSTANCE += 1;     // 让挂起的 load 回调立即失效
       EL = null;
     },
   };

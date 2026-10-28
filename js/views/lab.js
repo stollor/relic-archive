@@ -44,6 +44,8 @@ function queryOf(ctx) {
 
 export function mount(rootEl, ctx) {
   let pendingPanelScroll = false;
+  let legacyTimer = 0;   // 旧路由重定向定时器：卸载后必须作废，否则会劫持下一个页面
+  let dead = false;      // 先声明：旧路由定时器回调要读它
   // 旧路由（#/lab/builds|matrix|calc）在 DOM 渲染前就改 URL，避免截图停在旧路径
   {
     const sub = String((ctx && (ctx.sub || (ctx.segs && ctx.segs[1]))) || '');
@@ -51,7 +53,7 @@ export function mount(rootEl, ctx) {
       // 不能在 mount 内同步 router.go：那会触发重入 dispatch（还没 mounted）→ 双实例
       pendingPanelScroll = true;
       const target = legacyPath(ctx, LEGACY[sub]);
-      setTimeout(() => router.go(target, { replace: true }), 0);
+      legacyTimer = setTimeout(() => { if (!dead) router.go(target, { replace: true }); }, 0);
     }
     if (ctx && ctx.params && ctx.params.panel) pendingPanelScroll = true;
   }
@@ -75,8 +77,8 @@ export function mount(rootEl, ctx) {
 
   let model = null;
   let workbench = null;
-  let dead = false;
   let currentPanel = '';
+  let scrollRaf = 0;     // 面板滚动定位帧：卸载后必须取消
   const cache = new Map();
   const segBtns = new Map();
 
@@ -220,7 +222,9 @@ export function mount(rootEl, ctx) {
     }
     if (pendingPanelScroll) {
       pendingPanelScroll = false;
-      requestAnimationFrame(() => {
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0;
+        if (dead) return;
         const el = document.querySelector('.lab-panels');
         if (el) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 64), behavior: 'auto' });
       });
@@ -242,6 +246,7 @@ export function mount(rootEl, ctx) {
   }
 
   async function init() {
+    if (dead) return;
     showLoading();
     try {
       model = await loadLabModel();
@@ -255,11 +260,12 @@ export function mount(rootEl, ctx) {
       routeTo(router.getRoute() || ctx, true);
       if (!currentPanel) switchPanel('recommend');
     } catch (err) {
+      if (dead) return;   // 卸载后才失败：不得再写（已脱离文档的）DOM
       console.error('[lab] 数据载入失败', err);
       clear(workbenchHost);
       workbenchHost.append(emptyState('warning', '实验室数据载入失败',
         String((err && err.message) || err || '未知错误'),
-        h('button', { class: 'btn btn--primary', type: 'button', text: '重试', on: { click: () => { clear(workbenchHost); init(); } } })));
+        h('button', { class: 'btn btn--primary', type: 'button', text: '重试', on: { click: () => { if (dead) return; clear(workbenchHost); init(); } } })));
       panelHost.hidden = true;
     }
   }
@@ -273,13 +279,17 @@ export function mount(rootEl, ctx) {
 
   return {
     onRoute(nextCtx) {
-      if (!model) return;
+      if (!model || dead) return;
       routeTo(nextCtx);
     },
     unmount() {
+      if (dead) return;   // 幂等：workbench / 面板 destroy 恰好一次
       dead = true;
+      if (legacyTimer) { clearTimeout(legacyTimer); legacyTimer = 0; }
+      if (scrollRaf) { cancelAnimationFrame(scrollRaf); scrollRaf = 0; }
       for (const off of offs) { try { off(); } catch { /* ignore */ } }
       try { workbench?.destroy?.(); } catch (e) { console.error('[lab] workbench destroy', e); }
+      workbench = null;
       for (const p of cache.values()) { try { p.destroy?.(); } catch (e) { console.error('[lab] panel destroy', e); } }
       cache.clear();
     },

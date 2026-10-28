@@ -112,6 +112,7 @@ let io = null;
 let detailOpenId = null;
 let detailReturnPath = '/items';
 let EL = null;             // DOM 引用与控件映射
+let INSTANCE = 0;          // 视图实例代号：异步回调落地前校验「我还是当前实例」
 
 /* 把 URLSearchParams 解析成状态（只接受已知值，防止脏参数） */
 function parseState(qp) {
@@ -297,7 +298,10 @@ function computeSets() {
 }
 
 /* ------------------------------- 小工具 ------------------------------- */
-function deferTitle(t) { queueMicrotask(() => router.setTitle(t)); }
+function deferTitle(t) {
+  const mine = INSTANCE;
+  queueMicrotask(() => { if (mine === INSTANCE && EL) router.setTitle(t); });
+}
 function dash(v) { return typeof v === 'number' && Number.isFinite(v) ? v : null; }
 function statNum(v, d, icoName, unit) {
   if (typeof v !== 'number' || !Number.isFinite(v)) return '';
@@ -975,6 +979,7 @@ function appendBatch() {
 
 function renderEmpty(kind) {
   const R = EL;
+  if (!R) return;
   clear(R.empty);
   R.empty.hidden = false;
   R.grid.hidden = true;
@@ -988,8 +993,11 @@ function renderEmpty(kind) {
         class: 'btn btn--ghost', type: 'button',
         on: {
           click: () => {
+            const mine = INSTANCE;
             LOAD_PROMISE = null;
-            load().then(() => bootView()).catch(() => renderEmpty('error'));
+            load()
+              .then(() => { if (mine === INSTANCE && EL) bootView(); })
+              .catch(() => { if (mine === INSTANCE && EL) renderEmpty('error'); });
           },
         },
       }, icon('refresh', { size: 15 }), h('span', { text: '重试' })));
@@ -1366,31 +1374,35 @@ function bindGlobal() {
 /* ------------------------------- 启动 / 生命周期 ------------------------------- */
 function bootView() {
   const R = EL;
+  if (!R) return;
   if (!ITEMS || !SETS) {
     clear(R.grid);
     renderEmpty('error');
     return;
   }
-  buildDynamicControls();
-  bindGlobal();
-  buildMoreMenu();
+  // 幂等：只有实例首次 boot 才创建控件/绑定 document 监听，避免重复订阅
+  if (!R.controlsBuilt) { buildDynamicControls(); R.controlsBuilt = true; }
+  if (!R.globalBound) { bindGlobal(); R.globalBound = true; }
+  if (!R.menuBuilt) { buildMoreMenu(); R.menuBuilt = true; }
   const ctx = router.getRoute() || { domain: 'items', sub: '', query: new URLSearchParams() };
   handleRoute(ctx);
 }
 
 export function mount(rootEl, ctx) {
+  const mine = ++INSTANCE;
   clear(rootEl);
   buildShell(rootEl);
   const offStore = [
     store.on('owned', () => {
-      if (ITEMS && MODE === MODE_ITEMS && state.owned) renderAll();
+      if (mine === INSTANCE && ITEMS && MODE === MODE_ITEMS && state.owned) renderAll();
     }),
     store.on('fav', () => {
-      if (ITEMS && MODE === MODE_ITEMS && state.fav) renderAll();
+      if (mine === INSTANCE && ITEMS && MODE === MODE_ITEMS && state.fav) renderAll();
     }),
   ];
   load()
     .then(() => {
+      if (mine !== INSTANCE || !EL) return;   // 数据返回前已离开本视图：不得再写 DOM/绑监听
       try {
         bootView();
       } catch (err) {
@@ -1399,12 +1411,15 @@ export function mount(rootEl, ctx) {
       }
     })
     .catch((err) => {
+      if (mine !== INSTANCE || !EL) return;
       console.error('[library] 数据加载失败', err);
       renderEmpty('error');
     });
   return {
-    onRoute(next) { handleRoute(next); },
+    onRoute(next) { if (mine === INSTANCE) handleRoute(next); },
     unmount() {
+      if (!EL) { INSTANCE += 1; return; }   // 幂等：重复 unmount 不重复清理
+      INSTANCE += 1;   // 让所有挂起的异步回调（load / 重试）立即失效
       offStore.forEach((fn) => fn && fn());
       clearTimeout(urlTimer);
       if (io) { io.disconnect(); io = null; }
