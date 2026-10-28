@@ -92,6 +92,19 @@ test('createEngine：同一输入连续两次计算 deepEqual（确定性）', (
   assert.deepEqual(tableB, tableA, 'tableA 重复调用应一致（缓存不得改变内容）');
 });
 
+/** 去掉真实耗时字段：elapsedMs 随机器波动，不属于「确定性」契约（但必须存在且有限） */
+function withoutTiming(value) {
+  if (Array.isArray(value)) return value.map(withoutTiming);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (!/^(elapsedMs|ms|durationMs|timeMs)$/.test(k)) out[k] = withoutTiming(v);
+    }
+    return out;
+  }
+  return value;
+}
+
 test('createEngine：两个独立实例对同一输入结果一致', () => {
   const p0 = site.presets[0];
   const r1 = E.presetComputed(p0.best, p0.p, p0.s);
@@ -104,7 +117,12 @@ test('createEngine：两个独立实例对同一输入结果一致', () => {
   const enumerateOpts = () => ({
     picks: E.picksFromProfile(p0.p), scenarioId: p0.s, owned: new Set(E.presetIds(p0.best)), top: 3,
   });
-  assert.deepEqual(E2.enumerateTop(enumerateOpts()), E.enumerateTop(enumerateOpts()), '不同实例的枚举应一致');
+  const enum1 = E.enumerateTop(enumerateOpts());
+  const enum2 = E2.enumerateTop(enumerateOpts());
+  // elapsedMs 是真实耗时（两次运行可能差 0/1ms），先去掉再比确定性；同时确认它存在且有限
+  assert.ok(Number.isFinite(enum1.elapsedMs) && enum1.elapsedMs >= 0, 'elapsedMs 应为非负有限数');
+  assert.ok(Number.isFinite(enum2.elapsedMs) && enum2.elapsedMs >= 0, 'elapsedMs 应为非负有限数');
+  assert.deepEqual(withoutTiming(enum2), withoutTiming(enum1), '不同实例的枚举应一致（忽略真实耗时）');
 });
 
 test('多次调用不累积状态（同一实例重复计算结果稳定）', () => {
