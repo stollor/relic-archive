@@ -314,8 +314,9 @@ const perfCheck = {
   repro: 'node qa/perf.mjs --all --compare',
   artifacts: ['qa/results/perf.json'], baseline: null, optional: true,
   run: (ctx) => node(['qa/perf.mjs', '--all', '--base', ctx.base, '--json', 'qa/results/perf.json', '--quiet']),
-  parse: (ctx) => {
-    const data = artifact(ctx, 'qa/results/perf.json');
+  // 注意：gate 的 parse 只收到 { code/stdout/stderr }，没有 ctx；产物路径用 ROOT 拼。
+  parse: () => {
+    const data = readJsonSafe(path.join(ROOT, 'qa/results/perf.json'));
     if (!data || !data.scenarios) return null;
     const n = Object.keys(data.scenarios).length;
     return { pass: n, total: n, skip: 0, failed: [], note: `${n} 个场景（参考指标，不设阈值）` };

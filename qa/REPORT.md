@@ -592,7 +592,7 @@ statsFor memo/枚举剪枝（有改变排序风险）、图标 IO 控 src、事�
 | components / nav / nav-subpath | 20/20 · 6+1skip · 7/7 | 1.0/19.8/22.1s |
 
 - `quick`：5/5 PASS，约 7–9s（unit-js 195 + audit 60 + contrast 130 + data-builds + data-schema 38）。
-- `perf` 模式：`node qa/gate.mjs perf` 走统一入口调度 `qa/perf.mjs`（参考指标、不设阈值），结果 `qa/results/perf.json`。
+- `perf` 模式：`node qa/gate.mjs perf` 走统一入口调度 `qa/perf.mjs`（参考指标、不设阈值）→ **8/8 PASS，87.3s**，结果 `qa/results/perf.json`。
 - 基线已 `--update-baseline` 更新（unit-js 175→195、unit-py 37→45；新增 boot 8 / security 8 / serve security 8 并入）。
 - 浏览器子集回归（各 owner 在代码改动后自跑）：shot-dark/light 各 54/54、interactions 67/67、lifecycle 25/25、
   nav 6+1skip、nav-subpath 7/7、lab-async 8/8、components 20/20；像素 A/B 证明死 CSS 删除零视觉变化。
