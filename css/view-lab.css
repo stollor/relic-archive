@@ -1,0 +1,311 @@
+/* =============================================================================
+   遗迹2 · 遗物档案 — view-lab.css（v2）
+   实验室（工作台 + 推荐方案 / 逐槽替换 / 档位对照 / 计算器 / 存档导出）。
+   只引用 tokens.css 变量，禁止写死色值；组件类来自 components.css，本文件只做布局与组合。
+   ========================================================================== */
+
+/* ============================ 通用 ============================ */
+.lab-page { display: flex; flex-direction: column; gap: var(--sp-3); }
+.lab-gold { color: var(--gold-2); }
+.lab-tag--warn { color: var(--amber); border-color: var(--line-2); }
+.lab-note {
+  display: flex; align-items: flex-start; gap: 6px;
+  font-size: 11.5px; color: var(--t3); line-height: 1.55; padding: 6px 0 2px;
+}
+.lab-note svg { flex: none; margin-top: 2px; color: var(--t4); }
+.lab-note--warn { color: var(--amber); }
+.lab-note--warn svg { color: var(--amber); }
+.lab-note .btn { margin-left: 4px; }
+.lab-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+.lab-divider { height: 1px; background: var(--line); margin: var(--sp-3) 0; }
+.lab-bar-title { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-meta); color: var(--t3); }
+.lab-bar-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.lab-hints { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: var(--t2); line-height: 1.55; }
+.lab-hints li { position: relative; padding-left: 13px; }
+.lab-hints li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+.lab-hints b { color: var(--t1); font-weight: 600; }
+.lab-emptyline {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; max-height: 56px; padding: 6px 0; color: var(--t3); font-size: 12px;
+}
+.lab-skeleton { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+
+/* 小图案 / 折叠 / chips */
+.lab-minis { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.lab-mini {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px 1px 2px;
+  border-radius: var(--r-sm); background: var(--bg-2); border: 1px solid var(--line);
+  font-size: 10.5px; color: var(--t2); white-space: nowrap;
+}
+.lab-mini img { border-radius: 2px; }
+.lab-mini.is-click { cursor: pointer; transition: border-color var(--t-fast), color var(--t-fast); }
+.lab-mini.is-click:hover { border-color: var(--gold-line); color: var(--t1); }
+.lab-mini__name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+.lab-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px 0; }
+.lab-fold { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-1); margin-top: var(--sp-2); overflow: clip; }
+.lab-fold > summary {
+  display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none;
+  padding: 7px 10px; font-size: 12px; color: var(--t2); background: var(--bg-2);
+}
+.lab-fold > summary::-webkit-details-marker { display: none; }
+.lab-fold[open] > summary { border-bottom: 1px solid var(--line); }
+.lab-fold > summary:hover { color: var(--t1); }
+.lab-fold__chev { transition: transform var(--t-fast); color: var(--t3); }
+.lab-fold[open] .lab-fold__chev { transform: rotate(90deg); }
+.lab-fold__sub { margin-left: auto; font-size: 10.5px; color: var(--t3); }
+.lab-fold__body { padding: 10px; }
+
+/* ============================ 工作台布局 ============================ */
+.lab-wb {
+  display: grid; grid-template-columns: minmax(0, 1fr) 392px;
+  gap: var(--sp-4); align-items: start;
+}
+.lab-wb__main { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.lab-wb__side {
+  position: sticky; top: calc(var(--topbar-h) + var(--sp-3));
+  display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0;
+}
+
+/* 槽位 */
+.lab-slotgroup + .lab-slotgroup { margin-top: var(--sp-3); }
+.lab-slotgroup .bar-title { margin-bottom: 6px; }
+.lab-group-hint { margin-left: auto; font-size: 10.5px; color: var(--t4); letter-spacing: .02em; }
+.lab-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+.lab-slots--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lab-slots--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lab-slots--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lab-slotgroup .slot { height: 58px; min-height: 58px; min-width: 0; overflow: hidden; padding: 6px 8px; gap: 8px; }
+.lab-slotgroup .slot > * { min-width: 0; }
+.lab-slotgroup .slot__media { width: 38px; height: 38px; flex: 0 0 auto; }
+.lab-slotgroup .slot__media img { width: 34px; height: 34px; }
+.lab-slotgroup .slot__body { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.lab-slotgroup .slot__label { display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 9.5px; }
+.lab-slotgroup .slot__label .badge { height: 15px; padding: 0 4px; font-size: 9px; flex: none; }
+.lab-slotgroup .slot__name { font-size: 12.5px; line-height: 1.25; }
+.lab-slotgroup .slot__meta { flex-wrap: nowrap; overflow: hidden; }
+.lab-slotgroup .slot__meta > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lab-slotgroup .slot.is-missing { border-color: var(--red); background: var(--red-dim); }
+.lab-slotgroup .slot__acts {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  padding: 0; background: var(--bg-1);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  box-shadow: var(--shadow-1); z-index: 1;
+}
+.lab-slotgroup .slot:hover .slot__acts,
+.lab-slotgroup .slot:focus-within .slot__acts { background: var(--bg-3); }
+.lab-slotnote { font-size: 9px; color: var(--t4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ============================ 配装设置 ============================ */
+.lab-fieldrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+.lab-field--sm { min-width: 128px; }
+.lab-traitshead { display: flex; align-items: center; gap: var(--sp-2); margin: var(--sp-3) 0 var(--sp-2); }
+.lab-traits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px var(--sp-2); }
+.lab-trait {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  padding: 4px 6px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg-2);
+}
+.lab-trait.is-on { border-color: var(--gold-line); background: var(--gold-dim); }
+.lab-trait__main { flex: 1; min-width: 0; }
+.lab-trait__name { font-size: 11.5px; color: var(--t1); font-weight: 500; }
+.lab-trait__eff { font-size: 9.5px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-stepper { display: flex; align-items: center; gap: 2px; flex: none; }
+.lab-stepper__v { min-width: 18px; text-align: center; font-size: 11px; color: var(--t1); font-variant-numeric: tabular-nums; }
+.lab-stepper .iconbtn { width: 24px; height: 24px; }
+.lab-stepper .iconbtn svg { width: 12px; height: 12px; }
+
+/* 职业选择行 */
+.lab-archrow {
+  display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left;
+  padding: 9px 10px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--bg-2);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.lab-archrow:hover { border-color: var(--gold-line); background: var(--bg-3); }
+.lab-archrow.is-disabled { opacity: .5; cursor: not-allowed; }
+.lab-archrow__ico { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: var(--r-sm); background: var(--bg-3); color: var(--gold); }
+.lab-archrow__body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.lab-archrow__name { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--t1); flex-wrap: wrap; }
+.lab-archrow__meta, .lab-archrow__perks { font-size: 11px; line-height: 1.4; }
+
+/* ============================ 结果面板 ============================ */
+.lab-reshead { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: var(--sp-2); }
+.lab-reshead__score { display: flex; flex-direction: column; line-height: 1.1; }
+.lab-reshead__score b { font-size: 24px; font-weight: 600; color: var(--gold-2); font-variant-numeric: tabular-nums; }
+.lab-reshead__score span { font-size: 10.5px; }
+.lab-reshead__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.lab-resseg { margin-bottom: var(--sp-2); }
+.lab-resultbody { display: flex; flex-direction: column; gap: var(--sp-2); }
+.lab-statgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+.lab-statgrid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lab-statbox__sub { font-size: 9.5px; color: var(--t3); line-height: 1.35; }
+.lab-bars { display: flex; flex-direction: column; gap: 5px; }
+.lab-bars .meter-row { grid-template-columns: 66px 1fr 50px; }
+.lab-resline { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: var(--sp-2); border-top: 1px solid var(--line); }
+.lab-resline .stat { gap: 3px; }
+.lab-breakdownhost { margin-top: var(--sp-2); }
+
+/* 构成明细 */
+.lab-details { margin-top: var(--sp-2); border-top: 1px solid var(--line); padding-top: var(--sp-2); }
+.lab-details > summary {
+  display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none;
+  font-size: 12px; color: var(--t2); padding: 2px 0;
+}
+.lab-details > summary::-webkit-details-marker { display: none; }
+.lab-details > summary svg { color: var(--gold); }
+.lab-details > summary:hover { color: var(--t1); }
+.lab-details__body { padding-top: var(--sp-2); display: flex; flex-direction: column; gap: 4px; }
+.lab-bsection { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.lab-brow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; padding: 1px 0; }
+.lab-brow__k { color: var(--t1); font-weight: 500; }
+
+/* ============================ 下方面板 ============================ */
+.lab-panels { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bg-1); overflow: clip; }
+.lab-panels__head { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--line); background: var(--bg-2); overflow-x: auto; }
+.lab-panels__head .seg { background: transparent; border: 0; padding: 0; gap: 2px; }
+.lab-page__panel { min-width: 0; }
+.lab-panel { display: block; }
+.lab-panel[hidden] { display: none !important; }
+.lab-panel .panel { border: 0; border-radius: 0; background: transparent; }
+
+/* 通用分页 */
+.lab-pager { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); padding: var(--sp-3) 0; flex-wrap: wrap; }
+.lab-pager__info { font-size: 11.5px; color: var(--t3); font-variant-numeric: tabular-nums; }
+.lab-score {
+  display: inline-flex; align-items: baseline; gap: 5px; padding: 1px 7px; border-radius: var(--r-sm);
+  background: var(--gold-dim); border: 1px solid var(--gold-line);
+}
+.lab-score__k { font-size: 10px; color: var(--gold); letter-spacing: .03em; }
+.lab-score b { font-size: 13.5px; font-weight: 600; color: var(--gold-2); font-variant-numeric: tabular-nums; }
+
+/* ============================ 推荐方案 ============================ */
+.lab-rec { min-width: 0; }
+.lab-rec__bar { padding: var(--sp-3); border-bottom: 1px solid var(--line); }
+.lab-rec__barrow { display: flex; align-items: flex-end; gap: var(--sp-3); flex-wrap: wrap; }
+.lab-rec__statusbar { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--line); background: var(--bg-0); }
+.lab-rec__status { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; font-size: 11.5px; line-height: 1.5; }
+.lab-rec__rule { width: 100%; color: var(--t4); font-size: 10.5px; }
+.lab-rec__list { display: flex; flex-direction: column; }
+.lab-rec__row {
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  padding: 8px var(--sp-3); border-bottom: 1px solid var(--line);
+}
+.lab-rec__row:hover { background: var(--bg-2); }
+.lab-rec__rank { font-family: var(--font-mono); font-size: 11px; color: var(--t3); min-width: 26px; flex: none; }
+.lab-rec__nums { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.lab-rec__pieces { display: flex; gap: 3px; flex-wrap: wrap; min-width: 0; }
+.lab-rec__pager { border-top: 0; }
+
+/* ============================ 逐槽替换 ============================ */
+.lab-replace__body { padding: var(--sp-3); }
+.lab-subs { display: flex; flex-direction: column; gap: var(--sp-3); }
+.lab-sub { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); overflow: clip; }
+.lab-sub__cur { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.lab-sub__slot { font-size: 10.5px; color: var(--t3); min-width: 44px; }
+.lab-sub__alts { display: flex; flex-direction: column; padding: 4px; gap: 2px; }
+.lab-sub__alt {
+  display: flex; align-items: center; gap: 7px; width: 100%; text-align: left;
+  padding: 4px 6px; border-radius: var(--r-sm); font-size: 11.5px; color: var(--t2);
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.lab-sub__alt:hover { background: var(--bg-3); color: var(--t1); }
+.lab-sub__alt img { border-radius: 2px; }
+.lab-sub__name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lab-sub__delta { color: var(--green); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lab-sub__delta.muted { color: var(--t3); }
+.lab-sub__alt.is-down .lab-sub__delta:first-of-type { color: var(--red); }
+
+/* ============================ 档位对照 ============================ */
+.lab-tiers { padding: var(--sp-3); }
+.lab-tiers .tbl { min-width: 760px; }
+.lab-cell__pieces { display: inline-flex; flex-wrap: wrap; gap: 3px; vertical-align: middle; }
+.lab-tiers .tbl tr.is-hi td { background: var(--gold-dim); }
+
+/* ============================ 计算器 ============================ */
+.lab-calc,
+.lab-calc__wrap,
+.lab-calc__wrap > *,
+.lab-calc__form,
+.lab-calc__grid,
+.lab-calc__grid--2,
+.lab-calc__side,
+.lab-calc__panel { min-width: 0; }
+.lab-calc__wrap { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: var(--sp-4); align-items: start; padding: var(--sp-3); }
+.lab-calc__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+.lab-calc__grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lab-field--num .input--num { width: 100%; }
+.lab-field--num .field__label { display: flex; align-items: center; gap: 4px; }
+.lab-calc__side { display: flex; flex-direction: column; gap: var(--sp-3); }
+.lab-calc .panel { margin-bottom: 0; }
+.lab-calc .panel__head { flex-wrap: wrap; row-gap: 4px; }
+.lab-calc .panel__title { white-space: nowrap; }
+.lab-calc .panel__body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.lab-calc .formula { overflow-x: auto; max-width: 100%; }
+.lab-calc .statgrid, .lab-calc .lab-statgrid { margin-bottom: 2px; }
+
+/* ============================ 存档导出 ============================ */
+.lab-export {
+  width: 100%; min-height: 240px; resize: vertical; height: auto;
+  font-family: var(--font-mono); font-size: 11.5px; line-height: 1.55;
+  padding: 10px; white-space: pre; overflow: auto;
+}
+.lab-savedrow { display: flex; align-items: center; gap: var(--sp-2); padding: 7px 0; border-bottom: 1px solid var(--line); }
+.lab-savedrow:last-child { border-bottom: 0; }
+.lab-savedrow__name { font-size: 12.5px; color: var(--t1); font-weight: 500; }
+.lab-pool { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
+
+/* ============================ 响应式 ============================ */
+@media (max-width: 1180px) {
+  .lab-wb { grid-template-columns: 1fr; }
+  .lab-wb__side { position: static; }
+  .lab-calc__wrap { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .lab-slots, .lab-slots--3, .lab-slots--4, .lab-slots--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-traits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-statgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-calc__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-rec__row { padding: 8px var(--sp-2); }
+  .lab-skeleton { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .subnav { gap: var(--sp-2); padding: var(--sp-2) 0 var(--sp-1); flex-wrap: wrap; }
+  .subnav__title { font-size: var(--fs-h2); margin-right: 0; }
+  .subnav__tools { margin-left: 0; width: 100%; }
+  .lab-slotgroup + .lab-slotgroup { margin-top: var(--sp-2); }
+  .lab-slotgroup .bar-title { margin-bottom: 4px; font-size: var(--fs-micro); }
+  .lab-slots { gap: var(--sp-2); }
+  .lab-slotgroup .slot { height: 52px; min-height: 52px; padding: 4px 6px; gap: 6px; }
+  .lab-slotgroup .slot__media { width: 32px; height: 32px; }
+  .lab-slotgroup .slot__media img { width: 28px; height: 28px; }
+  .lab-slotgroup .slot__label { font-size: 9px; }
+  .lab-slotgroup .slot__label .badge { display: none; }
+  .lab-slotgroup .slot__name { font-size: 12px; }
+  .lab-slotgroup .slot__meta { display: none; }
+  .lab-slotgroup .slot__acts { opacity: 1; }
+  .lab-slotgroup .slot__acts .iconbtn { width: 30px; height: 30px; }
+  .panel__title { white-space: nowrap; }
+  .panel__head { flex-wrap: wrap; row-gap: 4px; min-height: auto; padding: 8px var(--sp-3); }
+  .lab-slotgroup .slot__name { text-overflow: ellipsis; }
+  .lab-fieldrow { grid-template-columns: 1fr; }
+  .lab-traits { grid-template-columns: 1fr; }
+  .lab-rec__bar { padding: var(--sp-2); }
+  .lab-rec__barrow { gap: var(--sp-2); }
+  .lab-rec__statusbar { padding: var(--sp-2); }
+  .lab-rec__row { gap: 6px; }
+  .lab-rec__nums { gap: 8px; }
+  .lab-rec__pieces { order: 3; width: 100%; }
+  .lab-rec__row > .btn { margin-left: auto; }
+  .lab-replace__body, .lab-tiers, .lab-calc__wrap { padding: var(--sp-2); }
+  .lab-panels__head { overflow-x: auto; }
+  .lab-panels__head .seg { flex-wrap: nowrap; }
+  .lab-panels__head .seg__btn { flex: none; white-space: nowrap; }
+  .lab-statgrid, .lab-statgrid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-calc__grid, .lab-calc__grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lab-tiers .tbl { min-width: 940px; }
+  .lab-calc .formula { font-size: 11px; }
+}
+
+@media (hover: none) {
+  .lab-slotgroup .slot__acts { opacity: 1; }
+}

@@ -1,0 +1,2291 @@
+{
+ "meta": {
+  "subtitle": "基于本机解包数据（1126 件真道具 / 43 个护甲套装）+ remnant2.wiki.gg 文本，全离线推出的 7 套强力配装",
+  "source": "数据：.mimocode/data/items.json (schema 1.4.0) · rmn2.db · wiki 抓取 1236 条；生成：build/80_assemble.py",
+  "generated": "2026-10-23"
+ },
+ "mechanics": {},
+ "armor": {
+  "sets": [
+   {
+    "key": "Leto1",
+    "name_zh": "莱托 1 型",
+    "name_en": "Leto Mark 1",
+    "parts": 4,
+    "armor": 180.8,
+    "weight": 95.0,
+    "eff": 1.9,
+    "res_str": "流血13 火13 电13 腐蚀15 枯萎13"
+   },
+   {
+    "key": "Leto2",
+    "name_zh": "莱托 2 型",
+    "name_en": "Leto Mark II",
+    "parts": 4,
+    "armor": 176.8,
+    "weight": 90.0,
+    "eff": 1.96,
+    "res_str": "流血10 火10 电10 腐蚀10 枯萎10"
+   },
+   {
+    "key": "NerudWarrior",
+    "name_zh": "菲特尔",
+    "name_en": "Phetyr Chassis",
+    "parts": 4,
+    "armor": 161.6,
+    "weight": 80.0,
+    "eff": 2.02,
+    "res_str": "流血11 火13 电13 腐蚀17 枯萎11"
+   },
+   {
+    "key": "Challenger",
+    "name_zh": "斗士",
+    "name_en": "Bruiser",
+    "parts": 4,
+    "armor": 140.4,
+    "weight": 64.8,
+    "eff": 2.17,
+    "res_str": "流血5 火14 腐蚀6"
+   },
+   {
+    "key": "Radiant",
+    "name_zh": "光耀保护者",
+    "name_en": "Radiant Protector",
+    "parts": 4,
+    "armor": 137.9,
+    "weight": 63.2,
+    "eff": 2.18,
+    "res_str": "流血5 火5 电12 枯萎3"
+   },
+   {
+    "key": "Engineer",
+    "name_zh": "技师",
+    "name_en": "Technician",
+    "parts": 4,
+    "armor": 132.8,
+    "weight": 60.0,
+    "eff": 2.21,
+    "res_str": "火5 电13 腐蚀7"
+   },
+   {
+    "key": "Invoker",
+    "name_zh": "门徒斗篷",
+    "name_en": "Disciple Mantle",
+    "parts": 4,
+    "armor": 128.0,
+    "weight": 57.6,
+    "eff": 2.22,
+    "res_str": "火9 电12 腐蚀4"
+   },
+   {
+    "key": "Void",
+    "name_zh": "虚空甲壳",
+    "name_en": "Void Carapace",
+    "parts": 4,
+    "armor": 127.2,
+    "weight": 56.8,
+    "eff": 2.24,
+    "res_str": "火7 电9 腐蚀9"
+   },
+   {
+    "key": "Summoner",
+    "name_zh": "扭结",
+    "name_en": "Knotted Cage",
+    "parts": 4,
+    "armor": 124.3,
+    "weight": 55.2,
+    "eff": 2.25,
+    "res_str": "流血3 腐蚀15 枯萎7"
+   },
+   {
+    "key": "CrimsonGuard",
+    "name_zh": "绯红守卫板甲",
+    "name_en": "Crimson Guard Plate",
+    "parts": 4,
+    "armor": 122.0,
+    "weight": 53.6,
+    "eff": 2.28,
+    "res_str": "流血9 火9 枯萎7"
+   },
+   {
+    "key": "FaeRoyalGuard",
+    "name_zh": "翡族皇家",
+    "name_en": "Fae Royal plate",
+    "parts": 4,
+    "armor": 120.4,
+    "weight": 52.8,
+    "eff": 2.28,
+    "res_str": "流血9 火9 枯萎7"
+   },
+   {
+    "key": "RedWidow",
+    "name_zh": "红寡妇法衣",
+    "name_en": "Red Widow Raiment",
+    "parts": 4,
+    "armor": 105.3,
+    "weight": 44.8,
+    "eff": 2.35,
+    "res_str": "流血12 腐蚀2 枯萎11"
+   },
+   {
+    "key": "Archon",
+    "name_zh": "迷宫斗篷",
+    "name_en": "Labyrinth Mantle",
+    "parts": 4,
+    "armor": 102.3,
+    "weight": 43.2,
+    "eff": 2.37,
+    "res_str": "火10 电15"
+   },
+   {
+    "key": "Alchemist",
+    "name_zh": "学者大衣",
+    "name_en": "Academic's Overcoat",
+    "parts": 4,
+    "armor": 98.8,
+    "weight": 41.6,
+    "eff": 2.38,
+    "res_str": "流血5 腐蚀15 枯萎7"
+   },
+   {
+    "key": "Gunslinger",
+    "name_zh": "正午上衣",
+    "name_en": "High Noon Duds",
+    "parts": 4,
+    "armor": 93.9,
+    "weight": 39.2,
+    "eff": 2.4,
+    "res_str": "火10 电9 腐蚀6"
+   },
+   {
+    "key": "Ritualist",
+    "name_zh": "狂热者外套",
+    "name_en": "Zealot's Overcoat",
+    "parts": 4,
+    "armor": 90.4,
+    "weight": 37.6,
+    "eff": 2.4,
+    "res_str": "流血6 电3 腐蚀8 枯萎8"
+   },
+   {
+    "key": "Cultist",
+    "name_zh": "教徒风衣",
+    "name_en": "Cultist Duster",
+    "parts": 4,
+    "armor": 89.0,
+    "weight": 36.8,
+    "eff": 2.42,
+    "res_str": "流血3 火4 电5 腐蚀7 枯萎6"
+   },
+   {
+    "key": "Hunter",
+    "name_zh": "夜行者上衣",
+    "name_en": "Nightstalker Garb",
+    "parts": 4,
+    "armor": 87.2,
+    "weight": 36.0,
+    "eff": 2.42,
+    "res_str": "流血6 火7 电5 枯萎13"
+   },
+   {
+    "key": "Medic",
+    "name_zh": "战地医务兵大衣",
+    "name_en": "Field Medic Overcoat",
+    "parts": 4,
+    "armor": 85.4,
+    "weight": 35.2,
+    "eff": 2.43,
+    "res_str": "流血15 腐蚀2 枯萎8"
+   },
+   {
+    "key": "Handler",
+    "name_zh": "驯兽员上衣",
+    "name_en": "Trainer Clothes",
+    "parts": 4,
+    "armor": 80.1,
+    "weight": 32.8,
+    "eff": 2.44,
+    "res_str": "流血6 电8 腐蚀7 枯萎3"
+   },
+   {
+    "key": "Survivor",
+    "name_zh": "幸存者",
+    "name_en": "Survivor",
+    "parts": 4,
+    "armor": 78.6,
+    "weight": 32.0,
+    "eff": 2.46,
+    "res_str": "流血5 火5 电5 腐蚀5 枯萎5"
+   },
+   {
+    "key": "Army",
+    "name_zh": "战斗上装",
+    "name_en": "Battle",
+    "parts": 4,
+    "armor": 68.4,
+    "weight": 27.7,
+    "eff": 2.47,
+    "res_str": "流血9 火7 腐蚀4 枯萎5"
+   },
+   {
+    "key": "Warden",
+    "name_zh": "纳米镀层法衣",
+    "name_en": "Nanoplated Vestments",
+    "parts": 4,
+    "armor": 64.2,
+    "weight": 26.0,
+    "eff": 2.47,
+    "res_str": "流血10 火6 枯萎9"
+   },
+   {
+    "key": "Invader",
+    "name_zh": "枯木",
+    "name_en": "Dendroid",
+    "parts": 4,
+    "armor": 61.6,
+    "weight": 24.8,
+    "eff": 2.48,
+    "res_str": "流血10 腐蚀10 枯萎5"
+   },
+   {
+    "key": "Elder",
+    "name_zh": "长老服饰",
+    "name_en": "Elder",
+    "parts": 4,
+    "armor": 59.4,
+    "weight": 24.0,
+    "eff": 2.48,
+    "res_str": "火12 腐蚀4 枯萎9"
+   },
+   {
+    "key": "Explorer",
+    "name_zh": "空间行者上衣",
+    "name_en": "Realmwalker Tunic",
+    "parts": 4,
+    "armor": 57.9,
+    "weight": 23.2,
+    "eff": 2.5,
+    "res_str": "流血5 火4 电7 枯萎9"
+   },
+   {
+    "key": "SpaceWorker",
+    "name_zh": "空间工作者",
+    "name_en": "Space Worker",
+    "parts": 4,
+    "armor": 56.0,
+    "weight": 22.4,
+    "eff": 2.5,
+    "res_str": "流血4 火3 电10 腐蚀7"
+   },
+   {
+    "key": "Bandit",
+    "name_zh": "强盗夹克",
+    "name_en": "Bandit Jacket",
+    "parts": 4,
+    "armor": 54.4,
+    "weight": 21.6,
+    "eff": 2.52,
+    "res_str": "流血9 腐蚀9 枯萎7"
+   },
+   {
+    "key": "TrueCrimsonCrown",
+    "name_zh": "真正的绯红皇冠",
+    "name_en": "True Crimson Crown",
+    "parts": 1,
+    "armor": 16.6,
+    "weight": 10.0,
+    "eff": 1.66,
+    "res_str": "流血-6 火35 电-6 腐蚀-6 枯萎-6"
+   },
+   {
+    "key": "PilotsHelm",
+    "name_zh": "领航员",
+    "name_en": "Navigator's Helm",
+    "parts": 1,
+    "armor": 16.0,
+    "weight": 7.6,
+    "eff": 2.11,
+    "res_str": "流血-1 火-1 电2 腐蚀3 枯萎-1"
+   },
+   {
+    "key": "TopHat",
+    "name_zh": "华丽礼帽",
+    "name_en": "Dandy Topper",
+    "parts": 1,
+    "armor": 12.8,
+    "weight": 5.3,
+    "eff": 2.42,
+    "res_str": "枯萎5"
+   },
+   {
+    "key": "FieldCap",
+    "name_zh": "战地医务兵帽子",
+    "name_en": "Field Medic Hat",
+    "parts": 1,
+    "armor": 10.6,
+    "weight": 4.4,
+    "eff": 2.41,
+    "res_str": "腐蚀1 枯萎2"
+   },
+   {
+    "key": "MudtoothsHat",
+    "name_zh": "泥牙的帽子",
+    "name_en": "Mudtooth's Hat",
+    "parts": 1,
+    "armor": 10.6,
+    "weight": 4.4,
+    "eff": 2.41,
+    "res_str": "流血1 火1 电1 腐蚀1 枯萎2"
+   },
+   {
+    "key": "WeldingGoggles",
+    "name_zh": "焊接护目镜",
+    "name_en": "Welding Goggles",
+    "parts": 1,
+    "armor": 9.0,
+    "weight": 4.0,
+    "eff": 2.25,
+    "res_str": "火3"
+   },
+   {
+    "key": "BloodlessCrown",
+    "name_zh": "断血王冠",
+    "name_en": "Bloodless Crown",
+    "parts": 1,
+    "armor": 6.6,
+    "weight": 2.7,
+    "eff": 2.44,
+    "res_str": "流血15 火-3 电3 腐蚀-3 枯萎-3"
+   },
+   {
+    "key": "LodestoneCrown",
+    "name_zh": "磁石王冠",
+    "name_en": "Lodestone Crown",
+    "parts": 1,
+    "armor": 6.5,
+    "weight": 2.6,
+    "eff": 2.5,
+    "res_str": "流血2 电-1 枯萎5"
+   },
+   {
+    "key": "RedPrince",
+    "name_zh": "红王子的王冠",
+    "name_en": "Crown of the Red Prince",
+    "parts": 1,
+    "armor": 6.0,
+    "weight": 6.0,
+    "eff": 1.0,
+    "res_str": "流血-6 火25 电-6 腐蚀-6 枯萎13"
+   }
+  ],
+  "mix_builds": [
+   {
+    "name_zh": "轻装上限·最大护甲",
+    "weight_class": "轻",
+    "armor": 62.5,
+    "weight": 25.0,
+    "for": "纯输出 / 机动流（Light 闪避，无体力惩罚）",
+    "parts": [
+     "Armor_Head_Army",
+     "Armor_Body_Explorer",
+     "Armor_Legs_Bandit",
+     "Armor_Gloves_Bandit"
+    ],
+    "res_str": "流血12 火4 电3 腐蚀4 枯萎6"
+   },
+   {
+    "name_zh": "中量上限·最大护甲",
+    "weight_class": "中",
+    "armor": 115.4,
+    "weight": 50.0,
+    "for": "通用输出 / 暴击位（Medium 闪避，+25% 闪避体力消耗）",
+    "parts": [
+     "Armor_Head_CrimsonGuard",
+     "Armor_Body_RedWidow",
+     "Armor_Legs_CrimsonGuard",
+     "Armor_Gloves_Engineer"
+    ],
+    "res_str": "流血9 火6 电2 腐蚀2 枯萎8"
+   },
+   {
+    "name_zh": "重量上限·最大护甲",
+    "weight_class": "重",
+    "armor": 155.6,
+    "weight": 75.0,
+    "for": "重装输出 / 半坦（Heavy 闪避，+50% 闪避体力消耗）",
+    "parts": [
+     "Armor_Head_NerudWarrior",
+     "Armor_Body_Challenger",
+     "Armor_Legs_NerudWarrior",
+     "Armor_Gloves_Leto2"
+    ],
+    "res_str": "流血9 火12 电8 腐蚀13 枯萎8"
+   },
+   {
+    "name_zh": "超重坦克·最高护甲",
+    "weight_class": "超重",
+    "armor": 180.8,
+    "weight": 95.0,
+    "for": "超重坦克（Ultra 强制 Flop 闪避）",
+    "parts": [
+     "Armor_Head_Leto1",
+     "Armor_Body_Leto1",
+     "Armor_Legs_Leto1",
+     "Armor_Gloves_Leto1"
+    ],
+    "res_str": "流血13 火13 电13 腐蚀15 枯萎13"
+   },
+   {
+    "name_zh": "元素抗性特化·火/枯",
+    "weight_class": "重",
+    "armor": 142.7,
+    "weight": 74.1,
+    "for": "元素抗性场（火焰/枯萎特化）",
+    "parts": [
+     "Armor_Head_RedPrince",
+     "Armor_Body_NerudWarrior",
+     "Armor_Legs_Leto1",
+     "Armor_Gloves_Hunter"
+    ],
+    "res_str": "流血4 火35 电5 腐蚀4 枯萎27"
+   },
+   {
+    "name_zh": "五系均衡抗性",
+    "weight_class": "重",
+    "armor": 153.4,
+    "weight": 75.0,
+    "for": "元素抗性场（未知元素环境通用）",
+    "parts": [
+     "Armor_Head_NerudWarrior",
+     "Armor_Body_NerudWarrior",
+     "Armor_Legs_CrimsonGuard",
+     "Armor_Gloves_Leto1"
+    ],
+    "res_str": "流血11 火13 电11 腐蚀14 枯萎12"
+   }
+  ],
+  "set_bonus_answer": {
+   "title": "护甲套装在《Remnant 2》里没有“套装效果”（数据可证）",
+   "text": "《Remnant 2》的护甲套装只是外观分组：护甲值、负重、抗性是装备唯一作用，穿 2 件 / 4 件不会触发任何额外效果。因此“套装组合变强”在本作的真实含义是：在负重档位（轻 ≤25 / 中 ≤50 / 重 ≤75 / 超重 >75）内把护甲值堆到最高，再把强度交给项链 + 4 戒指 + 武器改装 + 变异器 + 双职业这些真正的乘区。",
+   "evidence": [
+    "wiki 120 条护甲页 effect 字段非空数 = 0/120；index.jsonl 护甲道具 eff_en 非空 = 0",
+    "utoc_pathlist.txt 307,752 条资产路径中无 ArmorSet/SetBonus 资产；唯一命中是同名成就 Achievement_Armor_Set.uasset",
+    "ArmorSkill_Base_C（框架蓝图）在全局反射转储中的具体子类数 = 0；其图标位于 Graveyard（废弃）目录",
+    "locres en/zh 各有 8 条 2PC/3PC/4PC/5PC 文本（字符串表连续索引 1143-1150），含 R1 专属词条与 5PC（R2 仅 4 槽），且不被任何道具文本映射引用（0 命中）、无 ArmorSkill 子类消费 → 未使用文本",
+    "StatDef_Armor 结构体仅 8 个字段（Value / Armor / Encumbrance / BleedResistance / BlightResistance / FireResistance / ShockResistance / AcidResistance），无 set bonus/effect 字段",
+    "因此护甲无套装效果，4 件可自由混搭、无凑套惩罚"
+   ]
+  }
+ },
+ "rules": [
+  {
+   "title": "1. 伤害是“乘区相乘”，先把每一桶都喂起来",
+   "text": "同一乘区内多来源相加、不同乘区之间相乘。所以四件戒指的最优配置不是“四件都加全部伤害”，而是分别喂 全部伤害 / 暴击几率 / 暴击伤害 / 弱点伤害 这些不同桶。暴击伤害基础值 +50%；武器的暴击几率与弱点伤害是各自独立的武器侧修正。"
+  },
+  {
+   "title": "2. 负重档位是硬约束，且带耐力惩罚（官方数值）",
+   "text": "轻量 0–25（无惩罚）／中量 25.1–50（耐力消耗 +25%）／重量 50.1–75（+50%）／超重 75.1+（+75%）。档位越低方向翻滚越好；只有 超重 的中立翻滚明显变慢。减少负重（蒸馏酒）与提高负重阈值（强壮脊背）等价。"
+  },
+  {
+   "title": "3. 状态效果的“持续时间”是多来源相乘",
+   "text": "官方 维基 明确：折磨 满级 +100% 与 计时者宝戒 +100% 同时带时为 +300%（即 2×2=4 倍）。所以 持续伤害 流的时长乘区应按 4 倍算，而不是 3 倍——这是本报告里对 持续伤害 配装的一处修正。"
+  },
+  {
+   "title": "4. 有上限的乘区要先算清",
+   "text": "技能冷却上限 80%、移动速度上限 +100%、蓄力速度上限 -80%、瞄准移速上限 +100%。堆到上限后的多余词条是浪费，应该换乘区。"
+  },
+  {
+   "title": "5. “生命偷取 / 治疗效率 / 灰血”是三套独立系统",
+   "text": "Lifesteal Efficacy 只加成生命偷取，不作用于治疗效果；治疗 Effectiveness 只加成治疗效果，不影响生命偷取与灰血回复。要堆吸血就堆 Lifesteal Efficacy，别再堆治疗效率。"
+  },
+  {
+   "title": "6. 护甲不是伤害，是容错率",
+   "text": "护甲值只减伤与提供抗性，不提供任何输出词条；所以护甲选择只取决于你想站哪一档负重：轻档吃翻滚与机动、重档吃正面站桩。混搭永远优于整穿（同负重下可以多挤出 10~20 点护甲，见上方混搭表）。"
+  },
+  {
+   "title": "7. 负重档位同时决定闪避质量（官方 wiki 数据）",
+   "text": "三档闪避的无敌帧为 12 / 11 / 10（轻 / 中 / 重），超重强制 扑倒翻滚：15 帧无敌但后摇 65 帧；闪避体力消耗 25 / 31.25 / 37.5 / 43.75（每档 +25%）。所以轻档不只是“手感好”，是实打实的无敌帧优势；这也是所有输出流都优先压在 轻量 的原因。"
+  },
+  {
+   "title": "8. 戒指 / 项链是全游戏最灵活的乘区（也是稀缺乘区）",
+   "text": "225 枚戒指里：全部伤害 27 枚、暴击几率 10 枚、暴击伤害仅 3 枚、弱点伤害 3 枚、状态效果伤害 3 枚、状态时长 2 枚、改装能量 17 枚、护盾 17 枚。越稀缺的词条恰恰越强（暴伤/弱点/状态伤），所以 4 个戒指位要按「稀缺乘区优先」分配，而不是四件都堆全部伤害；同一套护甲武器下换一条项链就能换一套打法（详见报告「戒指 / 项链：为什么它们是第一乘区」）。"
+  }
+ ],
+ "builds": [
+  {
+   "key": "crit_weakspot",
+   "name_zh": "满暴弱点狙击",
+   "tagline": "常驻 87.5% 暴击、增益 齐 112.5%，每一枪都打在弱点上",
+   "role": "远程输出",
+   "chain_zh": "远程伤害池(+115%) × 暴击(几率 87.5%→112.5%、暴伤 +50%) × 弱点修正(武器 120%→195%)；三桶内相加、桶间相乘，另叠敌人身上的 腐蚀(+10% 受到伤害)",
+   "archetypes": [
+    {
+     "name_en": "Hunter",
+     "name_zh": "猎人",
+     "role": "主",
+     "why": "主职专长 追猎 追猎：单次弱点伤害≥55 就把猎人技能延长 3.5s（可超出初始时长）→ 猎人专注 增益 可整场不断；伤害专长神枪手 神枪手 一次给 +40% 远程伤害 / +15% 弱点伤害 / +5% 远程暴击率，同时喂两个桶"
+    },
+    {
+     "name_en": "Gunslinger",
+     "name_zh": "枪手",
+     "role": "副",
+     "why": "伤害专长快速射击 快速射击：+25% 远程伤害、+5% 暴击率、+15% 射速；副职 主职专长 默认不生效（除非取传奇词条 黄金时刻，本套给了危急情况）"
+    }
+   ],
+   "armor": {
+    "weight_class": "轻 轻量",
+    "need": "护甲总负重 ≤25（巨剑类 +15 负重件不可用）",
+    "total_weight": 25.0,
+    "total_armor": 62.5,
+    "note": "穷举最优解：顶点为 轻量 上限 25.0，护甲 62.5（4 件混搭）。若想留余量，可换 ≤24 负重方案：护甲 60.0 / 负重 23.9。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_FullMoonCirclet"
+    ],
+    "ring": [
+     "Ring_BraidedThorns",
+     "Ring_ProbabilityCord",
+     "Ring_ZaniasMalice",
+     "Ring_RingOfFlawedBeauty"
+    ],
+    "long_gun": [
+     "Weapon_SniperRifle"
+    ],
+    "hand_gun": [
+     "Weapon_HuntingPistol"
+    ],
+    "melee_weapon": [
+     "Weapon_DecayedClaws"
+    ],
+    "mod": [
+     "Mod_CorrosiveRounds",
+     "Mod_Bore"
+    ],
+    "meta_gem": [
+     "MetaGem_Momentum",
+     "MetaGem_GhostShell"
+    ],
+    "relic": [
+     "Relic_Consumable_ShieldedHeart"
+    ],
+    "fragment": [
+     "Weakspot Damage",
+     "Ranged Critical Chance",
+     "Critical Damage"
+    ],
+    "legendary": [
+     "Critical Situation"
+    ],
+    "trait": [
+     "Trait_StrongBack",
+     "Trait_Handling",
+     "Trait_Longshot",
+     "Trait_AmmoReserves",
+     "Trait_Expertise",
+     "Trait_Gifted",
+     "Trait_Chakra",
+     "Trait_Spirit",
+     "Trait_Leech",
+     "Trait_Swiftness"
+    ],
+    "perk": [
+     "Perk_DeadToRightsV3",
+     "Perk_Deadeye",
+     "Perk_Urgency",
+     "Perk_SwiftShot"
+    ],
+    "skill": [
+     "Skill_HuntersFocus"
+    ]
+   },
+   "loop": [
+    "先补满血再开打：满月饰环 +25% 远程伤害只在满血生效，靠 3% 远程吸血（水蛭放大到 4.5%）自维持",
+    "起手开猎人专注（冷却 50s / 持续 25s）：专注 给 +25% 远程伤害与 +25% 远程弱点伤害，瞄准自动 标记（对其暴击率 +10%）；此后每次弱点伤害≥55 延长 3.5s",
+    "腐蚀弹药一好就开（20s）：+15% 远程暴击率把 87.5% 推到 102.5%，并给目标挂 腐蚀（受到的所有伤害 +10%）",
+    "宁慢勿空：寡妇制造者弱点修正 120 + 饰品/碎片 75 = 195%，空枪触发缺陷美 -15% 远程伤害",
+    "弹匣 1 发：开火即换枪/装填，靠击杀触发的应急（+15% 装填 +15% 移速）与副武器钻孔造弱点续输出"
+   ],
+   "alts": [
+    "主武器 → 谎言 谎言 [「谎言」]：基础暴击 15%（全数据远程最高）让常驻暴击升到 92.5%，但弱点修正从 120 掉到 90，适合不想卡弱点、只要满暴的打法",
+    "项链 → 远程探头 远程探头 [「远程探头」]：击杀后 3 层共 +30% 远程伤害、靠弱点命中续期，多怪刷本强于满月饰环；单 首领 无小怪时换回",
+    "戒指 → 阿卡里战争指环 阿卡里战争指环 [「阿卡里战争指环」]：把编织棘刺(+10% 暴击率)换成完美闪避后 +10% 暴击率 +10% 暴伤，取消 100% 溢出；需稳定完美闪避（可配无法触及 +30% 闪避窗口）"
+   ],
+   "evidence": [
+    "Weapon_SniperRifle",
+    "Weapon_HuntingPistol",
+    "Weapon_DecayedClaws",
+    "Mod_CorrosiveRounds",
+    "Mod_Bore",
+    "MetaGem_Momentum",
+    "MetaGem_GhostShell",
+    "Amulet_FullMoonCirclet",
+    "Ring_BraidedThorns",
+    "Ring_ProbabilityCord",
+    "Ring_ZaniasMalice",
+    "Ring_RingOfFlawedBeauty",
+    "Relic_Consumable_ShieldedHeart",
+    "Perk_DeadToRightsV3",
+    "Perk_Deadeye",
+    "Perk_Urgency",
+    "Perk_SwiftShot",
+    "Skill_HuntersFocus",
+    "Trait_StrongBack",
+    "Trait_Handling",
+    "Trait_Longshot",
+    "Trait_AmmoReserves",
+    "Trait_Expertise",
+    "Trait_Gifted",
+    "Trait_Chakra",
+    "Trait_Spirit",
+    "Trait_Leech",
+    "Trait_Swiftness",
+    "Weapon_Deceit",
+    "Amulet_RangeFinder",
+    "Ring_AkariWarBand",
+    "Weakspot Damage",
+    "Ranged Critical Chance",
+    "Critical Damage",
+    "Critical Situation"
+   ],
+   "armor_parts": [
+    "Armor_Head_Army",
+    "Armor_Body_Explorer",
+    "Armor_Legs_Bandit",
+    "Armor_Gloves_Bandit"
+   ],
+   "ratings": {
+    "single": 5,
+    "aoe": 1.5,
+    "survival": 2,
+    "difficulty": 5,
+    "gear": 4
+   },
+   "scenario": "首领 / 单体精英专精；群怪图（如 神龛 事件、火之试炼）会很难受",
+   "trash_plan": [
+    "主武器寡妇制造者：单发、1 发弹匣，清群效率≈0（数据：弹匣 1 / 射速 1.65）",
+    "副武器弹无虚发：单发猎手枪（弹匣 1），同样无 范围伤害",
+    "改装：腐蚀弹药（自身增益）+ 钻孔（造弱点）都不是 范围伤害",
+    "技能猎人专注：单体增益；四个组件里没有任何一个是群体手段"
+   ],
+   "trash_fix": [
+    "换副武器 → 奥秘 奥秘（自动化链电，每次跳 7.5m 内目标、伤害递减 30%，挂 超载）→ 群怪能力直接拉到 3.5；代价是失去弹无虚发的单体补刀",
+    "换改装 → 微型新星 微型新星（5 颗星体各自爆炸 75→225 火伤）或 重力核心 重力核心（吸附 3 秒后 750→2250 范围伤害）→ 清群 3；代价是改装伤害吃不到本套的暴击/弱点乘区",
+    "换技能 → 猎人标记（35m 内全体 标记，对被标记者暴击 +10%）把\"点杀\"变\"群体点杀\"，单体略有损失"
+   ],
+   "difficulty_notes": [
+    "要打弱点：本套的 195% 弱点修正是主要乘区，空枪还有缺陷美 -15% 惩罚（数据）",
+    "满血条件：满月饰环 +25% 远程伤害只在满血生效，要求几乎不掉血",
+    "单发弹匣：寡妇制造者弹匣 1，开火即换枪/换弹，节奏失误直接断 输出",
+    "暴击阈值维持：87.5%→112.5% 依赖猎人专注 + 腐蚀弹药两个 20~25 秒窗口，断档就掉一档"
+   ],
+   "trinket": {
+    "multiplier": 1.57,
+    "note": "饰品在本套里不是最大乘区——暴击率的大头在棱镜传奇（+35）与动量（+20），饰品只给 +10 暴击；但弱点修正 +45（扎尼亚 +20 / 缺陷美 +25）与远程 +25 仍把最终伤害抬高 57%",
+    "lines": [
+     "满月饰环：远程伤害 +25%（满血条件，按 80% 覆盖率计 ≈ +20%）+ 3% 基础伤害吸血",
+     "编织棘刺：暴击几率 +10% → 暴击区 1.05→1.14（按暴伤 +50% 计）",
+     "几率之圈：暴击伤害 +20% → 与暴击率联动",
+     "扎尼亚的恶意：弱点伤害 +5%×4 层 = +20%（叠满后）",
+     "缺陷美戒指：弱点伤害 +25%（命中弱点时；未命中 -15% 远程）",
+     "→ 合计乘区 ≈ 1.57×（去掉 5 件饰品后只剩 64%）"
+    ]
+   }
+  },
+  {
+   "key": "mod_power_skill",
+   "name_zh": "改装能量引擎",
+   "tagline": "一枪一枪喂改装，改装把能量再喂回来，技能在中间点爆",
+   "role": "远程输出 / 技能爆发",
+   "chain_zh": "充能速率(生成池 ×1.65 + 遗物/技能一次性注入) × 改装伤害池(+100%~110%) × 改装暴击(17.5%) × 技能伤害(+65%)；闭环：伤害→改装能量(翡麟's 12.5% / 反馈 15% / 贝塔射线 5~15% / 暴风 15~30 每秒) → 改装能量→伤害(放大器 50% + 反应链 20% + 伪智者 15% + 启示之石 5~10%) → 改装能量→技能(织咒者每 100 点减 1% 冷却)",
+   "archetypes": [
+    {
+     "name_en": "Archon",
+     "name_zh": "执政官",
+     "role": "主",
+     "why": "主职专长 暴风 暴风 每秒自动 15 改装能量、施放改装后 10s 内翻倍到 30/s（怠速转速）；伤害专长放大器 放大器 给 +50% 改装伤害与 +10% 改装暴击率；团队专长能量回归返还已消耗 10% 并 +10% 生成；辅助专长内在精神把充能需求 -10%；圣物专长能源泄露让每次遗物 +100 双武器 / +100 当前"
+    },
+    {
+     "name_en": "Invoker",
+     "name_zh": "祈求者",
+     "role": "副",
+     "why": "伤害专长附魔 附魔：+30% 技能伤害 / +15% 元素 / +5% 技能与元素暴击；技能莉杜莎之道给目标 脆裂（受到暴击率 +10%、暴伤 +15%），对改装伤害与技能伤害同时生效，是把两条爆发线压进同一秒的关键"
+    }
+   ],
+   "armor": {
+    "weight_class": "中 中量",
+    "need": "护甲总负重 ≤50",
+    "total_weight": 50.0,
+    "total_armor": 115.4,
+    "note": "穷举最优解：负重 50.0 正好卡 中量 上限，护甲 115.4。要余量可用 ≤45 方案（护甲 106.0 / 负重 45.0）。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_ReactionChain"
+    ],
+    "ring": [
+     "Ring_FaerinsSigil",
+     "Ring_SpiritStone",
+     "Ring_BurdenOfTheSciolist",
+     "Ring_CrimsonDreamstone"
+    ],
+    "long_gun": [
+     "Weapon_AssaultRifle"
+    ],
+    "hand_gun": [
+     "Weapon_AlphaOmega"
+    ],
+    "melee_weapon": [
+     "Weapon_LabyrinthStaff"
+    ],
+    "mod": [
+     "Mod_PrismaticDriver"
+    ],
+    "meta_gem": [
+     "MetaGem_Feedback",
+     "MetaGem_Spellweaver",
+     "MetaGem_BattleMage"
+    ],
+    "relic": [
+     "Relic_Consumable_RunedHeart"
+    ],
+    "fragment": [
+     "Mod Damage",
+     "Mod Generation",
+     "Mod Critical Chance"
+    ],
+    "legendary": [
+     "Overpowered"
+    ],
+    "trait": [
+     "Trait_Spirit",
+     "Trait_Insight",
+     "Trait_Chakra",
+     "Trait_FlashCaster",
+     "Trait_Expertise",
+     "Trait_Gifted",
+     "Trait_Amplitude",
+     "Trait_Vigor",
+     "Trait_Barkskin",
+     "Trait_Resonance"
+    ],
+    "perk": [
+     "Perk_Tempest",
+     "Perk_Amplify",
+     "Perk_PowerCreep",
+     "Perk_SpiritWithin",
+     "Perk_PowerLeak",
+     "Perk_Entranced"
+    ],
+    "skill": [
+     "Skill_RealityRune",
+     "Skill_WayOfSand"
+    ]
+   },
+   "loop": [
+    "起手开现实符文站进圆顶：25% 减伤 + 每秒 50 改装能量，15s 白送 750 点，配合暴风（施放后 30/s）是全配装最快的充能窗口",
+    "主输出：AR-47（射速 7.3 / 弹匣 40）持续射击把棱镜驱动器充满 → 施放棱镜驱动器，光束每秒 125~375 改装伤害并引爆 300~900 范围伤害；改装伤害池 +100%~110%、改装暴击 17.5% 同时作用",
+    "爆发窗口：莉杜莎之道（脆裂：受到暴击率 +10% / 暴伤 +15%）与棱镜驱动器同开，该 减益 对改装伤害与技能伤害同时生效",
+    "能量告急：用遗物符文之心（500 点，10s）+ 能源泄露（双武器各 +100、当前再 +100）≈ 一次半充能，并触发能量回归返还 10%",
+    "换弹/切枪会引爆贝塔射线标记（275~825）；被标记目标死亡返还 5%~15% 弹药与改装能量；没子弹时用迷宫法杖 + 战斗法师近战充能（范围伤害 伤害额外 +50% 改装能量）"
+   ],
+   "alts": [
+    "项链 → 独一真皇魔符 独一真皇魔符 [「独一真皇魔符」]：同为 +20% 改装伤害，且在已带翡麟魔符时把它的 12.5% 提升 50% 至 18.75%，纯数值最高；代价是丢掉反应链「50% 能量转给收起武器」的转接（单 首领 用这条，多目标用反应链）",
+    "主武器 → 始与终 始与终 [「始与终」]：5 连发 + 7.42 发/秒，单位时间命中数更高、充能更快；代价是单发只有 14，平射伤害更低",
+    "戒指 → 启示之石 启示之石 [「启示之石」]：同时给生成池与伤害池（+5%/+5%，对 破绽 翻倍为 +10%/+10%）；本套无 破绽 来源故放替代位，若队伍有施加 破绽 的角色则顶掉绯红梦石"
+   ],
+   "evidence": [
+    "Weapon_AssaultRifle",
+    "Weapon_RunePistol",
+    "Weapon_LabyrinthStaff",
+    "Mod_PrismaticDriver",
+    "Mod_BetaRay",
+    "MetaGem_Feedback",
+    "MetaGem_Spellweaver",
+    "MetaGem_BattleMage",
+    "Amulet_ReactionChain",
+    "Ring_FaerinsSigil",
+    "Ring_SpiritStone",
+    "Ring_BurdenOfTheSciolist",
+    "Ring_CrimsonDreamstone",
+    "Relic_Consumable_RunedHeart",
+    "Perk_Tempest",
+    "Perk_Amplify",
+    "Perk_PowerCreep",
+    "Perk_SpiritWithin",
+    "Perk_PowerLeak",
+    "Perk_Entranced",
+    "Skill_RealityRune",
+    "Skill_WayOfSand",
+    "Trait_Spirit",
+    "Trait_Insight",
+    "Trait_Chakra",
+    "Trait_FlashCaster",
+    "Trait_Expertise",
+    "Trait_Gifted",
+    "Trait_Amplitude",
+    "Trait_Vigor",
+    "Trait_Barkskin",
+    "Trait_Resonance",
+    "Amulet_OneTrueKingSigil",
+    "Weapon_AlphaOmega",
+    "Ring_StoneOfRevelation",
+    "Mod Damage",
+    "Mod Generation",
+    "Mod Critical Chance",
+    "Overpowered"
+   ],
+   "armor_parts": [
+    "Armor_Head_CrimsonGuard",
+    "Armor_Body_RedWidow",
+    "Armor_Legs_CrimsonGuard",
+    "Armor_Gloves_Engineer"
+   ],
+   "ratings": {
+    "single": 4,
+    "aoe": 2.5,
+    "survival": 3,
+    "difficulty": 3,
+    "gear": 3.5
+   },
+   "scenario": "中长程持续输出 + 技能爆发；单体强、群怪靠棱镜驱动器的小 范围伤害 勉强",
+   "trash_plan": [
+    "棱镜驱动器：光束单体，但持续照射后 3m 范围伤害 爆炸 300→900 改装伤害（数据）",
+    "贝塔射线：标记目标，换弹/切枪引爆 275→825（单体延迟伤害）",
+    "迷宫法杖：蓄力 范围伤害 2m / 75→225，且 范围伤害 额外生成 50% 改装能量（数据）",
+    "副武器符文手枪：3 连发能量弹，无 范围伤害"
+   ],
+   "trash_fix": [
+    "换改装 → 重力核心 重力核心（吸附后 750→2250 范围伤害）或 微型新星 微型新星（5 发爆炸）→ 清群 4；代价是失去反馈闭环（反馈只对\"改装伤害\"生效，重力核心是 范围伤害 伤害，仍吃改装伤害池）",
+    "换主武器 → 沙尘暴 沙尘暴 / 星落 星落 类改装武器，群怪时改用改装清场",
+    "保留副武器位：换 奥秘 链电补群（牺牲 3 连发单体）"
+   ],
+   "difficulty_notes": [
+    "能量循环要盯：暴风（+15/秒，施放改装后翻倍）+ 反应链 + 能量回归，断供就整轮空转",
+    "圆顶站位：现实符文 7m 圆顶要站进去吃 25% 减伤与 50 能量/秒，出圈就没收益",
+    "改装暴击率只有 17.5%，不是满暴流，别按暴击思路用"
+   ],
+   "trinket": {
+    "multiplier": 1.9,
+    "note": "饰品的贡献拆成两条线：改装伤害池 +35%（反应链 20 + 伪智者 15）与能量周转 +22.5%（翡麟 12.5 + 精神之石 10），两者相乘 ≈ 1.35 × 1.225 ≈ 1.65，再叠绯红梦石的技能伤害 +20% → ≈ 1.9×",
+    "lines": [
+     "反应链：改装伤害 +20%，并把消耗能量的 50% 转给收起武器的改装（双改装循环）",
+     "翡麟魔符：暴击/弱点命中 +12.5% 改装能量 → 能量周转",
+     "精神之石：改装能量生成 +10%",
+     "伪智者之负担：改装与技能伤害 +15%（弹药 -20%）",
+     "绯红梦石：暴击命中 +2% 技能伤害 ×10 层 = +20%（条件易维持）",
+     "→ 合计乘区 ≈ 1.9×（去掉后只剩 53%）"
+    ]
+   }
+  },
+  {
+   "key": "mod_swapper",
+   "name_zh": "改装速切·星辰穿刺",
+   "tagline": "反应链驱动的双改装轮切：星辰爆裂贴脸爆发、穿刺者 2.0 远近通吃，几乎不用平A",
+   "role": "改装爆发 / 远程输出",
+   "chain_zh": "改装伤害池（放大器 +50%、反应链 +20%、失效保护 +10%~25%）× 改装暴击（放大器 +10%、遗物碎片 +7.5%）× 暴击伤害（赌徒之负担 +15%、几率之圈 +20%）× 充能循环（暴风 15~30/秒、反应链返还 50%、反馈把改装伤害的 25% 转回能量、灵体交换器把护盾的 150% 转能量、现实符文罩内 50/秒）；两个改装交替施放，循环闭合后几乎无缝。",
+   "archetypes": [
+    {
+     "name_en": "Archon",
+     "name_zh": "执政官",
+     "role": "主",
+     "why": "主职专长 暴风：每秒自动 15 改装能量、施放改装后 10 秒内翻倍到 30/秒；伤害专长 放大器：改装伤害 +50%、改装暴击几率 +10%；团队专长 能量回归：施放后返还消耗的 10% 给全队；辅助专长 内在精神：充能需求 -10%；圣物专长 能源泄露：每次用遗物给双武器各 +100、当前武器再 +100 改装能量。"
+    },
+    {
+     "name_en": "Warden",
+     "name_zh": "守望者",
+     "role": "副",
+     "why": "伤害专长 激励：全伤害 +25%、暴击 +5%；技能 无人机：护盾：常驻 10% 减伤、未满盾时每 2 秒给 8% 最大生命护盾——每层护盾经 灵体交换器 转成 150% 的改装能量，是本套的第二充能泵；团队专长 安全防护：无人机再给 1 层 壁垒（减伤 +7%）。"
+    }
+   ],
+   "armor": {
+    "weight_class": "中 中量",
+    "need": "护甲总负重 ≤50",
+    "total_weight": 43.2,
+    "total_armor": 102.3,
+    "note": "迷宫四件套（执政官初始套装）合计 102.3 甲 / 43.2 负重，落在 中量（25.1~50）内。本库数据结论：护甲无套装效果，所以追求极限可换 中量 混搭 115.4 甲 / 50.0 负重（见护甲前沿表），本套保留迷宫套只是沿用出处配置与外观。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_ReactionChain"
+    ],
+    "ring": [
+     "Ring_SpiritAlternator",
+     "Ring_BurdenOfTheGambler",
+     "Ring_BraidedThorns",
+     "Ring_ProbabilityCord"
+    ],
+    "long_gun": [
+     "Weapon_Sparkfire"
+    ],
+    "hand_gun": [
+     "Weapon_Revolver"
+    ],
+    "melee_weapon": [
+     "Weapon_HuntressSpear"
+    ],
+    "mod": [
+     "Mod_Skewer",
+     "Mod_AstralBurst"
+    ],
+    "meta_gem": [
+     "MetaGem_Failsafe",
+     "MetaGem_Feedback",
+     "MetaGem_TaintedBlade"
+    ],
+    "relic": [
+     "Relic_Consumable_ProfaneHeart"
+    ],
+    "fragment": [
+     "Mod Critical Chance",
+     "Mod Damage",
+     "Mod Generation"
+    ],
+    "legendary": [
+     "Jack of all Trades"
+    ],
+    "trait": [
+     "Trait_FlashCaster",
+     "Trait_Spirit",
+     "Trait_Amplitude",
+     "Trait_Insight",
+     "Trait_Expertise",
+     "Trait_Gifted",
+     "Trait_Vigor",
+     "Trait_Barkskin",
+     "Trait_Fortify",
+     "Trait_Barrier"
+    ],
+    "perk": [
+     "Perk_Tempest",
+     "Perk_Amplify",
+     "Perk_PowerCreep",
+     "Perk_SpiritWithin",
+     "Perk_Galvanize",
+     "Perk_Safeguard"
+    ],
+    "skill": [
+     "Skill_RealityRune",
+     "Skill_SummonShieldDrone"
+    ]
+   },
+   "loop": [
+    "起手放出 护盾无人机，看时机开 现实符文：7 米罩内减伤 25%、每秒白给 50 改装能量，把怪聚在罩子里打",
+    "主武器 星火霰弹枪 放 穿刺者 2.0：命中 200→600 后嵌入分裂，3 米内爆裂 350→1050（数值随武器强化成长）",
+    "立刻切 西部经典 放 星辰爆裂：7 枚星屑贴脸全中共 490→1470，撞墙最多反弹 3 次、每次 +10%",
+    "反应链 把每次施放消耗的改装能量 50% 灌给收起的那把枪——切枪本身就是充能，两把枪的改装轮流放",
+    "循环补能：暴风 15~30/秒 + 反馈（改装伤害转能量）+ 灵体交换器（护盾 150% 转能量）；掉血就用 亵渎之心（常驻 3% 吸血，使用后 15 秒吸血效率 +50%）"
+   ],
+   "alts": [
+    "副武器 → 奥秘（自动化链电，7.5 米内跳跃、挂 超载）：清群能力拉到 4.5，代价是失去星辰爆裂的贴脸爆发；或换 棱镜驱动器/重力核心 类改装武器继续走改装轮切",
+    "戒指 → 不想要「取消弱点判定」就换掉 赌徒之负担（改装能量或生存向戒指）：暴击 -10%、暴伤 -15%，但穿刺者 2.0 的 +50% 弱点伤害与爆头打法回来",
+    "护甲 → 迷宫四件套换 中量 混搭（115.4 甲 / 50.0 负重）：白赚 13 点护甲，只是放弃执政官本命外观"
+   ],
+   "evidence": [
+    "Weapon_Sparkfire",
+    "Weapon_Revolver",
+    "Weapon_HuntressSpear",
+    "Mod_Skewer",
+    "Mod_AstralBurst",
+    "MetaGem_Failsafe",
+    "MetaGem_Feedback",
+    "MetaGem_TaintedBlade",
+    "Amulet_ReactionChain",
+    "Ring_SpiritAlternator",
+    "Ring_BurdenOfTheGambler",
+    "Ring_BraidedThorns",
+    "Ring_ProbabilityCord",
+    "Relic_Consumable_ProfaneHeart",
+    "Armor_Head_Archon",
+    "Armor_Body_Archon",
+    "Armor_Legs_Archon",
+    "Armor_Gloves_Archon",
+    "Perk_Tempest",
+    "Perk_Amplify",
+    "Perk_PowerCreep",
+    "Perk_SpiritWithin",
+    "Perk_Galvanize",
+    "Perk_Safeguard",
+    "Skill_RealityRune",
+    "Skill_SummonShieldDrone",
+    "Trait_FlashCaster",
+    "Trait_Spirit",
+    "Trait_Amplitude",
+    "Trait_Insight",
+    "Trait_Expertise",
+    "Trait_Gifted",
+    "Trait_Vigor",
+    "Trait_Barkskin",
+    "Trait_Fortify",
+    "Trait_Barrier"
+   ],
+   "armor_parts": [
+    "Armor_Head_Archon",
+    "Armor_Body_Archon",
+    "Armor_Legs_Archon",
+    "Armor_Gloves_Archon"
+   ],
+   "ratings": {
+    "single": 5,
+    "aoe": 3.5,
+    "survival": 4,
+    "difficulty": 3,
+    "gear": 4
+   },
+   "scenario": "改装爆发通用：首领 / 精英贴脸倾泻，群怪靠穿刺者爆裂与星辰弹片；对移动快的小体型目标要多打一轮",
+   "trash_plan": [
+    "穿刺者 2.0：嵌入分裂 + 3 米爆裂 350→1050（数据），扎进怪堆一发清一片",
+    "星辰爆裂：7 枚星屑喷射、撞墙反弹 3 次每次 +10%，贴脸怪群全吃",
+    "星火霰弹枪平A：燃烧弹挂 燃烧（30→90 火伤 / 3 秒），补刀顺带点火",
+    "现实符文：7 米减速罩，把怪聚在爆裂半径里挨打"
+   ],
+   "trash_fix": [
+    "换副武器 → 奥秘（自动化链电，7.5 米内跳跃、递减 30%、挂 超载）→ 清群 4.5；代价是失去星辰爆裂的贴脸爆发",
+    "换改装 → 重力核心 重力核心（吸附 3 秒后 750→2250 范围伤害）或 微型新星 微型新星（5 发爆炸）→ 清群 4；代价是充能节奏变慢",
+    "换技能 → 混乱之门（友军每层 +0.7% 全伤害、有层即 +10% 改装生成）把清群战打成增伤战，罩子的保护没了"
+   ],
+   "difficulty_notes": [
+    "星辰爆裂要贴脸：7 枚弹片全中才是满伤，移动目标容易漏片，站太近也容易被硬直连死",
+    "切枪节奏是输出轴：反应链靠「收起武器」返还充能，忘记切枪 / 两把枪同时空仓会断循环",
+    "赌徒之负担取消弱点判定：放弃弱点乘区换稳定暴击，习惯了打弱点的要适应瞄身上",
+    "生存靠盾不靠甲：护盾无人机 + 现实符文断档时只剩 43 负重的中量护甲，别硬吃大招"
+   ],
+   "trinket": {
+    "multiplier": 1.55,
+    "note": "反应链是发动机（改装伤害 +20% + 施放返还 50% 耗能），其余四件全在喂暴击与充能；去掉 5 件饰品后改装伤害池与循环一起塌掉，只剩约 64% 输出",
+    "lines": [
+     "反应链：改装伤害 +20%，激活改装时把消耗的改装能量 50% 转给收起武器——本套循环核心",
+     "灵体交换器：获得护盾时按护盾量 150% 生成改装能量，把守望者无人机变成第二充能泵",
+     "赌徒之负担：暴击几率 +10%、暴击伤害 +15%（代价：取消弱点判定）",
+     "编织棘刺：暴击几率 +10%（无条件）",
+     "几率之圈：暴击伤害 +20%",
+     "→ 合计乘区 ≈ 1.55×（去掉 5 件饰品后只剩 64%）"
+    ]
+   }
+  },
+  {
+   "key": "status_dot",
+   "name_zh": "状态效果持续伤害流",
+   "tagline": "用「时长×状态伤×易伤」三个独立乘区把单发 持续伤害 放大 8.8~16.7 倍的多元素持续输出",
+   "role": "状态效果持续伤害",
+   "chain_zh": "单次 持续伤害 基础总量 × 4.0（状态时长乘区：「折磨」 +100% 与 「计时者宝戒」 +100% 在游戏内为“相乘”关系 —— 官方 维基 明确「（官方 维基 明确：折磨 满级与 计时者宝戒 同时携带时合计 +300%）」，即 (1+100%)×(1+100%)=4 倍） × 2.20（状态伤害加算池：卑劣 +15% + 芳香荆棘 +20% + 痛苦之影 +20% + 状态 伤害 碎片 +15% + 施虐 期望 +50%） × 1.15~1.90（易伤：破绽 +15% / 腐蚀 +10% / 阿哈内 4 状态 +20% / 愤怒 +25%）≈ 8.8×~16.7×",
+   "archetypes": [
+    {
+     "name_en": "Ritualist",
+     "name_zh": "仪式师",
+     "role": "主",
+     "why": "主职专长 卑劣：施加的负面状态附带 感染（状态伤害 +15%），死亡扩散 15m；「愤怒」 对带负面状态敌人 +25% 全伤害；「洁净」 圣物净化自身状态并反弹 7.5m；技能 瘴气 一次施加 流血/燃烧/超载/腐蚀 四状态、15m、总效果伤害 300"
+    },
+    {
+     "name_en": "Invoker",
+     "name_zh": "祈求者",
+     "role": "副",
+     "why": "「附魔」 技能伤害 +30%/元素伤害 +15%；技能 梅德拉之道 治疗 20% 最大生命 + 15s 森林（2%/s 回血、3% 吸血）并给敌人 阴郁（受到元素伤害 +15%）；「圣餐」 每 3s 回 2% 最大生命"
+    }
+   ],
+   "armor": {
+    "weight_class": "轻 轻量",
+    "need": "护甲总负重 ≤25",
+    "total_weight": 25.0,
+    "total_armor": 62.5,
+    "note": "持续伤害 伤害与护甲无关，取 轻量 保翻滚与闪避窗口；穷举最优 62.5 护甲 / 25.0 负重。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_FragrantThorn"
+    ],
+    "ring": [
+     "Ring_TimekeepersJewel",
+     "Ring_ShadowOfMisery",
+     "Ring_PanMageSigil",
+     "Ring_BloodJewel"
+    ],
+    "long_gun": [
+     "Weapon_Merciless"
+    ],
+    "hand_gun": [
+     "Weapon_Enigma"
+    ],
+    "melee_weapon": [
+     "Weapon_HuntressSpear"
+    ],
+    "mod": [],
+    "meta_gem": [
+     "MetaGem_TwistingWounds",
+     "MetaGem_Maelstrom",
+     "MetaGem_Stormbringer"
+    ],
+    "relic": [
+     "Relic_Consumable_VoidHeart"
+    ],
+    "fragment": [
+     "Status Damage",
+     "Ranged Critical Chance",
+     "Skill Damage"
+    ],
+    "legendary": [
+     "Sadistic"
+    ],
+    "trait": [
+     "Trait_Affliction",
+     "Trait_Expertise",
+     "Trait_Amplitude",
+     "Trait_Gifted",
+     "Trait_FlashCaster",
+     "Trait_Spirit",
+     "Trait_Insight",
+     "Trait_Siphoner",
+     "Trait_Vigor",
+     "Trait_Barkskin"
+    ],
+    "perk": [
+     "Perk_Wrath",
+     "Perk_Terrify",
+     "Perk_Purge",
+     "Perk_DarkBlood",
+     "Perk_Entranced",
+     "Perk_Soothsayer",
+     "Perk_Communion",
+     "Perk_MindAndBody"
+    ],
+    "skill": [
+     "Skill_Miasma",
+     "Skill_WayOfForest"
+    ]
+   },
+   "loop": [
+    "开场瘴气铺 4 状态（15m，振幅后 22.5m）→ 同时触发阿哈内 +20%、芳香荆棘 破绽 +15%、腐蚀 +10%，后续所有持续伤害吃满乘区",
+    "主武器「无情」：准星完全压缩后每发附加 200→600 流血/10 秒；它的固有改装「血脉」是穿透爆发（150→450 伤害 + 25% 暴击伤害加成），不可更换",
+    "副武器「奥秘」：固有改装「混乱驱动」在 10m 内互相链接电极，持续 10 秒的群体电击（20→60/秒），负责群体挂超载与清群",
+    "近战「女猎人之矛」：蓄力挂腐蚀（固有「标枪」）；另用蓄力攻击触发鲜血珠宝的 620 流血/20 秒",
+    "被围或吃机制时开虚空之心（4 秒承伤 -50%，结束回满已损失生命），洁净特性顺手净化自身负面状态"
+   ],
+   "alts": [
+    "想「持续燃烧」而不是群体链电：副武器换「技-22」（无固有改装，可自由装改装）→ 装热射 火热射击 补燃烧；代价是失去奥秘的群体超载，清群从 4.5 降到 3.5",
+    "想补酸蚀：主武器换「黑噬 AR-47」（无固有改装）→ 装腐蚀弹药 腐蚀弹药；代价是失去无情的流血与「血脉」穿透爆发",
+    "项链换「计时者的罚没品」（状态效果伤害 +50%，代价状态也施加给自己）→ 配合洁净+黑暗鲜血反打成收益",
+    "戒指换「死亡红戒」（复制最后一条伤害性状态，状态伤害 -10%）→ 单体首领可再翻一条持续伤害",
+    "变体可选：蠕动迷雾 蔓延迷雾（雾内敌人受状态伤害 +25%、被暴击 +5%）需占用一个可换装改装位，仅在换掉无情或奥秘后才装得上"
+   ],
+   "evidence": [
+    "Amulet_FragrantThorn",
+    "Ring_TimekeepersJewel",
+    "Ring_ShadowOfMisery",
+    "Ring_PanMageSigil",
+    "Ring_BloodJewel",
+    "Weapon_Merciless",
+    "Weapon_Enigma",
+    "Weapon_HuntressSpear",
+    "Mod_Hotshot",
+    "Mod_CorrosiveRounds",
+    "MetaGem_TwistingWounds",
+    "MetaGem_Maelstrom",
+    "MetaGem_Stormbringer",
+    "Relic_Consumable_VoidHeart",
+    "Trait_Affliction",
+    "Trait_Expertise",
+    "Trait_Amplitude",
+    "Trait_Gifted",
+    "Trait_FlashCaster",
+    "Trait_Spirit",
+    "Trait_Insight",
+    "Trait_Siphoner",
+    "Trait_Vigor",
+    "Trait_Barkskin",
+    "Perk_Wrath",
+    "Perk_Terrify",
+    "Perk_Purge",
+    "Perk_DarkBlood",
+    "Perk_Entranced",
+    "Perk_Soothsayer",
+    "Perk_Communion",
+    "Perk_MindAndBody",
+    "Skill_Miasma",
+    "Skill_WayOfForest",
+    "Vile (wiki-only 无 id, Ritualist prime perk)",
+    "Sadistic (wiki-only 传奇词条)",
+    "Status Damage (wiki-only 碎片)",
+    "Ranged Critical Chance (wiki-only 碎片)",
+    "Skill Damage (wiki-only 碎片)",
+    "Amulet_TimekeepersForfeit",
+    "Mod_CreepingMist",
+    "Weapon_Hellfire",
+    "Ring_RedRingOfDeath",
+    "Ring_BandOfTheFanatic",
+    "Skill_Eruption",
+    "MetaGem_Executor",
+    "Relic_Consumable_ShieldedHeart",
+    "Relic_Consumable_CrystalHeart",
+    "Insult to Injury (wiki-only 传奇词条)"
+   ],
+   "armor_parts": [
+    "Armor_Head_Army",
+    "Armor_Body_Explorer",
+    "Armor_Legs_Bandit",
+    "Armor_Gloves_Bandit"
+   ],
+   "ratings": {
+    "single": 4.5,
+    "aoe": 4.5,
+    "survival": 3,
+    "difficulty": 2,
+    "gear": 3.5
+   },
+   "scenario": "群怪 / 混合场景最舒服：一次 瘴气 铺满 15m，持续伤害 自己跳；单体也不弱",
+   "trash_plan": [
+    "瘴气 瘴气：15m 内全体施加流血/燃烧/超载/腐蚀 4 状态 + 300 总效果伤害（数据）→ 清群核心",
+    "索命者 无情：满压缩 200→600 流血/10s，点谁谁掉血",
+    "奥秘 奥秘：链电跳 7.5m 内多个目标并挂 超载（数据）→ 副武器位清群",
+    "死亡扩散：卑劣（主职）让被状态杀死的敌人把状态扩散给 15m 内敌人"
+   ],
+   "trash_fix": [
+    "本套清群已经够用；要更强可把「腐蚀弹药」换「蠕动迷雾 蔓延迷雾」（雾内敌人受状态伤害 +25%、被暴击 +5%）"
+   ],
+   "difficulty_notes": [
+    "操作最省心：技能铺完就站桩输出，持续伤害 自动结算，不需要弱点瞄准",
+    "唯一要记的是技能循环：瘴气 冷却 45 秒，空窗期用两个 20 秒改装错开补状态",
+    "生存一般（轻甲 62.5），被贴脸要靠虚空之心和森林/回血兜底"
+   ],
+   "trinket": {
+    "multiplier": 3.78,
+    "note": "饰品在本套里是第一乘区：时长 ×2.0（计时者宝戒）+ 状态伤害 +40%（芳香荆棘 20 + 痛苦之影 20）+ 全伤害 +35%（破绽 15 + 阿哈内 20）→ 2.0 × 1.40 × 1.35 ≈ 3.78×",
+    "lines": [
+     "计时者宝戒：自身施加的状态持续时间 +100% → 持续伤害 总伤害 ×2.0（与特性 折磨 相乘，官方 维基 确认 +300% 合值）",
+     "芳香荆棘：状态效果伤害 +20% + 4 状态触发 破绽（承受全伤 +15%，15 秒）",
+     "痛苦之影：状态效果伤害 +20%",
+     "阿哈内水晶：目标每种独特状态 +5% 伤害（瘴气 一次 4 种 = +20%）",
+     "鲜血珠宝：蓄力近战附加 620 流血/20s —— 它本身是被 ×3.78 放大的额外伤害源",
+     "→ 合计乘区 ≈ 3.78×（去掉后只剩 26%）"
+    ]
+   }
+  },
+  {
+   "key": "sustain_tank",
+   "name_zh": "吸血 / 回复生存流",
+   "tagline": "「护盾吸收 × 灰血缓冲 × 吸血回流」三层闭环的重甲坦克，窗口期伤害返还约 46%",
+   "role": "吸血/回复生存（坦克向）",
+   "chain_zh": "吸血乘区（基础 10.5% = 「虹吸者」 3% + 遗物_消耗品_亵渎之心 3% + 「差分机」 4.5%，开改装加 「粗糙弹药」 5% + 「恐怖行者」 10% 到 25.5%；再乘 亵渎之心 使用后 1.5× 与 「莉杜莎之泪」 1.2× = 18.9%~45.9% 伤害返还）× 护盾吸收池（「疗伤护盾」 100% 最大生命 + 「无人机：护盾」 每 2s 8% + 「危机戒指」 25% ≈ 225% 最大生命，「屏障」 +15% 盾量、「保留」 +30% 盾时长）× 减伤/灰血（坚不可摧 -30% × 重甲 莱托 标记 1 180.8 护甲 + 「坚韧」 +50% 甲效 × 「树皮」 -10% × 「安全防护」 壁垒 +7%；「黑巨剑」 固有 不屈打击 受击全转灰血 + 「偏转戒指」 50% 直伤转灰血 + 「黑暗契约」 +30% 转化率）",
+   "archetypes": [
+    {
+     "name_en": "Warden",
+     "name_zh": "守望者",
+     "role": "主",
+     "why": "主职专长 「动态」：10s 未受伤给 20% 最大生命护盾并 +50% 无人机能量；技能 无人机：护盾 常驻目标 10% 减伤且目标未满盾时每 2s 给 8% 最大生命护盾（可持续护盾引擎）；「安全防护」 给 壁垒+受疗 +10%；「应急措施」 低血自动 25% 护盾"
+    },
+    {
+     "name_en": "Medic",
+     "name_zh": "医师",
+     "role": "副",
+     "why": "技能 疗伤护盾：25m 内全体 100% 最大生命护盾 10s 且期间回 20% 最大生命；「战场急救」 治疗效率 +50%；「仁爱」 圣物效率 +15% 并分享治疗；「恩人」 圣物使用速度 +20% 且不被打断；「骨气」 灰血多扛 2 次"
+    }
+   ],
+   "armor": {
+    "weight_class": "超重 超重",
+    "need": "护甲总负重 95 + 黑巨剑 15 = 110（超重）",
+    "total_weight": 95.0,
+    "total_armor": 180.8,
+    "note": "莱托 1 型全套 180.8 护甲 / 95.0 负重，是全表最高护甲；加黑巨剑 +15 后总负重 110 必进 超重，配 「强壮脊背」 抵消负重门槛。若想留在 重量（≤75）：护甲取 ≤60 的搭配（133.1 甲 / 60.0 负重）再 +15 = 75.0 正好 重量。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_DifferenceEngine"
+    ],
+    "ring": [
+     "Ring_GeneratingBand",
+     "Ring_RingOfCrisis",
+     "Ring_RingOfDeflection",
+     "Ring_TearOfLydusa"
+    ],
+    "long_gun": [
+     "Weapon_Nightfall"
+    ],
+    "hand_gun": [
+     "Weapon_MachinePistol"
+    ],
+    "melee_weapon": [
+     "Weapon_BlackGreatsword"
+    ],
+    "mod": [
+     "Mod_AbrasiveRounds"
+    ],
+    "meta_gem": [
+     "MetaGem_Dreadful",
+     "MetaGem_Momentum",
+     "MetaGem_Edgelord"
+    ],
+    "relic": [
+     "Relic_Consumable_ProfaneHeart"
+    ],
+    "fragment": [
+     "Healing Effectiveness",
+     "Damage Reduction",
+     "Health Regeneration"
+    ],
+    "legendary": [
+     "Impervious"
+    ],
+    "trait": [
+     "Trait_Siphoner",
+     "Trait_Triage",
+     "Trait_Barrier",
+     "Trait_Fortify",
+     "Trait_Bloodstream",
+     "Trait_DarkPact",
+     "Trait_Barkskin",
+     "Trait_Preservation",
+     "Trait_Vigor",
+     "Trait_Shadeskin"
+    ],
+    "perk": [
+     "Perk_Dynamic",
+     "Perk_Safeguard",
+     "Perk_Contingency",
+     "Perk_Benevolence",
+     "Perk_Benefactor",
+     "Perk_Backbone"
+    ],
+    "skill": [
+     "Skill_SummonShieldDrone",
+     "Skill_HealingSurge"
+    ]
+   },
+   "loop": [
+    "开战先立盾：护盾无人机 常驻（每 2s 补 8% 最大生命盾 + 10% 减伤）→ 常驻触发 「生成指环」(3%/s 最大生命回复) 与 「差分机」(+20% 全伤 + 4.5% 吸血)；大伤害前用 疗伤护盾 铺 100% 最大生命群体盾。",
+    "输出围绕两个吸血窗口错开：日暮 的 恐怖行者（10s：10% 吸血 + 无限弹 + 25% 射速）与 技-22 的 粗糙弹药（20s：5% 吸血 + 流血），保证任何时刻至少一条吸血脉在线，其余时间靠 10.5% 常驻维持。",
+    "挨打是收益：吃机制前切黑巨剑蓄力进入 不屈（15% 减伤 + 受击全转灰血 + 免硬直 + 每层 +30% 伤害，最高 10 层），灰血越高 「可怖」 远程伤害越高。",
+    "低血三连保命（<25% 可连续触发）：「应急措施」 25% 护盾 + 「危机戒指」 25% 护盾 + 圣物 亵渎之心（使用后 15s 吸血效率 +50%），三件不共 冷却。",
+    "团队位：疗伤护盾 25m 群体 100% 护盾 + 期间 20% 群体回血 + 「仁爱」 治疗溢出分享；奶坦变体带 「修理工具」（对友军 3% 最大生命/秒并回充无人机能量）。"
+   ],
+   "alts": [
+    "「收获者机器人」（5 台机器人 30s，给 30m 内友方叠 虹吸：每层 1% 基础伤害吸血，最多 5 层）替换 粗糙弹药，多人队收益更高（对自身是否生效按 队友 惯例，待实测）。",
+    "「诅咒之戒」（角色名 诅咒之戒：每 1% 灰血 +0.4% 全伤，灰血≥50% 再 +5% 暴击）替换 「莉杜莎之泪」/「偏转戒指」，把灰血层转输出。",
+    "「护盾射击」（友军 25% 最大生命护盾、最多 50%）或 「哀痛」 + 「悼词」（每回收 1 支箭回 2% 最大生命）替换 技-22，走纯回复流。",
+    "「动能护盾交换器」（护盾中 +25% 改装伤害 / +30% 改装能量）或 「能量分流器」（护盾中 +10% 暴击 / +15% 全伤）替换 差分机，走护盾输出向。",
+    "遗物_消耗品_汲血之心（15s 内 10% 基础伤害吸血）或 遗物_消耗品_防护之心（100% 最大生命护盾 20s）替换 亵渎之心；棱镜传奇按压力改 医者(+100% 治疗效率)/防御措施(+100% 护盾上限)/不破之躯(灰血不可移除)。"
+   ],
+   "evidence": [
+    "Amulet_DifferenceEngine",
+    "Ring_GeneratingBand",
+    "Ring_RingOfCrisis",
+    "Ring_RingOfDeflection",
+    "Ring_TearOfLydusa",
+    "Weapon_Nightfall",
+    "Weapon_MachinePistol",
+    "Weapon_BlackGreatsword",
+    "Mod_Dreadwalker",
+    "Mod_AbrasiveRounds",
+    "MetaGem_Dreadful",
+    "MetaGem_Momentum",
+    "MetaGem_Edgelord",
+    "Relic_Consumable_ProfaneHeart",
+    "Trait_Siphoner",
+    "Trait_Triage",
+    "Trait_Barrier",
+    "Trait_Fortify",
+    "Trait_Bloodstream",
+    "Trait_DarkPact",
+    "Trait_Barkskin",
+    "Trait_Preservation",
+    "Trait_Vigor",
+    "Trait_Shadeskin",
+    "Trait_StrongBack",
+    "Perk_Dynamic",
+    "Perk_Safeguard",
+    "Perk_Contingency",
+    "Perk_Benevolence",
+    "Perk_Benefactor",
+    "Perk_Backbone",
+    "Skill_SummonShieldDrone",
+    "Skill_HealingSurge",
+    "Indomitable Strike (wiki-only 无 id, Black Greatsword 固有改装)",
+    "Healing Effectiveness (wiki-only 碎片)",
+    "Damage Reduction (wiki-only 碎片)",
+    "Health Regeneration (wiki-only 碎片)",
+    "Impervious (wiki-only 传奇词条)",
+    "Mod_HarvesterBots",
+    "Mod_ShieldingShot",
+    "Mod_Eulogy",
+    "Weapon_Sorrow",
+    "Weapon_RepairTool",
+    "Ring_StrongArmBand",
+    "Ring_CustodiansBastion",
+    "Amulet_KineticShieldExchanger",
+    "Amulet_EnergyDiverter",
+    "Relic_Consumable_SiphonHeart",
+    "Relic_Consumable_ShieldedHeart",
+    "Relic_Consumable_TranquilHeart",
+    "MetaGem_VampireBlade",
+    "Physician (wiki-only 传奇词条)",
+    "Defense Measures (wiki-only 传奇词条)",
+    "Unbreakable (wiki-only 传奇词条)"
+   ],
+   "armor_parts": [
+    "Armor_Head_Leto1",
+    "Armor_Body_Leto1",
+    "Armor_Legs_Leto1",
+    "Armor_Gloves_Leto1"
+   ],
+   "ratings": {
+    "single": 2.5,
+    "aoe": 2.5,
+    "survival": 5,
+    "difficulty": 3.5,
+    "gear": 4
+   },
+   "scenario": "生存/正面对轰；伤害偏低但几乎不死，适合练机制、带人、末世难度 开荒",
+   "trash_plan": [
+    "黑巨剑：蓄力横扫可以扫到多个近身目标，受伤还转灰血（数据：受击 15% 减伤、灰血转化 100%）",
+    "恐怖行者改装的日暮：无限弹药 + 25% 射速 + 10% 吸血（单体爆能，不是 范围伤害）",
+    "辅助清群：粗糙弹药（附加流血）+ 死亡烙印（25m 内承伤 +10%）"
+   ],
+   "trash_fix": [
+    "换改装 → 重力核心 / 微型新星 补 范围伤害；本套改装位本来就是工具位（恐怖行者是 10 秒窗）",
+    "换副武器 → 奥秘 链电；轻/中档位下更灵活",
+    "组队时可换守望者无人机为攻击型，靠队友清群"
+   ],
+   "difficulty_notes": [
+    "要管三层资源：护盾（护盾中才触发差分机 +20% 伤害）、灰血（越低越硬）、圣物充能",
+    "低血三连（危机戒指 + 应急措施 + 亵渎之心）不共享冷却，但需要知道什么时候让血掉下去",
+    "超重 超重：闪避变成 扑倒翻滚（15 帧无敌但后摇 65 帧），必须提前规划受击，不能靠翻滚躲"
+   ],
+   "trinket": {
+    "multiplier": 1.2,
+    "note": "本套的饰品主要买\"容错\"而不是\"伤害\"：差分机给 +20% 全伤 +4.5% 吸血，其余四件把护盾/回复/灰血循环撑起来；只看伤害乘区 ≈1.2×，但生存收益无法用乘区表达（护盾池 ≈225% 最大生命）",
+    "lines": [
+     "差分机：持盾时全部伤害 +20% + 4.5% 基础伤害吸血（护盾常驻 → 覆盖率≈100%）",
+     "生成指环：持盾时每秒回 3% 最大生命",
+     "危机戒指：血量 <25% 时 +25% 最大生命护盾（10 秒 / 30 秒一次）",
+     "偏转戒指：50% 直接伤害转灰血",
+     "莉杜莎之泪：治疗与吸血效能 +20%",
+     "→ 伤害乘区 ≈1.2×，但把\"会死\"变成\"不会死\"，实际 输出 收益远大于 1.2×"
+    ]
+   }
+  },
+  {
+   "key": "melee_burst",
+   "name_zh": "黑巨剑·蓄力爆发流",
+   "tagline": "用 0.8 攻速的铁块换 120 基础伤害，靠 不屈 叠 10 层 +300% 与 虫洞 的 +300% 打单次巨伤",
+   "role": "近战爆发",
+   "chain_zh": "基础120 × 蓄力乘区(不屈打击 10层×30%=+300%) × 近战伤害%(近距离战斗35%+腐朽边际35%+主宰者50%) × 暴击乘区(巨剑15%+格斗家的骄傲5%+虫洞触发完美闪避→阿卡里+10%暴击/+10%暴伤) × 弱点乘区(110%弱点+死亡烙印回响+10%) × 攻速补正(0.8→+15%攻速/+35%蓄力速度) × 吸血续航(3%+6%+3%，水蛭+50%效能)；闭环=近战伤害→改装能量(奥术攻击50%+翡凌魔符15%+织咒者)→死亡烙印/粗糙弹药反哺近战",
+   "archetypes": [
+    {
+     "name_en": "Challenger",
+     "name_zh": "挑战者",
+     "role": "主",
+     "why": "主职=虎胆(致命伤→3s无敌+回满血，冷却600s)；近距离战斗 10m内全伤+35%且暴击+5%；举重力士 负重耐力惩罚-50%；技能 主宰者 近战+50%/25s，是蓄力爬坡的爆发窗"
+    },
+    {
+     "name_en": "Invader",
+     "name_zh": "入侵者",
+     "role": "副",
+     "why": "突进猎手 冲刺/闪避叠5层=近战+35%/暴击+5%；漏洞 对诱饵目标近战吸血7.5%；技能 虫洞 下一击+300% 且 视为完美闪避，直接点亮阿卡里战争指环"
+    }
+   ],
+   "armor": {
+    "weight_class": "中 中量",
+    "need": "护甲总负重 ≤35（黑巨剑 +15 → 总 50 卡 中量）",
+    "total_weight": 35.0,
+    "total_armor": 85.6,
+    "note": "黑巨剑自带 +15 负重，所以护甲只能拿 35；穷举最优 85.6 甲 / 35.0 负重，合计 50.0 正好 中量 上限。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_DecayedMargin"
+    ],
+    "ring": [
+     "Ring_FaelinsSigil",
+     "Ring_BrawlersPride",
+     "Ring_AkariWarBand",
+     "Ring_DyingEmber"
+    ],
+    "long_gun": [
+     "Weapon_TommyGun"
+    ],
+    "hand_gun": [
+     "Weapon_HuntingPistol"
+    ],
+    "melee_weapon": [
+     "Weapon_BlackGreatsword"
+    ],
+    "mod": [
+     "Mod_AbrasiveRounds",
+     "Mod_DeathBrand"
+    ],
+    "meta_gem": [
+     "MetaGem_Edgelord",
+     "MetaGem_Spellweaver",
+     "MetaGem_Feedback"
+    ],
+    "relic": [
+     "Relic_Consumable_ProfaneHeart"
+    ],
+    "fragment": [
+     "Melee Damage",
+     "Melee Speed",
+     "Melee Critical Chance"
+    ],
+    "legendary": [
+     "Peak Conditioning"
+    ],
+    "trait": [
+     "Trait_ArcaneStrike",
+     "Trait_Spirit",
+     "Trait_Insight",
+     "Trait_Leech",
+     "Trait_Siphoner",
+     "Trait_Expertise",
+     "Trait_Gifted",
+     "Trait_Vigor",
+     "Trait_Barkskin",
+     "Trait_Fortify"
+    ],
+    "perk": [
+     "Perk_DieHard",
+     "Perk_CloseQuarters",
+     "Perk_PowerLifter",
+     "Perk_FaceOfDanger",
+     "Perk_SHARK",
+     "Perk_Loophole"
+    ],
+    "skill": [
+     "Skill_Battlecry_Juggernaut",
+     "Skill_WormHole"
+    ]
+   },
+   "loop": [
+    "起手 虫洞（算完美闪避）→ 阿卡里战争指环 +10%暴击/+10%暴伤、突进猎手 直接满5层(+35%近战/+5%暴击) → 主宰者 +50%近战伤害(25s)",
+    "贴近10m内持续蓄力，让 不屈打击 叠到10层(+300%)；蓄力期间自带15%减伤/灰血转化/免疫硬直，被围反而最强",
+    "打字机扫半梭触发 粗糙弹药(吸血+5%/20s+流血)；怪聚拢后放 死亡烙印(25m/25s/承伤+10%)",
+    "血线掉到60%不要交遗物（腐朽边际：每缺25%生命+3%近战吸血）；爆发前开亵渎之心(吸血效能+50%/15s)一发满蓄力吸回满血，重新点亮满血+35%增伤"
+   ],
+   "alts": [
+    "项链换 「屠夫灵偶」（蓄力命中后5s：暴击+15%/暴伤+25%，几乎常驻）；代价是放弃腐朽边际吸血，需把 水蛭/虹吸者 优先级顶满",
+    "近战变异器换 「超级充能器」（蓄力伤害+25~50%，耐力消耗+65%；级10 蓄力命中后3s耐力回复+100%）或 「重振精神」（蓄力耐力-25~50%，级10 蓄力伤害+20%/蓄力暴击+10%）",
+    "轻甲/空槽暴击变体：「勇者神符」(每空甲槽全伤+7.5%/4槽=30%) + 「蝇量刺痛」(<50负重加近战伤害，0负重+25%) + 棱镜 暴击 情况(轻量 档全暴击+35%)"
+   ],
+   "evidence": [
+    "Amulet_DecayedMargin",
+    "Ring_FaelinsSigil",
+    "Ring_BrawlersPride",
+    "Ring_AkariWarBand",
+    "Ring_DyingEmber",
+    "Weapon_TommyGun",
+    "Weapon_HuntingPistol",
+    "Weapon_BlackGreatsword",
+    "Mod_AbrasiveRounds",
+    "Mod_DeathBrand",
+    "MetaGem_Edgelord",
+    "MetaGem_Spellweaver",
+    "MetaGem_Feedback",
+    "Relic_Consumable_ProfaneHeart",
+    "Perk_DieHard",
+    "Perk_CloseQuarters",
+    "Perk_PowerLifter",
+    "Perk_FaceOfDanger",
+    "Perk_SHARK",
+    "Perk_Loophole",
+    "Skill_Battlecry_Juggernaut",
+    "Skill_WormHole",
+    "Melee Damage",
+    "Melee Speed",
+    "Melee Critical Chance",
+    "Peak Conditioning",
+    "Amulet_ButchersFetish",
+    "Amulet_MatriarchsInsignia",
+    "Amulet_DaredevilsCharm",
+    "Ring_FlyweightsSting",
+    "MetaGem_HyperCharger",
+    "MetaGem_Reinvigorate",
+    "Weapon_WorldsEdge",
+    "Weapon_Stonebreaker",
+    "Weapon_DecayedClaws",
+    "Weapon_AbyssalHook",
+    "Weapon_Wrathbringer",
+    "Amulet_OneTrueKingSigil",
+    "Ring_ProbabilityCord",
+    "Mod_Dreadwalker",
+    "Mod_HarvesterBots",
+    "Master Killer",
+    "Critical Situation",
+    "Trait_ArcaneStrike",
+    "Trait_Spirit",
+    "Trait_Insight",
+    "Trait_Leech",
+    "Trait_Siphoner",
+    "Trait_Expertise",
+    "Trait_Gifted",
+    "Trait_Vigor",
+    "Trait_Barkskin",
+    "Trait_Fortify"
+   ],
+   "armor_parts": [
+    "Armor_Head_Army",
+    "Armor_Body_Medic",
+    "Armor_Legs_Survivor",
+    "Armor_Gloves_Handler"
+   ],
+   "ratings": {
+    "single": 4.5,
+    "aoe": 3.5,
+    "survival": 4,
+    "difficulty": 4,
+    "gear": 4
+   },
+   "scenario": "贴脸爆发 / 精英与 首领 近战；受伤换输出，越被围越强",
+   "trash_plan": [
+    "黑巨剑：蓄力横扫覆盖 2m+ 扇形，多目标同时吃满蓄力伤害",
+    "死亡烙印：25m 内所有非友方承伤 +10%（群体减益）",
+    "主宰者：近战 +50%（25 秒）配合横扫清群"
+   ],
+   "trash_fix": [
+    "本套清群够用；若想更快，把暴击位戒指换成「格斗家的骄傲」已有近战攻速 +15%，可再叠「将熄余烬」吸血"
+   ],
+   "difficulty_notes": [
+    "站桩蓄力：0.8 攻速 + 蓄力时间，被远程/突进打断就断输出，需要熟悉每个 首领 的动作",
+    "完美闪避窗口：虫洞 算完美闪避、阿卡里战争指环要完美闪避触发，节奏要求高",
+    "能量闭环：近战伤害→改装能量→死亡烙印/粗糙弹药，断链就掉一个乘区"
+   ],
+   "trinket": {
+    "multiplier": 1.78,
+    "note": "饰品给近战 +35%（腐朽边际·满血）、攻速 +15%、近战暴击 +5%、暴击/暴伤 +10%（完美闪避后），再加 15% 近战改装能量与 6% 吸血续航 → ≈1.78×",
+    "lines": [
+     "腐朽边际：满血时近战伤害 +35%，另给 3%~9% 近战吸血（按缺血层数）",
+     "格斗家的骄傲：近战攻击速度 +15%、近战暴击几率 +5%",
+     "阿卡里战争指环：完美闪避后暴击 +10% / 暴伤 +10%（虫洞 可直接触发）",
+     "翡凌魔符：近战伤害额外生成 15% 改装能量（闭环支路）",
+     "将熄余烬：6% 近战吸血",
+     "→ 合计乘区 ≈1.78×（去掉后只剩 56%）"
+    ]
+   }
+  },
+  {
+   "key": "summon_companion",
+   "name_zh": "双召·伙伴齐射流",
+   "tagline": "召唤师 的 狂怒 + 灵魂之石 把 3 个单位变成主 输出，本体只负责挂减益、压 冷却、保命",
+   "role": "召唤物/伙伴",
+   "chain_zh": "召唤物基础 × 狂怒(「凶残无情」 仆从+50%伤害/+20%攻速，40s) × 召唤 伤害(「灵魂之石」 +30%) × 数量(仆从：飞怪×2 + 驯兽师 同伴×1 + 棱镜 灵魂伴侣 上限+1) × 玩家侧全伤(「灵魂碎片」 5%/召唤 max15% + 联手制敌 30%) × 减益(死亡烙印 承伤+10% / 蔓延迷雾 任意来源+5%暴击) × 存活(粗犷 召唤物HP+100% + 煽动 5%最大生命/s + 最好的朋友 +35%减伤 + 灵魂连接 召唤吸血反哺)",
+   "archetypes": [
+    {
+     "name_en": "Summoner",
+     "name_zh": "召唤师",
+     "role": "主",
+     "why": "主职=凶残无情：对本方仆从造成伤害→仆从 狂怒(+50%伤害/+20%攻速/+50%移速，40s，满级数值)；煽动 用遗物给仆从+15%伤害/+15%暴击/5%最大生命每秒；愤慨 献祭给本体吸血；遗留物 仆从消散留治疗光环；技能 仆从：飞怪 2只/10%最大生命/2充能，献祭返还最多50%冷却"
+    },
+    {
+     "name_en": "Handler",
+     "name_zh": "驯兽师",
+     "role": "副",
+     "why": "同伴情谊 白送常驻军犬（不吃召唤槽/不花最大生命）；最好的朋友 用遗物让同伴回满+25%伤害+35%减伤；联手制敌 本体+30%全类型伤害/+5%暴击；技能 攻击犬 狗+20%伤害且 嗥叫 给20m内全体盟友+20%伤害"
+    }
+   ],
+   "armor": {
+    "weight_class": "轻 轻量",
+    "need": "护甲总负重 ≤25",
+    "total_weight": 25.0,
+    "total_armor": 62.5,
+    "note": "召唤流靠走位与贴身触发 狂怒，取 轻量；穷举最优 62.5 甲 / 25.0 负重。"
+   },
+   "slots": {
+    "amulet": [
+     "Amulet_SoulStone"
+    ],
+    "ring": [
+     "Ring_SoulShard",
+     "Ring_SoulLink",
+     "Ring_SoulGuard",
+     "Ring_SoulFeast"
+    ],
+    "long_gun": [
+     "Weapon_AssaultRifle"
+    ],
+    "hand_gun": [
+     "Weapon_MachinePistol"
+    ],
+    "melee_weapon": [
+     "Weapon_RebellionSpear"
+    ],
+    "mod": [
+     "Mod_DeathBrand",
+     "Mod_CreepingMist"
+    ],
+    "meta_gem": [
+     "MetaGem_Spellweaver",
+     "MetaGem_Feedback",
+     "MetaGem_Dervish"
+    ],
+    "relic": [
+     "Relic_Consumable_DivertingHeart"
+    ],
+    "fragment": [
+     "Skill Cooldown",
+     "Health Bonus",
+     "Damage Reduction"
+    ],
+    "legendary": [
+     "Soulmate"
+    ],
+    "trait": [
+     "Trait_Rugged",
+     "Trait_BloodBond",
+     "Trait_Kinship",
+     "Trait_Expertise",
+     "Trait_Spirit",
+     "Trait_Insight",
+     "Trait_Vigor",
+     "Trait_Barkskin",
+     "Trait_Regrowth",
+     "Trait_Amplitude"
+    ],
+    "perk": [
+     "Perk_Ruthless",
+     "Perk_Incite",
+     "Perk_Outrage",
+     "Perk_Residue",
+     "Perk_Handler_Companion",
+     "Perk_BestFriend",
+     "Perk_PackHunter"
+    ],
+    "skill": [
+     "Skill_SummonFlyerMinion",
+     "Skill_AttackDog"
+    ]
+   },
+   "loop": [
+    "铺场：先放 攻击犬（常驻单位占1个在场召唤）→ 开遗物（煽动：仆从+15%伤害/+15%暴击、5%最大生命/s，30s）→ 飞怪×2（2充能）→ 灵魂碎片 满3单位=+15%全伤、灵魂守卫 3层壁垒",
+    "开 狂怒：长矛点自家 飞怪（亲朋好友 把友伤降到20%，打不死），仆从+50%伤害/+20%攻速/+50%移速 40s，每30~40s补刷新",
+    "铺减益：死亡烙印(850)怪群聚拢时放，25m/25s承伤+10%；蔓延迷雾(1000)丢在召唤物交战点，雾内任何来源暴击+5%",
+    "献祭循环：狂怒 快结束 长按 献祭 飞怪 → 50%冷却返还 + 灵魂盛宴 -8% + 献祭爆发(50/3m + 3×150追踪弹) → 立刻重招；技能全空时用 转变之心 再压15s"
+   ],
+   "alts": [
+    "副职换 工程师 炮台变体：技能_可部署_冲击炮台 + 「超导体」(技能充能×2、炮台/无人机 涅鲁德 能量×2) + 「阿泰里助推」(重武器+10%伤害/+10%暴击) + 「铁匠」(技能伤害+50%)，长枪换 武器_可部署_加特林炮台；注意炮台属 重武器 武器/炮台，没有 召唤 标签，不能假设吃 灵魂之石 的召唤伤害",
+    "项链换 「灵魂之锚」（至少1个召唤在场时全伤+20%，本体+召唤物通吃）",
+    "额外身体件：「使魔」（使魔，25→75/击，20s）/ 「骑士守卫」（骑士守卫，65→195，召唤上限=2，30s）；两者无 召唤 标签，只当可献祭/仇恨单位；走这条把 「灵魂盛宴」 换 「魔术师之环」"
+   ],
+   "evidence": [
+    "Amulet_SoulStone",
+    "Ring_SoulShard",
+    "Ring_SoulLink",
+    "Ring_SoulGuard",
+    "Ring_SoulFeast",
+    "Weapon_AssaultRifle",
+    "Weapon_RunePistol",
+    "Weapon_RebellionSpear",
+    "Mod_DeathBrand",
+    "Mod_CreepingMist",
+    "MetaGem_Spellweaver",
+    "MetaGem_Feedback",
+    "MetaGem_Dervish",
+    "Relic_Consumable_DivertingHeart",
+    "Perk_Ruthless",
+    "Perk_Incite",
+    "Perk_Outrage",
+    "Perk_Residue",
+    "Perk_Handler_Companion",
+    "Perk_BestFriend",
+    "Perk_PackHunter",
+    "Perk_Bonded",
+    "Skill_SummonFlyerMinion",
+    "Skill_AttackDog",
+    "Skill Cooldown",
+    "Health Bonus",
+    "Damage Reduction",
+    "Soulmate",
+    "Amulet_ProfaneSoulStone",
+    "Amulet_SoulAnchor",
+    "Amulet_Hyperconductor",
+    "Ring_ATaeriiBooster",
+    "Ring_ConjurersCircle",
+    "Mod_Familiar",
+    "Mod_KnightGuard",
+    "Skill_Deployable_ImpactCannon",
+    "Skill_Deployable_Gatling",
+    "Skill_Deployable_FlameThrower",
+    "Weapon_Deployable_Gatling",
+    "Weapon_Deployable_FlameThrower",
+    "Perk_Metalworker",
+    "Prime Time",
+    "Trait_Rugged",
+    "Trait_BloodBond",
+    "Trait_Kinship",
+    "Trait_Expertise",
+    "Trait_Spirit",
+    "Trait_Insight",
+    "Trait_Vigor",
+    "Trait_Barkskin",
+    "Trait_Regrowth",
+    "Trait_Amplitude"
+   ],
+   "armor_parts": [
+    "Armor_Head_Army",
+    "Armor_Body_Explorer",
+    "Armor_Legs_Bandit",
+    "Armor_Gloves_Bandit"
+   ],
+   "ratings": {
+    "single": 3.5,
+    "aoe": 4,
+    "survival": 3,
+    "difficulty": 2,
+    "gear": 3.5
+   },
+   "scenario": "让召唤物打、本体躲：群怪与多目标最舒服的低操作流派；单体上限不如暴击/持续伤害",
+   "trash_plan": [
+    "2 只飞怪仆从 + 1 只军犬：自动索敌，本体不用瞄准（数据：飞怪 2 只 / 每只 10% 生命）",
+    "死亡烙印：25m 内全体承伤 +10%",
+    "蠕动迷雾：雾内敌人受状态伤害 +25%、被暴击 +5%"
+   ],
+   "trash_fix": [
+    "已够用；想更快可把长枪换 奥秘/AR-47 打群，或棱镜给 灵魂伴侣 后补一只召唤物"
+   ],
+   "difficulty_notes": [
+    "要记得补 狂怒：长按/攻击自己召唤物触发 40 秒 +50% 伤害，忘记刷新就掉一大截",
+    "献祭循环：飞怪 献祭返还 50% 冷却，需要盯着冷却手动补召唤",
+    "本体很脆（轻甲），站位重要但比近战流宽松"
+   ],
+   "trinket": {
+    "multiplier": 1.5,
+    "note": "饰品给召唤物 +30%（灵魂之石）+ 本体全伤 +15%（灵魂碎片）+ 召唤吸血反哺 + 灵魂守卫减伤，召唤伤害乘区 ≈1.5×；若用攻击型词条（如灵魂石 + 阿泰里助推）还能再抬",
+    "lines": [
+     "灵魂之石：召唤物伤害 +30%、移速 +30%",
+     "灵魂碎片：每个在场召唤物 +5% 全伤害（3 个 = +15%）",
+     "灵魂连接：召唤物伤害的 5% 吸血回流本体",
+     "灵魂守卫：每个召唤物给 1 层 壁垒（减伤）",
+     "灵魂盛宴：召唤物/同伴死亡时技能冷却 -8%",
+     "→ 召唤伤害乘区 ≈1.5×，配合数量与 狂怒 才是完整倍数"
+    ]
+   }
+  }
+ ],
+ "i18n": {
+  "Amulet_FullMoonCirclet": "远程伤害吸血 3% 基础伤害；满血时远程伤害 +25%",
+  "Amulet_ReactionChain": "改装伤害 +20%；激活改装时，消耗的改装能量的 50% 转给收起武器的改装",
+  "Amulet_FragrantThorn": "状态效果伤害 +20%；对同一目标施加 ≥4 种独特负面状态时挂 破绽 15 秒（全来源承伤 +15%）",
+  "Amulet_DifferenceEngine": "持盾时：全部伤害 +20%，并返还 4.5% 基础伤害为生命偷取",
+  "Amulet_SoulStone": "召唤物伤害 +30%、召唤物移动速度 +30%",
+  "Amulet_DecayedMargin": "近战伤害吸血 3% 基础伤害；每损失 25% 生命额外 +3% 近战吸血；满血时近战伤害 +35%",
+  "Amulet_ButchersFetish": "蓄力近战命中后 5 秒：暴击几率 +15%、暴击伤害 +25%",
+  "Amulet_RangeFinder": "击杀敌人后：远程伤害 +10%、射程 +2m，可叠 3 层、持续 10 秒；远程弱点命中刷新持续时间",
+  "Amulet_OneTrueKingSigil": "改装伤害 +20%；你身上的魔符类饰品效果提高 50%",
+  "Amulet_SoulAnchor": "至少存在 1 个召唤物时，全部伤害 +20%",
+  "Amulet_TimekeepersForfeit": "状态效果伤害 +50%；但你施加的状态效果也会施加给自己",
+  "Amulet_KineticShieldExchanger": "持盾时：改装伤害 +25%、改装能量生成 +30%",
+  "Amulet_EnergyDiverter": "持盾时：暴击几率 +10%、全部伤害 +15%",
+  "Amulet_Hyperconductor": "技能充能速度 ×2；炮台/无人机类 涅鲁德 能量 ×2",
+  "Amulet_MatriarchsInsignia": "近战伤害 +35%，且近战命中回复 10 耐力",
+  "Amulet_DaredevilsCharm": "每空一个护甲槽，全部伤害 +7.5%（4 槽 = +30%）",
+  "Amulet_ProfaneSoulStone": "召唤物伤害 +30%、召唤物生命 +30%",
+  "Ring_BraidedThorns": "暴击几率 +10%",
+  "Ring_ProbabilityCord": "暴击伤害 +20%",
+  "Ring_ZaniasMalice": "命中弱点后，弱点伤害 +5%，持续 5 秒，最多叠 4 层",
+  "Ring_RingOfFlawedBeauty": "远程弱点伤害 +25%；未命中弱点时远程伤害 -15%",
+  "Ring_AkariWarBand": "完美闪避后：暴击几率 +10%、暴击伤害 +10%，持续 15 秒",
+  "Ring_TimekeepersJewel": "延长自身施加的所有状态效果的持续时间",
+  "Ring_ShadowOfMisery": "状态效果伤害 +20%",
+  "Ring_PanMageSigil": "目标每带有一种独特状态效果，你对其造成的伤害 +5%（4 种 = +20%）",
+  "Ring_BloodJewel": "蓄力近战命中施加流血，20 秒内共 620 点流血伤害",
+  "Ring_RedRingOfDeath": "复制目标最后受到的一条伤害性状态效果（状态伤害 -10%）",
+  "Ring_BandOfTheFanatic": "状态效果伤害 +30%、状态效果持续时间 -50%",
+  "Ring_GeneratingBand": "持盾时：每秒回复 3% 最大生命",
+  "Ring_RingOfCrisis": "生命降到 25% 以下时获得 25% 最大生命护盾，持续 10 秒",
+  "Ring_RingOfDeflection": "受到的直接伤害有 50% 几率完全转化为灰血",
+  "Ring_TearOfLydusa": "治疗与生命偷取效能 +20%；每损失 10% 圣物容量，该加成 -1.5%",
+  "Ring_StrongArmBand": "每 1% 灰血 +0.4% 全部伤害；灰血 ≥50% 时额外 +5% 暴击几率",
+  "Ring_FaerinsSigil": "暴击与弱点命中额外生成 12.5% 改装能量",
+  "Ring_FaelinsSigil": "近战伤害额外生成 15% 改装能量",
+  "Ring_SpiritStone": "改装能量生成 +10%",
+  "Ring_BurdenOfTheSciolist": "改装与技能伤害 +15%；弹药储备 -20%",
+  "Ring_CrimsonDreamstone": "暴击命中使技能伤害 +2%，持续 5 秒，最多 10 层",
+  "Ring_SoulShard": "每个在场召唤物使全部伤害 +5%，最多 +15%",
+  "Ring_SoulLink": "召唤物造成伤害的 5% 作为生命偷取回流给你",
+  "Ring_SoulGuard": "每个在场召唤物提供 1 层 壁垒（护盾减伤）",
+  "Ring_SoulFeast": "人类/同伴/召唤物倒地或死亡时，技能冷却 -8%",
+  "Ring_ConjurersCircle": "召唤物伤害 +20%、召唤物数量上限 +1",
+  "Ring_ATaeriiBooster": "重型武器在携带与炮台模式下：伤害 +10%、暴击几率 +10%",
+  "Ring_DyingEmber": "近战伤害吸血 6% 基础伤害",
+  "Ring_BrawlersPride": "近战攻击速度 +15%、近战暴击几率 +5%",
+  "Ring_FlyweightsSting": "负重低于 50 时近战伤害提高；0 负重时 +25%",
+  "Ring_LeakingGemstone": "改装激活期间仍有 20% 改装能量生成",
+  "Ring_DenseSiliconRing": "生命回复量的 200% 转化为改装能量",
+  "Ring_StoneOfMalevolence": "元素伤害额外生成 15% 改装能量",
+  "Ring_ShieldAlternator": "激活消耗 ≥100 改装能量的改装时获得护盾",
+  "Ring_BurdenOfTheWarlock": "改装能量需求 -15%；激活改装消耗 15% 生命（转为灰血）",
+  "Ring_BurdenOfTheMariner": "技能冷却 +15%；每个冷却中的技能提供 15% 额外改装能量",
+  "Ring_LightHouseKeepersRing": "15m 内每个受负面状态影响的单位提供 4 点/秒改装能量，最多 5 层",
+  "Ring_RingOfAshes": "收起武器每秒生成 15 点改装能量",
+  "Ring_SpiritAlternator": "受到护盾时按护盾值 150% 生成改装能量",
+  "Ring_WhitePawnStamp": "改装能量需求 -10%",
+  "Ring_CatalogersJewel": "每秒自动生成 10 点改装能量",
+  "Ring_BurdenOfTheFollower": "改装能量生成 +30%；射速 -15%",
+  "Ring_ShinyHogLure": "换弹时按装填比例给两把武器各回 25~50 点改装能量",
+  "Ring_StoneOfRevelation": "改装能量生成与改装伤害 +5%（对 破绽 目标翻倍）",
+  "Ring_FeedbackLoop": "完美闪避触发 3m 范围伤害 爆炸（55~155 电伤）并施加 超载",
+  "Amulet_ZeroHour": "全伤害 +20%、暴击几率 +10%；每高一个负重档，全伤害 -5%、暴击 -2.5%（轻量 档满额）",
+  "MetaGem_Momentum": "暴击命中共 +1~2% 暴击几率与暴击伤害，持续 3 秒，最多 10 层",
+  "MetaGem_GhostShell": "每第 3 次连续弱点命中造成 20~40% 额外伤害；满级：弱点暴击几率 +15%",
+  "MetaGem_Feedback": "使用改装后 10 秒内被动生成单次充能的 10~20% 改装能量；满级：改装伤害按 15% 基础伤害转化为改装能量",
+  "MetaGem_Spellweaver": "激活技能后 10 秒：改装伤害与改装能量生成 +10~15%；满级：激活改装每消耗 100 能量减 1% 技能冷却",
+  "MetaGem_BattleMage": "激活技能后 10 秒：近战改装能量生成 +25~50%；满级：近战伤害 +15%",
+  "MetaGem_TwistingWounds": "该武器对流血目标伤害 +1~10%，暴击/弱点命中施加流血",
+  "MetaGem_Maelstrom": "目标每种独特元素状态使该武器元素伤害 +5~10%；满级：元素伤害与元素状态伤害的改装能量生成提高",
+  "MetaGem_Stormbringer": "近战施加的状态效果伤害 +25~50%；满级：蓄力近战使敌人全状态抗性 -10%，持续 10 秒",
+  "MetaGem_Dreadful": "每 5% 灰血提供 1~2% 远程伤害，最多 +20%；满级：有灰血时换弹速度 +25%",
+  "MetaGem_Edgelord": "近战蓄力速度 +15~35%、近战攻速 +10~15%；满级：蓄力近战造成伤害的 3% 吸血",
+  "MetaGem_Dervish": "激活技能后 10 秒近战伤害 +20~40%；满级：累计 350 基础近战伤害后技能冷却 -3%",
+  "MetaGem_ChargedWounds": "每层 超载 使该武器射速与换弹速度 +2.5~5%",
+  "MetaGem_ThousandCuts": "每发命中 +0.1~0.5% 暴击几率与暴击伤害，持续 0.125 秒，最多 50 层",
+  "MetaGem_PressurePoint": "对 7m 内敌人远程与改装伤害 +5~15%",
+  "MetaGem_Repercussion": "主武器每次命中给 1 层（远程伤害 +3~6%，最多 5 层）",
+  "MetaGem_Supercharger": "弓与融合步枪蓄力速度 +10~30%",
+  "MetaGem_VengefulStrike": "生命低于 50% 时近战伤害 +25~50%；满级：低血时近战暴击几率 +15%",
+  "MetaGem_Opportunist": "完美闪避后 2 秒内近战暴击几率 +50~100%",
+  "MetaGem_WeaponLord": "普通近战命中使下一次蓄力攻击 +7~15%，最多 3 层",
+  "MetaGem_Sleeper": "收起 5 秒后该武器进入强化：拔出后 25% 暴击几率",
+  "MetaGem_SpiritHealer": "每消耗 150~50 点改装能量回复 2% 生命",
+  "MetaGem_SearingWounds": "该武器对燃烧目标伤害 +1~10%",
+  "MetaGem_Battery": "该武器每消耗 400 改装能量，弱点伤害 +10~20%",
+  "MetaGem_Insulator": "消耗 20~10% 弹匣获得护盾",
+  "MetaGem_DeadlyCalm": "持续瞄准 3 秒内远程伤害最多 +10~25%；满级：远程暴击几率 +10%",
+  "MetaGem_HyperCharger": "蓄力伤害 +25~50%，耐力消耗 +65%",
+  "MetaGem_Reinvigorate": "蓄力耐力消耗 -25~50%；满级：蓄力伤害 +20%、蓄力暴击 +10%",
+  "MetaGem_VampireBlade": "近战伤害吸血",
+  "MetaGem_Executor": "终结类变异器",
+  "Weapon_SniperRifle": "单发大威力狙击枪，自带 3 倍镜",
+  "Weapon_HuntingPistol": "大口径单发猎手枪，中远距离高伤害",
+  "Weapon_DecayedClaws": "腐朽根系制成的利爪，轻量近战（不加负重）",
+  "Weapon_Bow": "传说级长弓（蓄力远程）",
+  "Weapon_Deceit": "基础暴击最高的远程武器（15%）",
+  "Weapon_AssaultRifle": "全自动步枪，中等弹匣，点射效率高",
+  "Weapon_RunePistol": "3 连发能量手枪，可按住持续射击",
+  "Weapon_LabyrinthStaff": "普攻额外生成 10% 改装能量；蓄力 范围伤害 额外生成 50% 改装能量",
+  "Weapon_AlphaOmega": "5 连发，每层叠伤害增量",
+  "Weapon_Merciless": "准星完全压缩时施加 200→600 流血/10 秒",
+  "Weapon_Enigma": "电流跳弹（7.5m 内递减 30%）并施加 超载",
+  "Weapon_HuntressSpear": "蓄力近战施加腐蚀（承受全伤害 +10%）",
+  "Weapon_Hellfire": "燃烧 300→900 / 10 秒",
+  "Weapon_Nightfall": "骨片速射，附带硬直",
+  "Weapon_MachinePistol": "消音小口径全自动手枪，高射速",
+  "Weapon_BlackGreatsword": "蓄力时逐渐 +伤害，最高 +300%；受击减伤 15%；受击转灰血；自带负重 +15",
+  "Weapon_TommyGun": "大弹匣慢换弹冲锋枪，持续射击越打越准",
+  "Weapon_RebellionSpear": "长距离直伤长矛",
+  "Weapon_RepairTool": "对友军每秒回 3% 最大生命，并回充无人机能量",
+  "Weapon_Sorrow": "回收箭矢回复生命",
+  "Weapon_WorldsEdge": "重型大剑变体",
+  "Weapon_Stonebreaker": "重锤变体",
+  "Weapon_Deployable_Gatling": "工程师重武器：加特林炮台",
+  "Weapon_Deployable_FlameThrower": "工程师重武器：喷火炮台",
+  "Weapon_Deployable_ImpactCannon": "工程师重武器：冲击炮台",
+  "Perk_Amplify": "改装伤害 +50%，改装暴击几率 +10%（随执政官等级提升）",
+  "Perk_Backbone": "医师在失去灰血前可多承受 2 次伤害",
+  "Perk_Benefactor": "圣物使用速度 +20%，使用圣物不再被打断",
+  "Perk_Benevolence": "圣物效能 +15%，并把治疗量的 30%（对 35% 生命以下友军 60%）分享给附近队友",
+  "Perk_BestFriend": "使用圣物时同伴回满血，并获得 25% 伤害与 35% 减伤，持续 15 秒",
+  "Perk_CloseQuarters": "对 10m 内敌人全部伤害 +35%（20m 处衰减到 0），暴击几率 +5%",
+  "Perk_Contingency": "生命低于 25% 时获得 25% 最大生命护盾 10 秒（30 秒一次），护盾期间移速 +15%",
+  "Perk_DarkBlood": "受到负面状态伤害 -25%，枯萎累积 -50%",
+  "Perk_DeadToRightsV3": "单次远程或近战弱点伤害 ≥55 时，使激活中的猎人技能延长 3.5 秒（可超出初始时长）",
+  "Perk_Deadeye": "远程伤害 +40%、弱点伤害 +15%、远程暴击几率 +5%",
+  "Perk_DieHard": "受到致命伤害时无敌 3 秒并回满生命（10 分钟一次）；冷却期间获得 1 层 壁垒",
+  "Perk_Dynamic": "10 秒未受伤后 2 秒内生成 20% 最大生命护盾；炮台/无人机 涅鲁德 能量上限 +50%",
+  "Perk_FaceOfDanger": "在敌人 10m 内使用圣物：获得 2 层 壁垒 与 10% 增伤，持续 10 秒",
+  "Perk_Incite": "使用圣物：召唤物每秒回 5% 最大生命，伤害与暴击各 +15%，持续 30 秒",
+  "Perk_Loophole": "对入侵者诱饵目标造成的远程与近战伤害，7.5% 基础伤害转为生命偷取",
+  "Perk_Outrage": "牺牲召唤物：每牺牲 1 个获得 3% 生命偷取、移速 +15%，持续 10 秒",
+  "Perk_PackHunter": "同伴在 40m 内存活时：远程/近战/技能伤害 +30%，对应暴击几率 +5%",
+  "Perk_PowerCreep": "施放改装后 10 秒内，全队回收所消耗能量的 10%，并 +10% 改装能量生成",
+  "Perk_PowerLeak": "使用圣物：两把武器的改装各 +100 能量，当前装填的改装再 +100",
+  "Perk_PowerLifter": "各负重档的耐力消耗惩罚与耐力回复延迟均 -50%",
+  "Perk_Purge": "使用圣物时净化全部负面状态，并把净化掉的状态施加给 7.5m 内所有敌人",
+  "Perk_Residue": "召唤物消亡留下 3m 光环：每秒回 2.5% 生命、治疗 +20%，持续 10 秒",
+  "Perk_Ruthless": "对己方召唤物造成伤害使其 狂怒：伤害 +50%，攻速与移速 +20%，持续 40 秒",
+  "Perk_SHARK": "冲刺 1 秒或闪避叠 1 层 动量：远程/近战伤害 +7%、暴击几率 +1%，持续 10 秒，最多 5 层；完美闪避直接叠满",
+  "Perk_Safeguard": "守望者无人机给守护目标 1 层 壁垒，并 +10% 受到的治疗效果",
+  "Perk_SpiritWithin": "每充能的改装能量需求 -10%",
+  "Perk_Tempest": "每秒自动生成 15 点改装能量；施放改装后 10 秒内翻倍",
+  "Perk_Terrify": "击杀时使尸体 5m 内敌人 恐惧 20 秒（伤害 -5%，更易掉弹药）",
+  "Perk_Urgency": "击杀后换弹速度 +15%、移速 +15%，持续 5 秒",
+  "Perk_Wrath": "对受负面状态影响的敌人全部伤害 +25%、暴击几率 +5%",
+  "Perk_Bonded": "同伴与你共享部分伤害减免",
+  "Perk_Handler_Companion": "训犬师：获得一只常驻军犬同伴",
+  "Skill_AttackDog": "同伴跟随并造成 20% 额外伤害；单击指定攻击点，双击召回",
+  "Skill_Battlecry_Juggernaut": "主宰者：获得 3 层 壁垒，近战伤害 +50%，持续 25 秒",
+  "Skill_HealingSurge": "为 25m 内所有友军提供 100% 最大生命的护盾，持续 10 秒，期间回复 20% 最大生命",
+  "Skill_HuntersFocus": "连续开镜 0.5 秒进入专注：散布/后坐/摇摆 -50%，远程与远程弱点伤害 +25%，持续 25 秒；瞄准敌人自动标记（对其暴击 +10%）",
+  "Skill_Miasma": "15m 内全体敌人施加流血/燃烧/超载/腐蚀四状态，并造成 300 点总效果伤害，冷却 45 秒",
+  "Skill_RealityRune": "召唤 7m 护罩：敌人与其弹道减速；友军 25% 减伤、每秒自动生成 50 改装能量，持续 15 秒",
+  "Skill_SummonFlyerMinion": "召唤 1 只飞怪仆从（消耗 10% 最大生命，最多 2 只）；长按献祭：3m 内 50 伤害并生成追踪弹",
+  "Skill_SummonShieldDrone": "部署护盾无人机（125 能量）跟随守护目标：目标减伤 +10%，未满盾时每 2 秒补 8% 最大生命护盾",
+  "Skill_WayOfForest": "梅德拉之道：为友军回复 20% 最大生命并召唤 20m 森林 15 秒：森林内友军每秒回 2% 生命、获得 3% 生命偷取；森林内敌人 阴郁（受元素伤害 +15%）",
+  "Skill_WormHole": "向前空间跃迁，5 秒内下一次近战/远程攻击伤害 +300%，视为完美闪避",
+  "Skill_Eruption": "50 点爆炸伤害，目标每带 1 种状态则范围与伤害 +100%，并刷新全部状态",
+  "Skill_Deployable_ImpactCannon": "工程师重武器：冲击炮台",
+  "Skill_Deployable_Gatling": "工程师重武器：加特林炮台",
+  "Skill_Deployable_FlameThrower": "工程师重武器：喷火炮台",
+  "Mod_AbrasiveRounds": "20 秒内弹药附带流血，生命偷取 +5%",
+  "Mod_BetaRay": "标记目标 30 秒；被标记敌人死亡留下标记，换弹/切枪引爆造成 275→825 伤害",
+  "Mod_DeathBrand": "25m 内所有非友方受到死亡烙印：承受伤害 +10%；死亡留下回响",
+  "Mod_Dreadwalker": "进入梦魇领域：日暮无限弹药、射速 +25%、生命偷取 +10%、全自动，移动时更难被命中",
+  "Mod_CorrosiveRounds": "20 秒内弹药附带腐蚀，远程暴击几率 +15%",
+  "Mod_Hotshot": "10 秒内弹药附带燃烧（200→600 火伤）",
+  "Mod_CreepingMist": "释放迷雾：雾内敌人受到状态伤害 +25%、被暴击几率 +5%",
+  "Mod_HarvesterBots": "召唤 5 台机器人 30 秒，给 30m 内友方叠 虹吸（每层 1% 吸血，最多 5 层）",
+  "Mod_ShieldingShot": "为友军提供 25% 最大生命护盾（最多 50%）",
+  "Mod_Eulogy": "每回收 1 支箭回复 2% 最大生命",
+  "Mod_Familiar": "召唤使魔（25→75/击，持续 20 秒）",
+  "Mod_KnightGuard": "召唤骑士守卫（65→195，最多 2 个，30 秒）",
+  "Mod_Bore": "钻头：在目标身上钻出弱点",
+  "Relic_Consumable_DivertingHeart": "不提供常规治疗；使用后 15 秒内每秒减少 1 秒技能冷却",
+  "Relic_Consumable_ProfaneHeart": "固有 +3% 生命偷取；使用后 15 秒内生命偷取效能 +50%",
+  "Relic_Consumable_RunedHeart": "使用后生命回复 +5，并在 10 秒内为两把武器各生成 500 改装能量",
+  "Relic_Consumable_ShieldedHeart": "使用后获得 100% 最大生命护盾，持续 20 秒",
+  "Relic_Consumable_VoidHeart": "使用后 4 秒内承伤 -50%，结束时在 0.75 秒内回复全部已损失生命",
+  "Relic_Consumable_SiphonHeart": "15 秒内获得 10% 基础伤害的生命偷取",
+  "Relic_Consumable_TranquilHeart": "使用后回复生命并移除负面状态",
+  "Trait_Regrowth": "生命回复 +1.5/秒",
+  "Weakspot Damage": "弱点伤害 +15%",
+  "Ranged Critical Chance": "远程暴击几率 +7.5%",
+  "Critical Damage": "暴击伤害 +10%",
+  "Mod Damage": "改装伤害 +10%",
+  "Mod Generation": "改装能量生成 +10%",
+  "Mod Critical Chance": "改装暴击几率 +7.5%",
+  "Skill Cooldown": "技能冷却 -10%",
+  "Health Bonus": "生命上限 +10%",
+  "Damage Reduction": "减伤 +5%",
+  "Status Damage": "状态效果伤害 +15%",
+  "Skill Damage": "技能伤害 +10%",
+  "Healing Effectiveness": "治疗效果 +15%",
+  "Health Regeneration": "被动生命回复 +1/秒",
+  "Melee Damage": "近战伤害 +10%",
+  "Melee Speed": "近战攻击速度 +10%",
+  "Melee Critical Chance": "近战暴击几率 +7.5%",
+  "Critical Situation": "轻量级（轻量）时全部暴击几率 +35%",
+  "Overpowered": "改装能量生成 +50%",
+  "Sadistic": "状态效果伤害每跳有 50% 几率造成 2 倍伤害",
+  "Soulmate": "召唤物数量上限 +1",
+  "Peak Conditioning": "无限耐力",
+  "Impervious": "受到的所有伤害 -30%",
+  "Master Killer": "弱点伤害 ×1.35",
+  "Insult to Injury": "施加任意负面状态时附加 破绽（目标承受全伤害 +15%）",
+  "Physician": "治疗效果 +100%",
+  "Defense Measures": "护盾上限 +100%",
+  "Unbreakable": "灰血无法被移除",
+  "Prime Time": "副职的 主职专长 也会生效",
+  "Vile": "仪式师主职：施加负面状态附带 感染（受状态伤害 +15%），死亡时扩散",
+  "Indomitable Strike": "黑巨剑固有：每层 +30% 伤害（最多 10 层），受击全转灰血",
+  "Weapon_Sparkfire": "燃烧霰弹：命中施加 燃烧（火伤 30→90 / 3 秒，随强化成长）；弹匣 5、射速偏慢，输出轴在改装",
+  "Weapon_Revolver": "六发左轮：伤害 36（1 级）、暴击几率 +5%；扳机多快射多快，换弹快",
+  "Mod_Skewer": "发射穿刺长矛：命中 200→600，嵌入目标后快速分裂，3 米内爆裂 350→1050",
+  "Mod_AstralBurst": "近距离喷出 7 枚星屑：每枚 70→210，撞墙最多反弹 3 次、每次 +10%；弱点命中伤害降低",
+  "Ring_BurdenOfTheGambler": "取消弱点判定；暴击几率 +10%、暴击伤害 +15%",
+  "MetaGem_Failsafe": "附加的改装伤害 +10%→25%；满级：施放改装有 15% 几率不消耗充能",
+  "MetaGem_TaintedBlade": "目标每层 腐蚀 提升近战伤害 5%→8%（最多 5 层）；满级：近战命中施加 腐蚀",
+  "Perk_Galvanize": "全伤害 +2.5%→25%（随守望者等级）；满级再给 暴击几率 +5%",
+  "Trait_FlashCaster": "改装与技能施放速度 +5%→50%（执政官职业特性）",
+  "Trait_Barrier": "护盾量 +1.5%→15%（守望者职业特性）",
+  "Armor_Head_Archon": "迷宫头甲：护甲 12.9 / 负重 5.4（无套装效果）",
+  "Armor_Body_Archon": "迷宫斗篷：护甲 51 / 负重 21.6（无套装效果）",
+  "Armor_Legs_Archon": "迷宫护腿：护甲 25.5 / 负重 10.8（无套装效果）",
+  "Armor_Gloves_Archon": "迷宫护手：护甲 12.9 / 负重 5.4（无套装效果）",
+  "Jack of all Trades": "全部伤害 +40%（棱镜 51 级传奇词条）"
+ },
+ "data_notes": [
+  "数据来自本机《Remnant 2》IoStore 解包（UE5 unversioned properties，CDO 属性）+ 官方 locres 中文 + remnant2.维基.gg 抓取文本；全程离线，无联网推断。",
+  "本报告所有推荐道具都能在 .mimocode/build/index.jsonl 中按 id 查到（校验脚本 build/90_verify.py：0 个无效 id）。",
+  "效果描述以 维基 人工整理文本为准；items.json 的 numbers 有 5 处已知解码错配（满月饰环、扎尼亚的恶意、鬼魅甲壳、翡麟魔符、启示之石），已在分析中标注并避开。",
+  "改装数据里没有 ModPowerCost 字段（消耗值未解出），所以本报告只用“每秒生成 / 百分比加成”这类数据实有的量，不推算“几次施放”。",
+  "遗物碎片（44 条）与棱镜传奇词条（42 条）是 维基-only 数据，本地解包没有 id，按英文名列出。",
+  "负重阈值（25/50/75）、闪避无敌帧与若干乘区规则引自 remnant2.维基.gg 的 Stats / Encumbrance / Dodge 页面（官方 维基），其余数值全部来自本地解包。",
+  "实战评分（单体/清群/生存/难度）是对「数据里该套实际拥有的手段」的 1~5 分评估，不是游戏内数值；「饰品乘区」是用「去掉 5 件饰品后伤害剩多少」的近似模型估算（同乘区加算、跨乘区相乘、条件类按覆盖率折算），用于说明相对权重，不是精确伤害公式。",
+  "清群能力指一次面对 5~10 个普通怪的处理速度；首领 战里群怪压力小，单体分更关键。"
+ ],
+ "eval_summary": [
+  {
+   "key": "crit_weakspot",
+   "name": null,
+   "single": 5,
+   "aoe": 1.5,
+   "survival": 2,
+   "difficulty": 5,
+   "gear": 4,
+   "composite": 2.55,
+   "trinket_mult": 1.57,
+   "trinket_share": 0.363,
+   "scenario": "Boss / 单体精英专精；群怪图（如 Shrine 事件、Trial by Fire）会很难受"
+  },
+  {
+   "key": "mod_power_skill",
+   "name": null,
+   "single": 4,
+   "aoe": 2.5,
+   "survival": 3,
+   "difficulty": 3,
+   "gear": 3.5,
+   "composite": 3.15,
+   "trinket_mult": 1.9,
+   "trinket_share": 0.474,
+   "scenario": "中长程持续输出 + 技能爆发；单体强、群怪靠棱镜驱动器的小 AOE 勉强"
+  },
+  {
+   "key": "mod_swapper",
+   "name": null,
+   "single": 5,
+   "aoe": 3.5,
+   "survival": 4,
+   "difficulty": 3,
+   "gear": 4,
+   "composite": 3.95,
+   "trinket_mult": 1.55,
+   "trinket_share": 0.355,
+   "scenario": "改装爆发通用：首领 / 精英贴脸倾泻，群怪靠穿刺者爆裂与星辰弹片；对移动快的小体型目标要多打一轮"
+  },
+  {
+   "key": "status_dot",
+   "name": null,
+   "single": 4.5,
+   "aoe": 4.5,
+   "survival": 3,
+   "difficulty": 2,
+   "gear": 3.5,
+   "composite": 4.1,
+   "trinket_mult": 3.78,
+   "trinket_share": 0.735,
+   "scenario": "群怪 / 混合场景最舒服：一次 Miasma 铺满 15m，DoT 自己跳；单体也不弱"
+  },
+  {
+   "key": "sustain_tank",
+   "name": null,
+   "single": 2.5,
+   "aoe": 2.5,
+   "survival": 5,
+   "difficulty": 3.5,
+   "gear": 4,
+   "composite": 3.0,
+   "trinket_mult": 1.2,
+   "trinket_share": 0.167,
+   "scenario": "生存/正面对轰；伤害偏低但几乎不死，适合练机制、带人、Apocalypse 开荒"
+  },
+  {
+   "key": "melee_burst",
+   "name": null,
+   "single": 4.5,
+   "aoe": 3.5,
+   "survival": 4,
+   "difficulty": 4,
+   "gear": 4,
+   "composite": 3.6,
+   "trinket_mult": 1.78,
+   "trinket_share": 0.438,
+   "scenario": "贴脸爆发 / 精英与 Boss 近战；受伤换输出，越被围越强"
+  },
+  {
+   "key": "summon_companion",
+   "name": null,
+   "single": 3.5,
+   "aoe": 4,
+   "survival": 3,
+   "difficulty": 2,
+   "gear": 3.5,
+   "composite": 3.65,
+   "trinket_mult": 1.5,
+   "trinket_share": 0.333,
+   "scenario": "让召唤物打、本体躲：群怪与多目标最舒服的低操作流派；单体上限不如暴击/DoT"
+  }
+ ],
+ "trinket_scarcity": {
+  "rings_total": 225,
+  "amulets_total": 104,
+  "rings": {
+   "全部伤害": 27,
+   "暴击几率": 10,
+   "暴击伤害": 3,
+   "弱点伤害": 3,
+   "远程伤害": 6,
+   "近战伤害": 12,
+   "改装伤害": 4,
+   "技能伤害": 3,
+   "状态效果伤害": 3,
+   "状态时长": 2,
+   "元素伤害": 4,
+   "改装能量": 17,
+   "技能冷却": 9,
+   "伤害减免": 9,
+   "生命偷取": 8,
+   "护盾": 17,
+   "灰血": 11
+  },
+  "amulets": {
+   "全部伤害": 29,
+   "暴击几率": 11,
+   "暴击伤害": 5,
+   "弱点伤害": 2,
+   "远程伤害": 7,
+   "近战伤害": 5,
+   "改装伤害": 4,
+   "技能伤害": 1,
+   "状态效果伤害": 3,
+   "状态时长": 0,
+   "元素伤害": 1,
+   "改装能量": 4,
+   "技能冷却": 4,
+   "伤害减免": 7,
+   "生命偷取": 4,
+   "护盾": 6,
+   "灰血": 4
+  }
+ },
+ "trinket_principles": [
+  "① 先补稀缺乘区：暴击伤害（戒指仅 3 枚）、弱点伤害（3 枚）、状态效果伤害（3 枚）、状态时长（2 枚）——这些词条全游戏几乎只存在于饰品上，所以它们决定了流派上限。",
+  "② 同一乘区里挑「数值最大且无条件」的那件：条件类（满血、灰血、完美闪避、击杀后）按覆盖率折算，一般打 6~7 折；两个条件环环相扣的（如满血 + 低血）不要同时带。",
+  "③ 4 个戒指位不要重复同一桶：典型分配是「1 件暴击/暴伤 + 1 件弱点或状态 + 1 件能量/循环 + 1 件生存或条件增益」。",
+  "④ 饰品是唯一能「换一件就换一套打法」的槽位：戒指/项链互相独立、不占武器与护甲格子，同一套护甲武器下换个项链就能从单体切群怪（见下面被低估清单）。"
+ ],
+ "underrated": [
+  {
+   "id": "Ring_StrongArmBand",
+   "fit": "吸血坦克（#4）/ 灰血流",
+   "gain": "灰血 50% 时 ≈ 全伤害 +20% + 暴击 +5%",
+   "text": "Increases All Damage by 0.4% for each 1% of Grey Health. Increase Critical Chance by 5% if at least 50% of Max Health is Grey.",
+   "why": "本作的灰血可以靠「偏转戒指 / 黑巨剑受击转灰血 / 黑暗契约」稳定维持，等于把生存资源直接转成输出；坦克流里它常被当成「防御件」忽略，实际是最高效的输出位之一。"
+  },
+  {
+   "id": "Amulet_ZeroHour",
+   "fit": "轻装输出（#1 / #2 / #3）",
+   "gain": "全伤害 +20% + 暴击 +10%（轻量 档无衰减）",
+   "text": "Increases All Damage by 20% and Critical Chance by 10%. Each Weight Class above LIGHT reduces All Damage bonus by 5% and Critical Chance by 2.5%.",
+   "why": "「全伤害」是比「远程伤害」更宽的桶（连改装/技能都吃），而且没有满血/灰血条件；只要压在 轻量 档，它就等于一件无条件的 20% 增伤 + 10% 暴击，性价比高于多数专项项链。"
+  },
+  {
+   "id": "Amulet_MatriarchsInsignia",
+   "fit": "近战流（#5）",
+   "gain": "近战 +35%（无条件）",
+   "text": "Increases Melee Damage by 35% and causes all successful Melee Attacks to restore 10 Stamina.",
+   "why": "同样是 +35% 近战，腐朽边际要满血才给，还夹了吸血；主母徽记无条件给足 35% 并回耐力，黑巨剑蓄力吃耐力的打法里更稳。两件可以按「是否容易掉血」二选一。"
+  },
+  {
+   "id": "Amulet_TimekeepersForfeit",
+   "fit": "状态 持续伤害（#3）",
+   "gain": "状态效果伤害 +50%（代价：状态也施加给自己）",
+   "text": "Increases Status Effect Damage by 50%. Applying a Status Effect to an enemy also applies it to the wearer.",
+   "why": "芳香荆棘给 20% 状态伤 + 破绽(15%)≈1.38×，罚没品单件就是 1.5×；副作用用仪式师「洁净 Purge」（圣物净化并反弹给敌人）+ 黑暗鲜血（负状态伤害 -25%）就能反打成收益。"
+  },
+  {
+   "id": "Amulet_SoulAnchor",
+   "fit": "召唤流（#6）",
+   "gain": "全伤害 +20%（有召唤物时）",
+   "text": "Increase All Damage by 20% while at least 1 Summon is active.",
+   "why": "灵魂之石只加召唤物 +30%；灵魂之锚的 20% 是「全部伤害」，本体与召唤物通吃，与灵魂碎片的「每个召唤 +5% 全伤」同桶叠加，群体收益更高。"
+  },
+  {
+   "id": "Ring_FeedbackLoop",
+   "fit": "满暴狙击的清群补丁（#1）",
+   "gain": "完美闪避触发 3m 范围伤害 爆炸 + 超载",
+   "text": "Perfect Dodge triggers a 3m AOE blast that deals 55 - 155 SHOCK Damage and applies OVERLOADED...",
+   "why": "狙击流最大的短板是群怪。这枚戒指把「完美闪避」——本来只是保命动作——变成一次小范围清场，而且不需要放弃任何输出位；操作好的人等于白送一个 范围伤害。"
+  }
+ ],
+ "eval_notes": [
+  "评分口径：单体/清群/生存按数据里该套实际拥有的手段打分（是否有 范围伤害 技能/改装/武器、是否有减伤护盾、单体倍率），1~5 分。",
+  "操作难度：1=站桩也能打，5=需要弱点瞄准 + 完美闪避 + 多窗口维持。",
+  "饰品乘区：以\"去掉 5 件饰品后伤害剩多少\"为口径的近似模型（同一乘区加算、不同乘区相乘，条件类按覆盖率折算），不是游戏内精确公式——但足以说明饰品在每套里的相对权重。",
+  "清群能力指的是\"一次面对 5~10 个普通怪时的处理速度\"，首领 战里群怪压力小很多。"
+ ]
+}

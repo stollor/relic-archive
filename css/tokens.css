@@ -1,0 +1,269 @@
+/* =============================================================================
+   遗迹2 · 遗物档案 — tokens.css
+   唯一的设计变量来源。任何颜色/字号/间距都必须来自这里，视图 CSS 禁止写死色值。
+
+   双主题：
+     :root                    暗色（默认）：“黑曜石 / 烬火 / 黄铜金 / 青瓷”
+     html[data-theme="light"] 亮色：“荒原白昼” —— 风化羊皮纸 / 石灰底 + 深炭字 +
+                              同一族黄铜金（亮底上压暗成深铜，保证对比度）+ 青瓷 / 锈红。
+   变量名保持向后兼容：只允许“改值 + 新增”，不删不改名。
+   行尾标「新增」的是本次双主题化引入的语义 token（base/components/components-picker 已收敛使用）。
+
+   ⚠ 亮色下 gold 系同时承担“亮底文字/图标”与“金色块填充”两种角色，因此：
+     --gold / --gold-2 在亮色被压暗为深铜（用于文字/边框/图标），
+     --on-gold 在亮色是奶油色（金色块上的反白文字），在暗色是近黑（金色块上的深字）。
+   ========================================================================== */
+:root{
+  /* ---------- 表面 ---------- */
+  --bg-0:#080a0e;
+  --bg-1:#0c1016;
+  --bg-2:#11161e;
+  --bg-3:#171d27;
+  --bg-4:#1e2530;
+  --bg-scrim:rgba(4,6,9,.72);
+  --glass-1:rgba(8,10,14,.86);        /* 新增：顶栏玻璃底（.topbar） */
+  --float-1:rgba(6,8,11,.75);         /* 新增：压在物品图上的浮动控件底（卡角旗标 / 快捷状态钮） */
+  --float-2:rgba(6,8,11,.95);         /* 新增：浮动控件 hover 底 */
+  --toast-bg:rgba(20,25,33,.97);      /* 新增：Toast 底 */
+  --tip-bg:#10151d;                   /* 新增：悬浮说明底 */
+
+  --line:rgba(255,255,255,.075);
+  --line-2:rgba(255,255,255,.14);
+  --line-3:rgba(255,255,255,.22);
+
+  /* ---------- 文字 ---------- */
+  --t1:#e9edf4;
+  --t2:#a7b2c2;
+  --t3:#808b9c;                       /* 提亮：对 bg-0..3 均 ≥4.5:1（原 #6d7889 在 bg-3 上仅 3.8:1） */
+  --t4:#4d5666;                       /* 仅装饰（占位符 / 弱提示） */
+
+  /* ---------- 强调 ---------- */
+  --gold:#d9ac51;
+  --gold-2:#f0c979;
+  --gold-dim:rgba(217,172,81,.14);
+  --gold-dim-2:rgba(217,172,81,.24);  /* 新增：金色浅底 hover（.picker-pill:hover） */
+  --gold-line:rgba(217,172,81,.32);
+  --gold-a04:rgba(217,172,81,.04);    /* 新增：金色极浅水洗（空槽 hover / 表格 is-hi 的近亲） */
+  --gold-a05:rgba(217,172,81,.055);   /* 新增：详情 hero 顶部金色洗光 */
+  --gold-a06:rgba(217,172,81,.06);    /* 新增：桌面详情左栏金色洗光 */
+  --gold-a12:rgba(217,172,81,.12);    /* 新增：物品卡图区金色径向光 */
+  --on-gold:#1a1408;                  /* 新增：金色块上的文字（主按钮 / 跳过链接） */
+  --cyan:#5bbcc6;
+  --cyan-dim:rgba(91,188,198,.12);
+  --red:#d75b50;
+  --red-dim:rgba(215,91,80,.12);
+  --red-dim-2:rgba(215,91,80,.22);    /* 新增：危险按钮 hover 底 */
+  --red-line:rgba(215,91,80,.40);     /* 新增：锈红描边（危险按钮 / 缺件 / 低评级） */
+  --red-fg:#eaa39b;                   /* 新增：锈红系文字（危险按钮 / 低评级 / 负向数值） */
+  --amber:#d9a13c;
+  --amber-dim:rgba(217,161,60,.13);   /* 新增：琥珀浅底 */
+  --amber-line:rgba(217,161,60,.30);  /* 新增：琥珀描边 */
+  --amber-fg:#e8c583;                 /* 新增：琥珀系文字 */
+  --green:#63a86e;
+  --green-dim:rgba(99,168,110,.12);
+  --green-line:rgba(99,168,110,.40);  /* 新增：苔绿描边（已拥有 / 正向状态） */
+  --green-fg:#8fd6a0;                 /* 新增：苔绿系文字 */
+  --purple-dim:rgba(168,111,216,.12); /* 新增：紫浅底 */
+  --purple-line:rgba(168,111,216,.26);/* 新增：紫描边 */
+
+  /* ---------- 伤害类型（图标与数字共用） ---------- */
+  --dmg-phys:#b9c2cf;
+  --dmg-armor:#9aa7b8;
+  --dmg-resist:#5bbcc6;
+  --dmg-bleed:#d24a4a;
+  --dmg-fire:#e8803a;
+  --dmg-shock:#4aa6e8;
+  --dmg-corrode:#8fbf3f;
+  --dmg-blight:#a86fd8;
+  --crit:#f0c04e;
+  --weakspot:#e86a8a;
+  --weight:#b9a37a;
+  --stamina:#7bd88f;
+  --dodge:#6ec8ff;
+
+  /* ---------- 获取难度 ---------- */
+  --acq-easy:#63a86e;
+  --acq-craft:#d9a13c;
+  --acq-boss:#dc6156;                 /* 比 --red 略亮：小字号「获取难度」徽章压在同色浅底上需 ≥4.5:1 */
+  --acq-rng:#a86fd8;
+
+  /* ---------- 组件补充语义（本次双主题化新增） ---------- */
+  --btn-gold-1:#e0b85f;               /* 新增：主按钮渐变起（亮金） */
+  --btn-gold-2:#c99a3f;               /* 新增：主按钮渐变止 */
+  --btn-gold-line:rgba(240,201,121,.5); /* 新增：主按钮描边 */
+  --btn-gold-inset:rgba(255,255,255,.18); /* 新增：主按钮顶部内高光 */
+  --btn-hover-bright:1.06;            /* 新增：主按钮 hover 提亮系数（亮色下减小，防止文字对比度掉档） */
+  --field-bg:var(--bg-2);             /* 新增：输入框底 */
+  --field-focus-bg:var(--bg-3);       /* 新增：输入框聚焦底 */
+  --raised-bg:var(--bg-4);            /* 新增：浮起态底（分段控件选中项） */
+  --hover-1:rgba(255,255,255,.10);    /* 新增：通用轻 hover 叠色（pill 关闭钮等） */
+  --track-1:rgba(255,255,255,.12);    /* 新增：滑杆 / 进度条轨道 */
+  --row-hover:rgba(255,255,255,.025); /* 新增：表格行 hover 底 */
+  --row-hi:rgba(217,172,81,.055);     /* 新增：表格高亮行底 */
+  --sheen:rgba(255,255,255,.014);     /* 新增：面板顶部微高光 */
+  --shine-1:rgba(255,255,255,.045);   /* 新增：骨架屏微光起止 */
+  --shine-2:rgba(255,255,255,.09);    /* 新增：骨架屏微光波峰 */
+  --sel-bg:rgba(217,172,81,.28);      /* 新增：文本选中底 */
+  --scroll-thumb:rgba(255,255,255,.16);       /* 新增：滚动条滑块 */
+  --scroll-thumb-hover:rgba(255,255,255,.28); /* 新增：滚动条滑块 hover */
+  --ambient-1:rgba(217,172,81,.055);  /* 新增：body 顶部金色环境光 */
+  --ambient-2:rgba(91,188,198,.035);  /* 新增：body 右上青瓷环境光 */
+  --code-fg:#cfd6e2;                  /* 新增：公式 / 代码块正文色 */
+  --img-shadow:rgba(0,0,0,.5);        /* 新增：物品图投影 */
+  --shadow-1:0 1px 2px rgba(0,0,0,.45);
+  --shadow-2:0 12px 32px rgba(0,0,0,.45);
+  --shadow-3:0 24px 64px rgba(0,0,0,.6);
+  --glow-gold:0 0 0 1px rgba(217,172,81,.35),0 0 24px rgba(217,172,81,.12);
+
+  /* ---------- 字体 ---------- */
+  --font-ui:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,-apple-system,sans-serif;
+  --font-mono:"Cascadia Mono","JetBrains Mono",Consolas,"SFMono-Regular",ui-monospace,monospace;
+  --fs-micro:11px;
+  --fs-meta:12px;
+  --fs-body:13px;
+  --fs-title:15px;
+  --fs-h2:18px;
+  --fs-h1:24px;
+  --lh-tight:1.25;
+  --lh-body:1.55;
+
+  /* ---------- 间距 / 圆角 ---------- */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-full:999px;
+
+  /* ---------- 动效 / 层级 ---------- */
+  --t-fast:.12s;
+  --t:.2s;
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --z-topbar:50;
+  --z-sticky:40;
+  --z-drawer:120;
+  --z-modal:160;
+  --z-toast:200;
+  --z-tip:220;
+
+  /* ---------- 尺寸 ---------- */
+  --topbar-h:56px;
+  --content-max:1560px;
+  --side-w:264px;
+}
+
+/* =============================================================================
+   亮色 · 荒原白昼
+   风化羊皮纸 / 石灰底（暖白，非纯白）+ 深炭字；黄铜金压暗一档做文字与描边，
+   “金色块”改用深铜渐变 + 奶油反白（--on-gold）；阴影变轻、描边变实、hover 变深。
+   ========================================================================== */
+html[data-theme="light"]{
+  /* ---------- 表面（由亮到暗：bg-1 卡片最亮，bg-0 画布略深，bg-3/4 为 hover/按压） ---------- */
+  --bg-0:#e9e1d2;
+  --bg-1:#f6f1e6;
+  --bg-2:#efe9dc;
+  --bg-3:#e6decd;
+  --bg-4:#d9d0bc;
+  --bg-scrim:rgba(48,38,22,.42);
+  --glass-1:rgba(247,242,231,.88);
+  --float-1:rgba(252,248,240,.82);
+  --float-2:rgba(252,248,240,.97);
+  --toast-bg:rgba(252,248,240,.98);
+  --tip-bg:#fbf7ee;
+
+  --line:rgba(62,49,30,.16);
+  --line-2:rgba(62,49,30,.26);
+  --line-3:rgba(62,49,30,.40);
+
+  /* ---------- 文字（深炭，暖调） ---------- */
+  --t1:#241e15;
+  --t2:#52483a;
+  --t3:#665d4f;
+  --t4:#8a7f6c;
+
+  /* ---------- 强调：金 = 深铜（亮底文字/描边可读），青色/锈红同族压暗 ---------- */
+  --gold:#7a5c17;
+  --gold-2:#5f4610;
+  --gold-dim:rgba(122,92,23,.12);
+  --gold-dim-2:rgba(122,92,23,.20);
+  --gold-line:rgba(122,92,23,.42);
+  --gold-a04:rgba(122,92,23,.045);
+  --gold-a05:rgba(122,92,23,.055);
+  --gold-a06:rgba(122,92,23,.07);
+  --gold-a12:rgba(122,92,23,.10);
+  --on-gold:#fbf4e2;
+  --cyan:#276b73;
+  --cyan-dim:rgba(39,107,115,.10);
+  --red:#a83a31;
+  --red-dim:rgba(168,58,49,.10);
+  --red-dim-2:rgba(168,58,49,.18);
+  --red-line:rgba(168,58,49,.44);
+  --red-fg:#8a2b23;
+  --amber:#7d5510;
+  --amber-dim:rgba(125,85,16,.12);
+  --amber-line:rgba(125,85,16,.36);
+  --amber-fg:#6f4a0a;
+  --green:#356b3f;
+  --green-dim:rgba(53,107,63,.12);
+  --green-line:rgba(53,107,63,.44);
+  --green-fg:#2f6b3b;
+  --purple-dim:rgba(107,74,158,.12);
+  --purple-line:rgba(107,74,158,.36);
+
+  /* ---------- 伤害类型：亮底上全部压暗，保证在卡片/表格上可读 ---------- */
+  --dmg-phys:#4e5866;
+  --dmg-armor:#586471;
+  --dmg-resist:#276b73;
+  --dmg-bleed:#a83232;
+  --dmg-fire:#9c4310;
+  --dmg-shock:#1b5f98;
+  --dmg-corrode:#44690f;
+  --dmg-blight:#6b4a9e;
+  --crit:#7d5a10;
+  --weakspot:#a03a5c;
+  --weight:#6d5933;
+  --stamina:#2f7040;
+  --dodge:#1b5f98;
+
+  /* ---------- 获取难度 ---------- */
+  --acq-easy:#356b3f;
+  --acq-craft:#7d5510;
+  --acq-boss:#a83a31;
+  --acq-rng:#6b4a9e;
+
+  /* ---------- 组件补充语义：深铜块 + 奶油字；更轻的阴影、更实的边框 ---------- */
+  --btn-gold-1:#8a6a20;
+  --btn-gold-2:#6b5012;
+  --btn-gold-line:rgba(251,244,226,.30);
+  --btn-gold-inset:rgba(255,248,232,.20);
+  --btn-hover-bright:1.02;
+  --field-bg:#fcf8ef;
+  --field-focus-bg:#fffdf8;
+  --raised-bg:#fdfaf3;
+  --hover-1:rgba(62,49,30,.09);
+  --track-1:rgba(62,49,30,.16);
+  --row-hover:rgba(62,49,30,.045);
+  --row-hi:rgba(122,92,23,.10);
+  --sheen:rgba(255,255,255,.34);
+  --shine-1:rgba(120,98,58,.06);
+  --shine-2:rgba(120,98,58,.12);
+  --sel-bg:rgba(122,92,23,.26);
+  --scroll-thumb:rgba(72,57,34,.30);
+  --scroll-thumb-hover:rgba(72,57,34,.46);
+  --ambient-1:rgba(122,92,23,.07);
+  --ambient-2:rgba(39,107,115,.05);
+  --code-fg:#3c382e;
+  --img-shadow:rgba(88,66,32,.30);
+  --shadow-1:0 1px 2px rgba(74,56,26,.15);
+  --shadow-2:0 10px 26px rgba(66,49,22,.16);
+  --shadow-3:0 22px 56px rgba(52,39,17,.22);
+  --glow-gold:0 0 0 1px rgba(122,92,23,.40),0 0 24px rgba(122,92,23,.10);
+}
+
+/* 显式深色：:root 已是暗色，这里只声明 color-scheme，避免内联脚本与系统切换时出现表单控件配色错档 */
+html[data-theme="dark"]{
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  color-scheme:light;
+}
+
+@media (prefers-reduced-motion:reduce){
+  :root{ --t-fast:0s; --t:0s; }
+}

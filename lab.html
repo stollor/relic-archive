@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>实验室 · 遗物档案</title>
+<meta name="robots" content="noindex">
+<!-- 旧版独立护甲页已并入统一站点：本页只做跳转，保留旧链接可用。配色跟随系统亮/暗，避免暗闪。 -->
+<meta http-equiv="refresh" content="0; url=index.html#/lab">
+<style>
+  /* 跳转页自包含（不拉 tokens.css，保证秒跳）：亮暗两套中性底/字/金色按钮 */
+  :root{
+    --bg:#080a0e;--fg:#e9edf4;--fg2:#a7b2c2;--fg3:#808b9c;
+    --btn-1:#e0b85f;--btn-2:#c99a3f;--on-btn:#1a1408;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#e9e1d2;--fg:#241e15;--fg2:#52483a;--fg3:#665d4f;
+      --btn-1:#8a6a20;--btn-2:#6b5012;--on-btn:#fbf4e2;
+    }
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
+    font:14px/1.6 "Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    display:grid;place-items:center}
+  .box{text-align:center;max-width:440px;padding:24px}
+  .box b{display:block;font-size:16px;margin-bottom:8px}
+  .box p{color:var(--fg2);font-size:13px;margin:0 0 16px}
+  a.btn{display:inline-block;padding:9px 18px;border-radius:8px;text-decoration:none;
+    background:linear-gradient(180deg,var(--btn-1),var(--btn-2));color:var(--on-btn);font-weight:600}
+  .hint{margin-top:14px;font-size:11px;color:var(--fg3)}
+</style>
+</head>
+<body>
+<div class="box">
+  <b>实验室已并入统一站点</b>
+  <p>旧的「配装 · 防御」独立页已迁到新站点：实验室 · 工作台 / 配装推荐 / 护甲矩阵 / 计算器；推荐配装现在也在「流派」里。</p>
+  <a class="btn" href="index.html#/lab">前往新实验室</a>
+  <div class="hint">若未自动跳转请点按钮；旧版页面见 <a href="../archive/web-legacy/lab-legacy.html">archive/web-legacy/lab-legacy.html</a></div>
+</div>
+<script>location.replace('index.html#/lab');</script>
+</body>
+</html>

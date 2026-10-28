@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#080a0e" id="themeColorMeta">
+<title>遗物档案 · 遗迹2 数据库</title>
+<meta name="description" content="《遗迹2》本地离线数据库：道具资料库、配装实验室、配装流派、机制知识库。纯静态、无联网、无 CDN。">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- 首屏主题：在样式表之前同步落 html[data-theme]，避免闪白/闪黑（逻辑在 js/theme-boot.js） -->
+<script src="js/theme-boot.js"></script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/components-picker.css">
+<link rel="stylesheet" href="css/view-library.css">
+<link rel="stylesheet" href="css/view-lab.css">
+<link rel="stylesheet" href="css/view-builds.css">
+<link rel="stylesheet" href="css/view-codex.css">
+<script type="module" src="js/core/theme.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#view-root">跳到主内容</a>
+
+<header class="topbar">
+  <a class="brand" href="#/items" aria-label="遗物档案首页">
+    <span class="brand__mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M32 5 55 32 32 59 9 32Z"/><path d="M32 17 45 32 32 47 19 32Z"/>
+        <path d="M32 5v12M32 47v12M9 32h10M45 32h10"/>
+      </svg>
+    </span>
+    <span class="brand__text"><b>遗物档案</b><i>REMNANT II</i></span>
+  </a>
+
+  <nav class="domnav" aria-label="主导航">
+    <a class="domnav__link" data-domain="items" href="#/items">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h12.5v15.5H7A2.5 2.5 0 0 0 4.5 21z"/><path d="M4.5 5.5V21M8.5 7.5h7M8.5 11.5h7"/></svg>
+      <span>资料库</span>
+    </a>
+    <a class="domnav__link" data-domain="lab" href="#/lab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10.2 3v5.6L5.6 17a3 3 0 0 0 2.7 4.2h7.4A3 3 0 0 0 18.4 17l-4.6-8.4V3"/><path d="M7.4 15.6c2.2-1.6 6.9 1.4 9.2 0"/></svg>
+      <span>实验室</span>
+      <span class="domnav__count" hidden></span>
+    </a>
+    <a class="domnav__link" data-domain="builds" href="#/builds">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7.6" y="3.6" width="10.8" height="14.6" rx="2"/><path d="M4.9 7.2v11.2a2 2 0 0 0 2 2h7.6"/><path d="m13 7.6 1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1z" fill="currentColor" stroke="none"/></svg>
+      <span>流派</span>
+    </a>
+    <a class="domnav__link" data-domain="codex" href="#/codex">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.4C10.2 4.9 7.4 4.4 3.5 4.6v13.9c3.9-.2 6.7.3 8.5 1.8 1.8-1.5 4.6-2 8.5-1.8V4.6c-3.9-.2-6.7.3-8.5 1.8z"/><path d="M12 6.4v13.9"/></svg>
+      <span>知识库</span>
+    </a>
+  </nav>
+
+  <div class="topbar__right">
+    <a class="topbar__stat" id="statOwned" href="#/items?owned=1" title="已拥有的道具（点击查看）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.2 2.8 2.8L16 9.6"/></svg>
+      <span>已拥有</span><b>0</b>
+    </a>
+    <a class="topbar__stat" id="statFav" href="#/items?fav=1" title="收藏的道具（点击查看）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="m12 4 2.5 5.4 5.5.8-4 4 1 5.6-5-2.8-5 2.8 1-5.6-4-4 5.5-.8z"/></svg>
+      <span>收藏</span><b>0</b>
+    </a>
+    <span class="topbar__divider"></span>
+    <button class="iconbtn" id="themeBtn" type="button" title="主题：自动（跟随系统）" aria-label="切换主题（自动 / 白天 / 黑夜）" data-mode="auto">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></svg>
+    </button>
+    <button class="iconbtn" id="helpBtn" type="button" title="说明与快捷键（按 ?）" aria-label="说明与快捷键">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.5 2.4c-.7.4-1 .9-1 1.7M12 16.6v.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="app" id="app" tabindex="-1">
+  <div class="view-root" id="view-root" tabindex="-1"></div>
+  <footer class="sitefoot">
+    <span>数据 <b id="footCount">—</b> 件</span>
+    <span class="sitefoot__sep">·</span>
+    <span>快照 <b id="footStamp">—</b></span>
+    <span class="sitefoot__sep">·</span>
+    <span>只读：不启动、不注入、不修改游戏</span>
+    <span class="sitefoot__right">
+      <span>纯静态 · 离线可用</span>
+    </span>
+  </footer>
+</main>
+
+<!-- ===== 浮层宿主（顺序勿动，styles 依赖） ===== -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-label="详情面板">
+  <header class="drawer__head"></header>
+  <div class="drawer__body"></div>
+  <footer class="drawer__foot" hidden></footer>
+</aside>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="对话框">
+  <div class="modal__card">
+    <header class="modal__head">
+      <div class="grow">
+        <p class="modal__kicker" hidden></p>
+        <div class="modal__title" role="heading" aria-level="2"></div>
+      </div>
+      <button class="iconbtn" type="button" data-modal-close aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="modal__body"></div>
+    <footer class="modal__foot" hidden></footer>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div class="tip" id="tip" hidden role="tooltip"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

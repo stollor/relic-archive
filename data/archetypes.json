@@ -1,0 +1,953 @@
+{
+  "meta": {
+    "schema": 1,
+    "updated": "2026-10-27",
+    "source": "items.json(Engram_*) + locres_zh-Hans/locres_en + site_data.json(modifiers.traits/perks, prev_builds) + build/ref/trait.md + wiki:Archetype；生成器 build/mk_archetypes.py",
+    "note": "16 个职业条目 = items.json 的 15 个 kind=item Engram + 补收的 Archon（Engram_Archon kind=unknown、缺 label）。其中 14 个已实装（含 Archon），Gambler/Paragon 为 World_DLC4 未实装内容。zh 以 locres 官方译文为准；role 留空——游戏内没有官方 role 分类，避免编造；perks 为 site_data 里的防御向子集（非每职业全部 5 个专长）。Archon 的 engram 文本/图标待补，见该条 note。"
+  },
+  "archetypes": [
+    {
+      "id": "Alchemist",
+      "en": "Alchemist",
+      "zh": "炼金术师",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Potency",
+        "zh": "效能",
+        "en": "Potency",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Philosopher's Stone」"
+      },
+      "perks": [
+        {
+          "id": "Perk_Panacea",
+          "zh": "灵丹妙药",
+          "effect": {
+            "resistance_flat": {
+              "all": 15
+            }
+          },
+          "condition": "while_curative_applied",
+          "stacks": 1,
+          "uptime": 0.5,
+          "note": "wiki：「Curative effects apply to all allies within 15m, and grant 15 additional Resistance. Angels affected by …"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Alchemist",
+        "labelEn": "Philosopher's Stone",
+        "labelZh": "贤者之石"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "290B458D4485ECD0B674DB88C9658565",
+          "en": "Alchemist Archetype",
+          "zh": "炼金术师职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 0,
+        "Expertise": 2,
+        "Spirit": 2,
+        "Vigor": 1
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Alchemist（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Philosopher's Stone」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Challenger",
+      "en": "Challenger",
+      "zh": "挑战者",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_StrongBack",
+        "zh": "强壮脊背",
+        "en": "Strong Back",
+        "effectSource": "site_data.modifiers.traits",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Steel Enswell」",
+        "effect_at_max": {
+          "weight_threshold_flat": 15
+        },
+        "effect_per_level": {
+          "weight_threshold_flat": 1.5
+        }
+      },
+      "perks": [
+        {
+          "id": "Perk_IntimidatingPresence",
+          "zh": "震慑威力",
+          "effect": {
+            "enemy_damage_reduction": 0.1
+          },
+          "condition": "while_skill_active",
+          "stacks": 1,
+          "uptime": 0.5,
+          "note": "wiki：「After activating a Challenger Skill, enemies within 15m deal 10% less damage for 15s, with an additional…"
+        },
+        {
+          "id": "Perk_PowerLifter",
+          "zh": "举重力士",
+          "effect": {
+            "stamina_regen_delay_pct": -0.5
+          },
+          "condition": null,
+          "stacks": 1,
+          "uptime": 1.0,
+          "note": "wiki：「Both the Stamina cost increase for each weight bracket and Staminа Regen Delay are reduced by 50%.」体力回复延…"
+        },
+        {
+          "id": "Perk_DieHard",
+          "zh": "虎胆",
+          "effect": {
+            "bulwark": true
+          },
+          "condition": "while_invuln_cooldown",
+          "stacks": 1,
+          "uptime": 0.9,
+          "note": "wiki：「When receiving fatal damage, the Challenger becomes invulnerable for 3s and regenerates 100% of Max Heal…"
+        },
+        {
+          "id": "Perk_FaceOfDanger",
+          "zh": "迎危而上",
+          "effect": {
+            "bulwark": true
+          },
+          "condition": "after_relic_use",
+          "stacks": 2,
+          "uptime": 0.4,
+          "note": "wiki：「Using a Relic within 10m of an enemy grants 2 stacks of Bulwark and 10% Increased Damage for 10s.」2 层 BU…"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Challenger",
+        "labelEn": "Steel Enswell",
+        "labelZh": "精钢敷板"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "7AEAF13644E62EE13F7E64B9B52205F8",
+          "en": "Challenger Archetype",
+          "zh": "挑战者职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 2,
+        "Expertise": 0,
+        "Spirit": 0,
+        "Vigor": 3
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Challenger（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Steel Enswell」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Engineer",
+      "en": "Engineer",
+      "zh": "工程师",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Fortify",
+        "zh": "坚韧",
+        "en": "Fortify",
+        "effectSource": "site_data.modifiers.traits",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Drzyr Caliper」",
+        "effect_at_max": {
+          "armor_efficacy": 0.5
+        },
+        "effect_per_level": {
+          "armor_efficacy": 0.05
+        }
+      },
+      "perks": [
+        {
+          "id": "Perk_MagneticField",
+          "zh": "磁场",
+          "effect": {
+            "flat_dr": 0.15
+          },
+          "condition": "while_heavy_weapon",
+          "stacks": 1,
+          "uptime": 0.5,
+          "note": "wiki：「Heavy Weapons grant 15% Damage Reduction and gradually restore Ammo to all allies within 2.5m.」"
+        },
+        {
+          "id": "Perk_HeavyMobility",
+          "zh": "轻便重装",
+          "effect": {
+            "evade_distance_pct": 0.25,
+            "evade_speed_pct": 0.25
+          },
+          "condition": "while_heavy_weapon",
+          "stacks": 1,
+          "uptime": 0.5,
+          "note": "wiki：「While Carrying a Heavy Weapon, Movement Speed is increased by 35%, and both Evade Speed and Evade Distan…"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Engineer",
+        "labelEn": "Drzyr Caliper",
+        "labelZh": "泽厄尔卡尺"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "8EE6889943936A8262D412AED2BF4CEC",
+          "en": "Engineer Archetype",
+          "zh": "工程师职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 3,
+        "Expertise": 0,
+        "Spirit": 0,
+        "Vigor": 2
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Engineer（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Drzyr Caliper」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Explorer",
+      "en": "Explorer",
+      "zh": "探索者",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Swiftness",
+        "zh": "迅捷",
+        "en": "Swiftness",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Golden Compass」"
+      },
+      "perks": [],
+      "engram": {
+        "id": "Engram_Explorer",
+        "labelEn": "Golden Compass",
+        "labelZh": "黄金罗盘"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "1161D75C49EB6BE602E56FBC6E5E9FE0",
+          "en": "Explorer Archetype",
+          "zh": "探索者职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 2,
+        "Expertise": 1,
+        "Spirit": 2,
+        "Vigor": 0
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Explorer（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Golden Compass」",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Gunslinger",
+      "en": "Gunslinger",
+      "zh": "枪手",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_AmmoReserves",
+        "zh": "弹药储备",
+        "en": "Ammo Reserves",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Iron Cylinder」"
+      },
+      "perks": [],
+      "engram": {
+        "id": "Engram_Gunslinger",
+        "labelEn": "Iron Cylinder",
+        "labelZh": "铁弹膛"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "0811B4FA4D4621B96D31CBA95355C0AD",
+          "en": "Gunslinger Archetype",
+          "zh": "枪手职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 1,
+        "Expertise": 2,
+        "Spirit": 0,
+        "Vigor": 2
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Gunslinger（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Iron Cylinder」",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Handler",
+      "en": "Handler",
+      "zh": "驯兽师",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Kinship",
+        "zh": "亲朋好友",
+        "en": "Kinship",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Silent Whistle」"
+      },
+      "perks": [],
+      "engram": {
+        "id": "Engram_Handler",
+        "labelEn": "Silent Whistle",
+        "labelZh": "无声哨子"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "5CA004FA413EBF669420DE80658DE957",
+          "en": "Handler Archetype",
+          "zh": "驯兽师职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 1,
+        "Expertise": 3,
+        "Spirit": 0,
+        "Vigor": 1
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Handler（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Silent Whistle」",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Hunter",
+      "en": "Hunter",
+      "zh": "猎人",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Longshot",
+        "zh": "远射",
+        "en": "Longshot",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Sniper War Medal」"
+      },
+      "perks": [],
+      "engram": {
+        "id": "Engram_Hunter",
+        "labelEn": "Sniper War Medal",
+        "labelZh": "狙击手战争勋章"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "887A9B304A40B65F58979EB713533D46",
+          "en": "Hunter Archetype",
+          "zh": "猎人职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 2,
+        "Expertise": 2,
+        "Spirit": 0,
+        "Vigor": 1
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Hunter（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Sniper War Medal」",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Invader",
+      "en": "Invader",
+      "zh": "入侵者",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Untouchable",
+        "zh": "无法触及",
+        "en": "Untouchable",
+        "effectSource": "site_data.modifiers.traits",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Serrated Root Blade」",
+        "effect_at_max": {
+          "evade_window_pct": 0.3
+        },
+        "effect_per_level": {
+          "evade_window_pct": 0.03
+        }
+      },
+      "perks": [
+        {
+          "id": "Perk_Bypass",
+          "zh": "规避",
+          "effect": {
+            "stamina_cost_pct": -0.15
+          },
+          "condition": "always",
+          "stacks": 1,
+          "uptime": 1.0,
+          "note": "wiki：「Reduce Cost of Evade and Combat Slide by 15%. Perfect Dodges gain an additional 15% reduction.」仅闪避/滑铲消耗，…"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Invader",
+        "labelEn": "Serrated Root Blade",
+        "labelZh": "锯齿根刀"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "472A11FB4685E8047E10179EC5E885D9",
+          "en": "Invader Archetype",
+          "zh": "入侵者职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 4,
+        "Expertise": 0,
+        "Spirit": 1,
+        "Vigor": 0
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Invader（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Serrated Root Blade」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Medic",
+      "en": "Medic",
+      "zh": "医务兵",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Triage",
+        "zh": "战场急救",
+        "en": "Triage",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Caduceus Idol」"
+      },
+      "perks": [],
+      "engram": {
+        "id": "Engram_Medic",
+        "labelEn": "Caduceus Idol",
+        "labelZh": "卡杜科斯像"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "0438A4574BBBEBE510BBC0900E9A312A",
+          "en": "Medic Archetype",
+          "zh": "医务兵职业"
+        }
+      ],
+      "zhConflicts": [
+        {
+          "vs": "prev_builds",
+          "value": "医师",
+          "note": "站点旧文案，与官方译名不一致"
+        }
+      ],
+      "coreTraits": {
+        "Endurance": 0,
+        "Expertise": 2,
+        "Spirit": 1,
+        "Vigor": 2
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Medic（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Caduceus Idol」",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Summoner",
+      "en": "Summoner",
+      "zh": "召唤师",
+      "dlc": "base",
+      "role": null,
+      "trait": {
+        "id": "Trait_Regrowth",
+        "zh": "再生",
+        "en": "Regrowth",
+        "effectSource": "site_data.modifiers.traits",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Tome of the Bringer」",
+        "effect_at_max": {
+          "health_regen": 1.5
+        },
+        "effect_per_level": {
+          "health_regen": 0.15
+        }
+      },
+      "perks": [],
+      "engram": {
+        "id": "Engram_Summoner",
+        "labelEn": "Tome of the Bringer",
+        "labelZh": "使者之书"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "39B0F1AB4D802268203C3E9A35C87907",
+          "en": "Summoner Archetype",
+          "zh": "召唤师职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 0,
+        "Expertise": 1,
+        "Spirit": 3,
+        "Vigor": 1
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Summoner（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Tome of the Bringer」",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Ritualist",
+      "en": "Ritualist",
+      "zh": "祭祀者",
+      "dlc": "dlc1",
+      "role": null,
+      "trait": {
+        "id": "Trait_Affliction",
+        "zh": "折磨",
+        "en": "Affliction",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Cursed Effigy」"
+      },
+      "perks": [
+        {
+          "id": "Perk_DarkBlood",
+          "zh": "黑暗鲜血",
+          "effect": {
+            "flat_dr": 0.25
+          },
+          "condition": null,
+          "stacks": 1,
+          "uptime": 1.0,
+          "note": "wiki 原文（wiki:Dark Blood）：「Reduces damage received from Negative Status Effects by 25%. Reduces Blight Buildup …"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Ritualist",
+        "labelEn": "Cursed Effigy",
+        "labelZh": "被诅咒的人形"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "588DFD42439B8DF0C6FD83BF91D64741",
+          "en": "Ritualist Archetype",
+          "zh": "祭祀者职业"
+        }
+      ],
+      "zhConflicts": [
+        {
+          "vs": "prev_builds",
+          "value": "仪式师",
+          "note": "站点旧文案，与官方译名不一致"
+        }
+      ],
+      "coreTraits": {
+        "Endurance": 0,
+        "Expertise": 2,
+        "Spirit": 3,
+        "Vigor": 0
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_DLC1/",
+        "engram": "items.json id=Engram_Ritualist（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Cursed Effigy」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Invoker",
+      "en": "Invoker",
+      "zh": "祈求者",
+      "dlc": "dlc2",
+      "role": null,
+      "trait": {
+        "id": "Trait_Gifted",
+        "zh": "天赋",
+        "en": "Gifted",
+        "effectSource": "未收录（site_data.modifiers.traits 仅含防御向 15 条）",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Spirit Flute」"
+      },
+      "perks": [
+        {
+          "id": "Perk_MindAndBody",
+          "zh": "思想和躯干",
+          "effect": {
+            "flat_dr": 0.05
+          },
+          "condition": "while_skill_active",
+          "stacks": 1,
+          "uptime": 0.5,
+          "note": "wiki：「Increases Movement Speed by 5% and Damage Reduction by 5% while an Invoker Skill is active.」"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Invoker",
+        "labelEn": "Spirit Flute",
+        "labelZh": "灵魂长笛"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "2EFB7B7748650ACE613AD28626F1802D",
+          "en": "Invoker Archetype",
+          "zh": "祈求者职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 0,
+        "Expertise": 3,
+        "Spirit": 0,
+        "Vigor": 2
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_DLC2/",
+        "engram": "items.json id=Engram_Invoker（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Spirit Flute」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Warden",
+      "en": "Warden",
+      "zh": "护卫者",
+      "dlc": "dlc3",
+      "role": null,
+      "trait": {
+        "id": "Trait_Barrier",
+        "zh": "屏障",
+        "en": "Barrier",
+        "effectSource": "site_data.modifiers.traits",
+        "source": "trait.md 获取行「Automatically acquired by equipping the Warden engram」",
+        "effect_at_max": {
+          "shield_pct": 0.15
+        },
+        "effect_per_level": {
+          "shield_pct": 0.015
+        }
+      },
+      "perks": [
+        {
+          "id": "Perk_Safeguard",
+          "zh": "安全防护",
+          "effect": {
+            "bulwark": true
+          },
+          "condition": "while_drone_active",
+          "stacks": 1,
+          "uptime": 0.8,
+          "note": "wiki：「The Warden's Drone grants 1 stack of Bulwark and increases incoming Healing Effectiveness by 10% to its …"
+        },
+        {
+          "id": "Perk_Contingency",
+          "zh": "应急措施",
+          "effect": {
+            "shield_pct": 0.25
+          },
+          "condition": "while_low_health",
+          "stacks": 1,
+          "uptime": 0.15,
+          "note": "wiki：「When the Warden's Health drops below 25%, gain a Shield for 25% of Max Health. Lasts 10s. Can only happe…"
+        },
+        {
+          "id": "Perk_Dynamic",
+          "zh": "动态",
+          "effect": {
+            "shield_pct": 0.2
+          },
+          "condition": "after_10s_undamaged",
+          "stacks": 1,
+          "uptime": 0.5,
+          "note": "wiki：「After 10s of not being damaged, the Warden generates a Shield for 20% of their Max Health over 2s.」"
+        },
+        {
+          "id": "Perk_Energize",
+          "zh": "充能",
+          "effect": {
+            "shield_pct": 0.25
+          },
+          "condition": "after_relic_use",
+          "stacks": 1,
+          "uptime": 0.4,
+          "note": "wiki：「On Relic Use, grants a Shield for 25% of Max Health. Lasts 10s or until Shield is removed by damage.」"
+        }
+      ],
+      "engram": {
+        "id": "Engram_Warden",
+        "labelEn": "Command Module",
+        "labelZh": "指挥模块"
+      },
+      "status": "released",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "high",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "6095C4E3450F8C53B263B7A62B0407DF",
+          "en": "Warden Archetype",
+          "zh": "护卫者职业"
+        }
+      ],
+      "zhConflicts": [
+        {
+          "vs": "prev_builds",
+          "value": "守望者",
+          "note": "站点旧文案，与官方译名不一致"
+        }
+      ],
+      "coreTraits": {
+        "Endurance": 1,
+        "Expertise": 2,
+        "Spirit": 2,
+        "Vigor": 0
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_DLC3/",
+        "engram": "items.json id=Engram_Warden（label_zh_source=official）",
+        "trait": "trait.md 获取行「Automatically acquired by equipping the Warden engram」",
+        "perks": "site_data.json modifiers.perks（防御向子集，archetype 字段匹配）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      }
+    },
+    {
+      "id": "Gambler",
+      "en": "Gambler",
+      "zh": "赌徒",
+      "dlc": "dlc4",
+      "role": null,
+      "trait": null,
+      "perks": [],
+      "engram": {
+        "id": "Engram_Gambler",
+        "labelEn": "Poker Chip",
+        "labelZh": null
+      },
+      "status": "unreleased",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "mid",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "EB27286C4755A91E97FB1BA207180A68",
+          "en": "Gambler Archetype",
+          "zh": "赌徒职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": null,
+      "sources": {
+        "dlc": "items.json pkg /World_DLC4/",
+        "engram": "items.json id=Engram_Gambler（label_zh_source=None）",
+        "trait": "无职业特性（未实装职业，trait.md 无对应条目）",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": null,
+        "status": "wiki:Archetype「There are currently 14 archetypes available in the game.」"
+      }
+    },
+    {
+      "id": "Paragon",
+      "en": "Paragon",
+      "zh": "英杰",
+      "dlc": "dlc4",
+      "role": null,
+      "trait": null,
+      "perks": [],
+      "engram": {
+        "id": "Engram_Paragon",
+        "labelEn": "Nobel Prize Medal",
+        "labelZh": null
+      },
+      "status": "unreleased",
+      "zhSource": "locres",
+      "zhConfidence": "high",
+      "confidence": "mid",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "ED5059ED4BCCF82512742581842DC1A1",
+          "en": "Paragon Archetype",
+          "zh": "英杰职业"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": null,
+      "sources": {
+        "dlc": "items.json pkg /World_DLC4/",
+        "engram": "items.json id=Engram_Paragon（label_zh_source=None）",
+        "trait": "无职业特性（未实装职业，trait.md 无对应条目）",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": null,
+        "status": "wiki:Archetype「There are currently 14 archetypes available in the game.」"
+      }
+    },
+    {
+      "id": "Archon",
+      "en": "Archon",
+      "zh": "执政官",
+      "dlc": "base",
+      "role": null,
+      "trait": null,
+      "perks": [],
+      "engram": {
+        "id": "Engram_Archon",
+        "labelEn": null,
+        "labelZh": null
+      },
+      "status": "released",
+      "zhSource": "locres+prev_builds",
+      "zhConfidence": "high",
+      "confidence": "mid",
+      "zhEvidence": [
+        {
+          "source": "locres",
+          "key": "7100EC47404F6458EDFE8FAEBF70CF05",
+          "en": "Archon Archetype",
+          "zh": "执政官职业"
+        },
+        {
+          "source": "prev_builds",
+          "why": "builds.archetypes[].zh",
+          "zh": "执政官"
+        }
+      ],
+      "zhConflicts": [],
+      "coreTraits": {
+        "Endurance": 1,
+        "Expertise": 0,
+        "Spirit": 3,
+        "Vigor": 1
+      },
+      "sources": {
+        "dlc": "items.json pkg /World_Base/",
+        "engram": "items.json id=Engram_Archon（label_zh_source=None）",
+        "trait": "未确认；trait.md：Flash Caster「Automatically acquired by equipping the Hexahedron」疑似对应 Archon，待核",
+        "perks": "无（防御向子集未收录）",
+        "coreTraits": "wiki:Archetype#Core_Traits（初始 5 点投入）",
+        "status": "wiki:Archetype（14 职业列表含本职业）"
+      },
+      "note": "现有 items.json decode 缺 label（kind=unknown、label_en=null、icon_asset=null），中文名来自 locres「Archon Archetype→执政官职业」+ prev_builds「执政官」；engram 文本与图标待补，pkg 归属（/Game/World_Base/Items/Archetypes/Archon/）待复核。trait 留空：trait.md 中 Flash Caster 的获取行为「equipping the Hexahedron」，疑为 Archon 职业特性，但 engram 未解码未能确认。",
+      "decodeIncomplete": true
+    }
+  ]
+}

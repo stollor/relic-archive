@@ -1,0 +1,271 @@
+{
+ "builds": {
+  "crit_weakspot": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_SniperRifle",
+     "name_zh": "寡妇制造者",
+     "name_en": "Widowmaker",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Momentum",
+     "mod": "Mod_CorrosiveRounds"
+    },
+    "hand_gun": {
+     "id": "Weapon_HuntingPistol",
+     "name_zh": "弹无虚发",
+     "name_en": "Sureshot",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_GhostShell",
+     "mod": "Mod_Bore"
+    },
+    "melee_weapon": {
+     "id": "Weapon_DecayedClaws",
+     "name_zh": "腐朽利爪",
+     "name_en": "Decayed Claws",
+     "inherent_mod": null,
+     "can_swap_mod": false,
+     "mutator": null,
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "主副武器均无固有改装，两个改装位可自由分配：腐蚀弹药给主武器（打 首领 前开），钻孔给副武器。",
+   "variants": [],
+   "free_mod_slots": [
+    "long_gun",
+    "hand_gun"
+   ]
+  },
+  "mod_power_skill": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_AssaultRifle",
+     "name_zh": "黑噬 AR-47",
+     "name_en": "Blackmaw AR-47",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Feedback",
+     "mod": "Mod_PrismaticDriver"
+    },
+    "hand_gun": {
+     "id": "Weapon_AlphaOmega",
+     "name_zh": "始与终",
+     "name_en": "Alpha / Omega",
+     "inherent_mod": "Beta Ray",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Spellweaver",
+     "mod": null
+    },
+    "melee_weapon": {
+     "id": "Weapon_LabyrinthStaff",
+     "name_zh": "迷宫法杖",
+     "name_en": "Labyrinth Staff",
+     "inherent_mod": null,
+     "can_swap_mod": false,
+     "mutator": "MetaGem_BattleMage",
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "原副武器「符文手枪」自带固有改装「灵魂烙印」，改装槽不可更换，无法装贝塔射线；改用「始与终」（固有改装正是贝塔射线），把「棱镜驱动器」留在主武器。",
+   "variants": [],
+   "free_mod_slots": [
+    "long_gun"
+   ]
+  },
+  "mod_swapper": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_Sparkfire",
+     "name_zh": "星火霰弹枪",
+     "name_en": "Sparkfire Shotgun",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Failsafe",
+     "mod": "Mod_Skewer"
+    },
+    "hand_gun": {
+     "id": "Weapon_Revolver",
+     "name_zh": "西部经典",
+     "name_en": "Western Classic",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Feedback",
+     "mod": "Mod_AstralBurst"
+    },
+    "melee_weapon": {
+     "id": "Weapon_HuntressSpear",
+     "name_zh": "女猎人之矛",
+     "name_en": "Huntress Spear",
+     "inherent_mod": "Javelin",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_TaintedBlade",
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "主副武器均无固有改装，两个改装位自由分配：穿刺者 2.0 给主武器星火霰弹枪（嵌入爆裂吃霰弹的近距优势），星辰爆裂给副武器西部经典（贴脸 7 弹片全中）；变异器按槽位顺序：主武器 失效保护、副武器 反馈、近战 污秽之刃。",
+   "variants": [],
+   "free_mod_slots": [
+    "long_gun",
+    "hand_gun"
+   ]
+  },
+  "status_dot": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_Merciless",
+     "name_zh": "无情",
+     "name_en": "Merciless",
+     "inherent_mod": "Bloodline",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_TwistingWounds",
+     "mod": null
+    },
+    "hand_gun": {
+     "id": "Weapon_Enigma",
+     "name_zh": "奥秘",
+     "name_en": "Enigma",
+     "inherent_mod": "Chaos Driver",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Maelstrom",
+     "mod": null
+    },
+    "melee_weapon": {
+     "id": "Weapon_HuntressSpear",
+     "name_zh": "女猎人之矛",
+     "name_en": "Huntress Spear",
+     "inherent_mod": "Javelin",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Stormbringer",
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "三把武器（无情 / 奥秘 / 女猎人之矛）都自带固有改装（血脉 / 混乱驱动 / 标枪），改装槽不可更换；本套不再额外装改装，四系状态由瘴气 + 三把武器的固有改装覆盖。",
+   "variants": [
+    "若更想要「持续燃烧」而不是链电清群：副武器换「技-22」（无固有改装）→ 可装 热射 火热射击，代价是失去奥秘的链式超载（清群从 4.5 降到 3.5）。"
+   ],
+   "free_mod_slots": []
+  },
+  "sustain_tank": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_Nightfall",
+     "name_zh": "日暮",
+     "name_en": "Nightfall",
+     "inherent_mod": "Dreadwalker",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Dreadful",
+     "mod": null
+    },
+    "hand_gun": {
+     "id": "Weapon_MachinePistol",
+     "name_zh": "技-22",
+     "name_en": "Tech 22",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Momentum",
+     "mod": "Mod_AbrasiveRounds"
+    },
+    "melee_weapon": {
+     "id": "Weapon_BlackGreatsword",
+     "name_zh": "黑巨剑",
+     "name_en": "Black Greatsword",
+     "inherent_mod": "Indomitable Strike",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Edgelord",
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "日暮自带固有改装「恐怖行者」（不可换），因此只把「粗糙弹药」装到副武器技-22 上。",
+   "variants": [],
+   "free_mod_slots": [
+    "hand_gun"
+   ]
+  },
+  "melee_burst": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_TommyGun",
+     "name_zh": "芝加哥打字机",
+     "name_en": "Chicago Typewriter",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Edgelord",
+     "mod": "Mod_AbrasiveRounds"
+    },
+    "hand_gun": {
+     "id": "Weapon_HuntingPistol",
+     "name_zh": "弹无虚发",
+     "name_en": "Sureshot",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Spellweaver",
+     "mod": "Mod_DeathBrand"
+    },
+    "melee_weapon": {
+     "id": "Weapon_BlackGreatsword",
+     "name_zh": "黑巨剑",
+     "name_en": "Black Greatsword",
+     "inherent_mod": "Indomitable Strike",
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Feedback",
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "主副武器均无固有改装：粗糙弹药（吸血+流血）给主武器，死亡烙印（群体承伤+10%）给副武器。",
+   "variants": [],
+   "free_mod_slots": [
+    "long_gun",
+    "hand_gun"
+   ]
+  },
+  "summon_companion": {
+   "weapons": {
+    "long_gun": {
+     "id": "Weapon_AssaultRifle",
+     "name_zh": "黑噬 AR-47",
+     "name_en": "Blackmaw AR-47",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Spellweaver",
+     "mod": "Mod_DeathBrand"
+    },
+    "hand_gun": {
+     "id": "Weapon_MachinePistol",
+     "name_zh": "技-22",
+     "name_en": "Tech 22",
+     "inherent_mod": null,
+     "can_swap_mod": true,
+     "mutator": "MetaGem_Feedback",
+     "mod": "Mod_CreepingMist"
+    },
+    "melee_weapon": {
+     "id": "Weapon_RebellionSpear",
+     "name_zh": "叛乱长矛",
+     "name_en": "Rebellion Spear",
+     "inherent_mod": null,
+     "can_swap_mod": false,
+     "mutator": "MetaGem_Dervish",
+     "mod": null
+    }
+   },
+   "unused_mods": [],
+   "fix_reason": "原副武器「符文手枪」自带固有改装「灵魂烙印」，只剩主武器一个换装位，装不下死亡烙印 + 蠕动迷雾；副武器换「技-22」（无固有改装）后两个改装位都可用。",
+   "variants": [],
+   "free_mod_slots": [
+    "long_gun",
+    "hand_gun"
+   ]
+  }
+ },
+ "notes": [
+  "改装能量引擎：hand_gun 始与终 → 始与终",
+  "双召·伙伴齐射流：hand_gun 技-22 → 技-22"
+ ]
+}

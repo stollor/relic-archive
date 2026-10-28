@@ -1,0 +1,481 @@
+{
+  "generated_at": "2026-10-28T03:54:47.535Z",
+  "base": "http://127.0.0.1:8777",
+  "pass": 67,
+  "fail": 0,
+  "skip": 0,
+  "total": 67,
+  "console_errors": [],
+  "external_requests": [],
+  "results": [
+    {
+      "area": "items",
+      "id": "I1",
+      "name": "#/items 卡片列表渲染",
+      "status": "PASS",
+      "detail": "首屏 60 张卡"
+    },
+    {
+      "area": "items",
+      "id": "I2",
+      "name": "桌面点卡片 → 居中弹窗 #modal（#drawer 不可见）+ 路由写 #/items/<id>",
+      "status": "PASS",
+      "detail": "modal「物品详情」；hash=#/items/Amulet_AbrasiveWhetstone"
+    },
+    {
+      "area": "items",
+      "id": "I3",
+      "name": "弹窗宽度 ≤1040px 且水平居中（±16px）",
+      "status": "PASS",
+      "detail": "宽 1040px（≤1040），centerX=720"
+    },
+    {
+      "area": "items",
+      "id": "I4",
+      "name": "详情大图实际宽度 ≥ 240px",
+      "status": "PASS",
+      "detail": "图片 240px"
+    },
+    {
+      "area": "items",
+      "id": "I5",
+      "name": "效果类目详情首块按新契约：有 effectZh → 首块「效果」(18px 原文)；无 → 首块「效果」(数值行)",
+      "status": "PASS",
+      "detail": "Ring_PanMageSigil 区块=效果/数值明细/获取途径/背景；原文「目标每承受一种不同的状态效果，对其造成的伤害额外增加 5%。…」；背景保留风味"
+    },
+    {
+      "area": "items",
+      "id": "I5b",
+      "name": "无 effectZh 的效果类目（Amulet_AbrasiveWhetstone）不渲染「描述」，首块为「效果」数值行",
+      "status": "PASS",
+      "detail": "区块=效果/获取途径/背景；无 detail-effect，首块为数值行"
+    },
+    {
+      "area": "items",
+      "id": "I5c",
+      "name": "武器详情首块仍是「描述」（非效果类目回归保护）",
+      "status": "PASS",
+      "detail": "区块=描述/属性/获取途径/背景故事；首块「描述」"
+    },
+    {
+      "area": "items",
+      "id": "I5d",
+      "name": "effectZh 并入 haystack：搜索「状态效果」可命中 Ring_PanMageSigil",
+      "status": "PASS",
+      "detail": "effectZh「目标每承受一种不同的状态效果，对其造成的伤害额外…」；haystack 命中；全库 29 条命中"
+    },
+    {
+      "area": "items",
+      "id": "I6",
+      "name": "详情「效果」行：≥1 条，含中文与数值",
+      "status": "PASS",
+      "detail": "1 条，例「伤害加成每状态效果 +5」"
+    },
+    {
+      "area": "items",
+      "id": "I7",
+      "name": "Esc 关闭弹窗 → hash 回到列表",
+      "status": "PASS",
+      "detail": "hash=#/items"
+    },
+    {
+      "area": "items",
+      "id": "I8",
+      "name": "深链 #/items/<id> 直达弹窗（标题匹配）",
+      "status": "PASS",
+      "detail": "#/items/Amulet_AbrasiveWhetstone → 弹窗「物品详情」"
+    },
+    {
+      "area": "items",
+      "id": "I9",
+      "name": "弹窗内「拥有/收藏」独立于配装",
+      "status": "PASS",
+      "detail": "owned 0→1；build 未变"
+    },
+    {
+      "area": "items",
+      "id": "I10",
+      "name": "弹窗「装备」写槽；再点同一件不重复",
+      "status": "PASS",
+      "detail": "槽 ring1；按钮「已装备」；未重复"
+    },
+    {
+      "area": "items",
+      "id": "I11",
+      "name": "「加入特性」：重复 info、第 11 个 warn",
+      "status": "PASS",
+      "detail": "重复→info；第 11 个→warn；保持 10"
+    },
+    {
+      "area": "items",
+      "id": "I12",
+      "name": "侧栏无「部位族」；有「效果标签」3 组且中文",
+      "status": "PASS",
+      "detail": "3 组「防御与生存 / 输出与战斗 / 功能与特殊」，23 标签（23 tooltip）"
+    },
+    {
+      "area": "items",
+      "id": "I13",
+      "name": "点击效果标签 chip → 结果数变化且写入 URL",
+      "status": "PASS",
+      "detail": "结果 1,126 → 114；hash=#/items?tag=Health"
+    },
+    {
+      "area": "items",
+      "id": "I14",
+      "name": "武器排序 damage：首项数值 > 次项，前 10 非递增",
+      "status": "PASS",
+      "detail": "damage 前 10：250 > 200 > 150 > 130 > 125 > 120 > 120 > 115 > 115 > 105"
+    },
+    {
+      "area": "items",
+      "id": "I15",
+      "name": "列表视图每行有非空描述（2 行截断）",
+      "status": "PASS",
+      "detail": "hash=#/items?view=list；60 行；0 行为数据缺口（无），其余有描述"
+    },
+    {
+      "area": "items",
+      "id": "I16",
+      "name": "#/items?owned=1 / ?fav=1 真筛选且计数一致",
+      "status": "PASS",
+      "detail": "?owned=1 → 2 件（计数 2）；?fav=1 → 2 件"
+    },
+    {
+      "area": "items",
+      "id": "I17",
+      "name": "按 / 聚焦搜索框",
+      "status": "PASS",
+      "detail": "聚焦 input[type=search] 搜索道具"
+    },
+    {
+      "area": "items",
+      "id": "L6",
+      "name": "列表视图搜索「阿哈内」：行内显示效果原文（含「状态效果」，不是风味段）",
+      "status": "PASS",
+      "detail": "「阿哈内水晶」→「目标每承受一种不同的状态效果，对其造成的伤害额外增加 5%。…」（lib-row__desc lib-row__desc--effect）；共 13 行命中"
+    },
+    {
+      "area": "lab",
+      "id": "B1",
+      "name": "#/lab 工作台 15 槽（含主/副职业）",
+      "status": "PASS",
+      "detail": "15 槽：longGun / handGun / melee / head / body / legs / gloves / amulet / ring1 / ring2 / ring3 / ring4 / relic / archetype1 / archetype2"
+    },
+    {
+      "area": "lab",
+      "id": "B2",
+      "name": "五面板 seg 齐全（推荐/逐槽替换/档位对照/计算器/存档）",
+      "status": "PASS",
+      "detail": "recommend / replace / classes / calc / saved"
+    },
+    {
+      "area": "lab",
+      "id": "B3",
+      "name": "空槽 → 选择器 → 点行装备进槽",
+      "status": "PASS",
+      "detail": "装备「孢子喷射」→ longGun 写入"
+    },
+    {
+      "area": "lab",
+      "id": "B4",
+      "name": "选择器「详情」ⓘ → 桌面弹窗打开且不装备",
+      "status": "PASS",
+      "detail": "modal「物品详情」；build 未变"
+    },
+    {
+      "area": "lab",
+      "id": "B5",
+      "name": "× 移除 → 槽清空但 owned 不变 + Toast",
+      "status": "PASS",
+      "detail": "已移除；owned 2 未变"
+    },
+    {
+      "area": "lab",
+      "id": "B6",
+      "name": "清空当前配装 → 确认框（取消不改动）",
+      "status": "PASS",
+      "detail": "确认框「清空当前配装」；取消后未改动"
+    },
+    {
+      "area": "lab",
+      "id": "B7",
+      "name": "职业槽：点主职业 → 职业选择器（≥14）→ 选中写入槽位",
+      "status": "PASS",
+      "detail": "可选 16 个职业；选中「炼金术师 · Alchemist」"
+    },
+    {
+      "area": "lab",
+      "id": "B8",
+      "name": "特性 stepper：+1 后等级/已用徽章/护甲值变化",
+      "status": "PASS",
+      "detail": "15 行；坚韧 0→1（已用特性 1/10）；护甲值 180.8 → 189.8"
+    },
+    {
+      "area": "lab",
+      "id": "B9",
+      "name": "结果面板分防御/生存/机动，生存含「有效生命 EHP」",
+      "status": "PASS",
+      "detail": "分组 防御/生存/机动；生存含有效生命"
+    },
+    {
+      "area": "lab",
+      "id": "B10",
+      "name": "推荐面板：排序 select 切换后行顺序变化",
+      "status": "PASS",
+      "detail": "score→weight：#1「#1场景分51.4%189.8护甲48.7%总减伤48.7%最坏减伤95.0负重超重194.9EHP」→「#1场景分49.7%175.8护甲46.8%总减伤46.8%最坏减伤84.5负重超重187.9EHP」"
+    },
+    {
+      "area": "lab",
+      "id": "B11",
+      "name": "推荐面板：切换场景后重算（结果行变化）",
+      "status": "PASS",
+      "detail": "#1「#1场景分49.7%175.8护甲46.8%总减伤46.8%最坏减伤84.5负重超重187.9EHP难点 3 件菲特尔感」→「#1场景分56.6%149.8护甲42.8%总减伤42.8%最坏减伤74.1负重重装174.9EHP难点 2 件红王子的」"
+    },
+    {
+      "area": "lab",
+      "id": "B12",
+      "name": "面板 replace（逐槽替换）深链可见且有内容",
+      "status": "PASS",
+      "detail": "逐槽替换：逐槽替换保持其余三件不变按缺件重算最优头盔莱托 1 型头盔真正的绯红皇冠场景分 +3.6 个百分点-6.3 护甲-1.9 负重红王子的王冠场"
+    },
+    {
+      "area": "lab",
+      "id": "B13",
+      "name": "面板 classes（档位对照）深链可见且有内容",
+      "status": "PASS",
+      "detail": "档位对照：档位对照四档极限护甲 + 抗性特化矩阵档位阈值极限护甲（含护甲效果）护甲减伤负重与当前对比（护甲 / 负重）四件 / 操作轻装2565.6 "
+    },
+    {
+      "area": "lab",
+      "id": "B14",
+      "name": "面板 calc（计算器）深链可见且有内容",
+      "status": "PASS",
+      "detail": "计算器：计算器与工作台同一引擎护甲值（不含护甲效果）负重固定减伤%五类抗性流血抗性火焰抗性电击抗性腐蚀抗性枯萎抗性场景与增益场景通用 / Bo  物"
+    },
+    {
+      "area": "lab",
+      "id": "B15",
+      "name": "面板 saved（存档导出）深链可见且有内容",
+      "status": "PASS",
+      "detail": "存档导出：存档导出15 槽 + 设置一起保存保存当前配装载入存档导出给 AI清空当前配装缺件与可用池已拥有 2 件缺件 0 件缺件独立于「已拥有」：标"
+    },
+    {
+      "area": "lab",
+      "id": "B16",
+      "name": "旧路由重定向：builds→recommend / matrix→classes / calc→calc",
+      "status": "PASS",
+      "detail": "#/lab/builds → #/lab?panel=recommend；#/lab/matrix → #/lab?panel=classes；#/lab/calc → #/lab?panel=calc"
+    },
+    {
+      "area": "lab",
+      "id": "B17",
+      "name": "缺件重算 → 推荐面板出 10 行 + 摘要（可用池/已排除/穷举）+ 写入四件跳过缺件",
+      "status": "PASS",
+      "detail": "推荐面板 10 行；摘要含可用池/已排除/穷举；写入 Armor_Head_TrueCrimsonCrown / Armor_Body_Leto1 / Armor_Legs_Leto1 / Armor_Gloves_Leto1（跳过缺件）"
+    },
+    {
+      "area": "lab",
+      "id": "B18",
+      "name": "选择器筛选：标签多选 + 按槽位动态排序，点行仍装备",
+      "status": "PASS",
+      "detail": "饰品标签 23 个（排序 name），标签「伤害减免14」→ 14 行；护甲槽排序 armor/weight/name；已装备 amulet"
+    },
+    {
+      "area": "builds",
+      "id": "P1",
+      "name": "#/builds 列表：7 套卡片 + 按目标选 + 横向对比表 + 单 h1",
+      "status": "PASS",
+      "detail": "7 套 / 目标卡 6 / 对比表 7 行：满暴弱点狙击、改装能量引擎、改装速切·星辰穿刺、状态效果持续伤害流、吸血 / 回复生存流、黑巨剑·蓄力爆发流、双召·伙伴齐射流"
+    },
+    {
+      "area": "builds",
+      "id": "P2",
+      "name": "点卡片进详情：分区齐全、单 h1、面包屑可回",
+      "status": "PASS",
+      "detail": "「满暴弱点狙击」14 个分区 / 50 个可点道具；面包屑可回列表"
+    },
+    {
+      "area": "builds",
+      "id": "P3",
+      "name": "7 套详情全部可开且内容非空（深链直达）",
+      "status": "PASS",
+      "detail": "满暴弱点狙击(3653字/50)、改装能量引擎(3953字/58)、改装速切·星辰穿刺(3948字/59)、状态效果持续伤害流(3997字/68)、吸血 / 回复生存流(4308字/69)、黑巨剑·蓄力爆发流(3729字/70)、双召·伙伴齐射流(3734字/71)"
+    },
+    {
+      "area": "builds",
+      "id": "P4",
+      "name": "详情里点真实道具 → 打开全站统一详情弹窗（桌面）",
+      "status": "PASS",
+      "detail": "弹窗标题「物品详情」，Esc 可关"
+    },
+    {
+      "area": "builds",
+      "id": "P5",
+      "name": "「装入实验室」：写入 15 槽配装并跳转 #/lab",
+      "status": "PASS",
+      "detail": "「满暴弱点狙击」→ 15 槽：longGun/handGun/melee/head/body/legs/gloves/amulet/ring1/ring2/ring3/ring4/relic/archetype1/archetype2"
+    },
+    {
+      "area": "builds",
+      "id": "P6",
+      "name": "无效流派 key → 友好 404（不报错、可返回列表）",
+      "status": "PASS",
+      "detail": "404 有说明与返回按钮；返回后台址 #/builds"
+    },
+    {
+      "area": "builds",
+      "id": "P7",
+      "name": "页面内链接无坏链（域名合法 + 流派 key 存在）",
+      "status": "PASS",
+      "detail": "检查 39 条站内链接，0 坏链"
+    },
+    {
+      "area": "codex",
+      "id": "C1",
+      "name": "#/codex 分类目录可直达",
+      "status": "PASS",
+      "detail": "目录 13 项 / 条目卡 13"
+    },
+    {
+      "area": "codex",
+      "id": "C2",
+      "name": "#/codex/<id> 深链直达（标题/文档标题同步、单 h1）",
+      "status": "PASS",
+      "detail": "#/codex/armor-efficacy → h1「护甲效果：加的是护甲值」"
+    },
+    {
+      "area": "codex",
+      "id": "C3",
+      "name": "目录点击 → 切换条目",
+      "status": "PASS",
+      "detail": "#/codex → #/codex/armor-dr"
+    },
+    {
+      "area": "codex",
+      "id": "C4",
+      "name": "公式块 .formula 存在且可识别",
+      "status": "PASS",
+      "detail": "1 个公式块，例：总护甲   = 基础护甲 × (1 + 护甲效果)\n护甲减伤率 = 总护甲 ÷ (总护甲 + 200"
+    },
+    {
+      "area": "global",
+      "id": "G1",
+      "name": "Alt+1/2/3/4 切换四领域（hash + 顶部选中态）",
+      "status": "PASS",
+      "detail": "2:#/lab/lab → 3:#/builds/builds → 4:#/codex/codex → 1:#/items/items"
+    },
+    {
+      "area": "global",
+      "id": "G2",
+      "name": "document.title 随路由同步（四领域）",
+      "status": "PASS",
+      "detail": "items→「资料库 · 遗物档案」; lab→「实验室 · 遗物档案」; builds→「流派 · 7 套推荐配装 · 遗物档案」; codex→「知识库 · 机制与证据 · 遗物档案」"
+    },
+    {
+      "area": "global",
+      "id": "G3",
+      "name": "顶栏「已拥有/收藏」计数随操作变化（自包含）",
+      "status": "PASS",
+      "detail": "已拥有 2→3；收藏 2→3"
+    },
+    {
+      "area": "global",
+      "id": "G4",
+      "name": "刷新后状态保持（localStorage）",
+      "status": "PASS",
+      "detail": "刷新后 owned=3 / fav=3"
+    },
+    {
+      "area": "global",
+      "id": "G5",
+      "name": "全程 0 console error / 未捕获异常",
+      "status": "PASS",
+      "detail": "0 error / 0 未捕获异常"
+    },
+    {
+      "area": "global",
+      "id": "G6",
+      "name": "无本机之外网络请求（纯离线）",
+      "status": "PASS",
+      "detail": "0 外链请求"
+    },
+    {
+      "area": "global",
+      "id": "G7",
+      "name": "全站可交互元素均有可访问名称",
+      "status": "PASS",
+      "detail": "5 条路由全部有可访问名称"
+    },
+    {
+      "area": "global",
+      "id": "G8",
+      "name": "全站图片均有 alt 属性",
+      "status": "PASS",
+      "detail": "3 条路由 img 全部带 alt"
+    },
+    {
+      "area": "global",
+      "id": "G9",
+      "name": "无重复标题（每页 h1 ≤1、panel 标题不重复）",
+      "status": "PASS",
+      "detail": "10 条路由 h1=1、无重复 panel 标题"
+    },
+    {
+      "area": "global",
+      "id": "D1",
+      "name": "数据门禁：/data/item_effects.json 200 且 items ≥300；/api/health extra_data 含 item_effects",
+      "status": "PASS",
+      "detail": "HTTP 200；items=323；extra_data=7 项（含 item_effects / builds）"
+    },
+    {
+      "area": "global",
+      "id": "G10",
+      "name": "主题：三态循环 / Alt+T / localStorage 持久化 / 首屏属性一致",
+      "status": "PASS",
+      "detail": "循环 auto:light → light:light → dark:dark → auto:light；刷新保持 light；Alt+T→dark；theme-color 随主题更新"
+    },
+    {
+      "area": "mobile",
+      "id": "M1",
+      "name": "390×844 各路由无横向滚动",
+      "status": "PASS",
+      "detail": "#/items: 390/390; #/items?view=list: 390/390; #/lab: 390/390; #/lab?panel=recommend: 390/390; #/lab?panel=calc: 390/390; #/codex: 390/390; #/codex/armor-efficacy: 390/390; #/builds: 390/390; #/builds/crit_weakspot: 390/390"
+    },
+    {
+      "area": "mobile",
+      "id": "M2",
+      "name": "移动点卡片 → 全屏抽屉（#drawer 可见、#modal 隐藏、宽=视口）",
+      "status": "PASS",
+      "detail": "抽屉 390×视口 390；modal 隐藏"
+    },
+    {
+      "area": "mobile",
+      "id": "M3",
+      "name": "移动详情图片 120–140px（§11.1）",
+      "status": "PASS",
+      "detail": "图片 120px（容器 390px）"
+    },
+    {
+      "area": "mobile",
+      "id": "M4",
+      "name": "移动端筛选可用（chip 可见可点）",
+      "status": "PASS",
+      "detail": "chip 45 个，首个 87.9×26 @26"
+    },
+    {
+      "area": "mobile",
+      "id": "M5",
+      "name": "抽样 10 个点击目标 ≥32px",
+      "status": "PASS",
+      "detail": "112.8×34 32×32 76×36.1 32×32 32×32 32×32 32×32 67×32 46×32 125×32"
+    },
+    {
+      "area": "mobile",
+      "id": "M6",
+      "name": "移动列表视图每行有描述（1 行截断）",
+      "status": "PASS",
+      "detail": "5 行，例「数值：暴击率 15%；暴击伤害 15%」"
+    }
+  ]
+}

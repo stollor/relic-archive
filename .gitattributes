@@ -1,0 +1,10 @@
+# 统一换行：仓库内存 LF；Windows 批处理/PS 脚本检出为 CRLF（cmd.exe 对 LF 的 .cmd 有解析坑）
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.db binary

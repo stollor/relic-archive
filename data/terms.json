@@ -1,0 +1,809 @@
+{
+  "version": 2,
+  "updated": "2026-10-27",
+  "note": "全站术语与语义映射的唯一来源。zh 字段以本地 locres_zh-Hans 官方译文为准（verified=locres），社区惯用写法单列 alias。视图不得自创译名。v2（2026-10-27）：新增 gameTags(23)/effectCategories/archetypes，archetypes 与 data/archetypes.json 同源。Relic→圣物（官方译名）：terms.slots/cats 的 relic 已改「圣物」，旧称「遗物」入 alias。",
+  "nameLang": {
+    "zh": "中文",
+    "en": "英文"
+  },
+  "damage": [
+    {
+      "id": "physical",
+      "zh": "物理",
+      "en": "Physical",
+      "icon": "phys",
+      "color": "#b9c2cf",
+      "resistKey": null,
+      "note": "不吃五类抗性，只吃护甲减伤与固定减伤"
+    },
+    {
+      "id": "bleed",
+      "zh": "流血",
+      "en": "Bleed",
+      "icon": "bleed",
+      "color": "#d24a4a",
+      "resistKey": "bleed"
+    },
+    {
+      "id": "fire",
+      "zh": "火焰",
+      "en": "Fire",
+      "icon": "fire",
+      "color": "#e8803a",
+      "resistKey": "fire"
+    },
+    {
+      "id": "shock",
+      "zh": "电击",
+      "en": "Shock",
+      "icon": "shock",
+      "color": "#4aa6e8",
+      "resistKey": "shock"
+    },
+    {
+      "id": "corrosive",
+      "zh": "腐蚀",
+      "en": "Corrosive",
+      "icon": "corrode",
+      "color": "#8fbf3f",
+      "resistKey": "corrosive"
+    },
+    {
+      "id": "blight",
+      "zh": "枯萎",
+      "en": "Blight",
+      "icon": "blight",
+      "color": "#a86fd8",
+      "resistKey": "blight"
+    }
+  ],
+  "resistOrder": [
+    "bleed",
+    "fire",
+    "shock",
+    "corrosive",
+    "blight"
+  ],
+  "resistZh": {
+    "bleed": "流血抗性",
+    "fire": "火焰抗性",
+    "shock": "电击抗性",
+    "corrosive": "腐蚀抗性",
+    "blight": "枯萎抗性"
+  },
+  "stats": {
+    "armor": {
+      "zh": "护甲值",
+      "en": "Armor",
+      "icon": "armor",
+      "verified": "locres"
+    },
+    "damageReduction": {
+      "zh": "减伤率",
+      "en": "Damage Reduction",
+      "icon": "resist",
+      "verified": "wiki"
+    },
+    "armorEfficacy": {
+      "zh": "护甲效果",
+      "en": "Armor Efficacy",
+      "icon": "armor",
+      "verified": "locres"
+    },
+    "weight": {
+      "zh": "负重",
+      "en": "Encumbrance",
+      "icon": "weight",
+      "verified": "locres"
+    },
+    "stamina": {
+      "zh": "体力",
+      "en": "Stamina",
+      "icon": "stamina",
+      "verified": "locres"
+    },
+    "staminaRegen": {
+      "zh": "体力回复",
+      "en": "Stamina Regen",
+      "icon": "stamina",
+      "verified": "locres"
+    },
+    "evade": {
+      "zh": "闪避",
+      "en": "Evade",
+      "icon": "dodge",
+      "verified": "locres"
+    },
+    "resistance": {
+      "zh": "抗性",
+      "en": "Resistance",
+      "icon": "resist",
+      "verified": "locres"
+    },
+    "crit": {
+      "zh": "暴击率",
+      "en": "Critical Chance",
+      "icon": "crit",
+      "verified": "locres"
+    },
+    "critDamage": {
+      "zh": "暴击伤害",
+      "en": "Critical Damage",
+      "icon": "crit",
+      "verified": "locres"
+    },
+    "weakspot": {
+      "zh": "弱点伤害",
+      "en": "Weakspot Damage",
+      "icon": "weakspot",
+      "verified": "locres"
+    },
+    "damage": {
+      "zh": "伤害",
+      "en": "Damage",
+      "icon": "damage",
+      "verified": "locres"
+    },
+    "fireRate": {
+      "zh": "射速",
+      "en": "Fire Rate",
+      "icon": "firerate",
+      "verified": "locres"
+    },
+    "magazine": {
+      "zh": "弹匣容量",
+      "en": "Magazine",
+      "icon": "mag",
+      "verified": "locres"
+    },
+    "reload": {
+      "zh": "装填时间",
+      "en": "Reload Time",
+      "icon": "reload",
+      "verified": "locres"
+    },
+    "health": {
+      "zh": "生命值",
+      "en": "Health",
+      "icon": "health",
+      "verified": "locres"
+    },
+    "shield": {
+      "zh": "护盾",
+      "en": "Shield",
+      "icon": "shield",
+      "verified": "locres"
+    },
+    "bulwark": {
+      "zh": "壁垒",
+      "en": "Bulwark",
+      "icon": "bulwark",
+      "verified": "wiki"
+    }
+  },
+  "weightClass": [
+    {
+      "id": "LIGHT",
+      "zh": "轻装",
+      "en": "Light",
+      "threshold": [
+        0,
+        25
+      ],
+      "penalty": 0,
+      "evade": "轻闪避",
+      "iframe": 12,
+      "recovery": 22,
+      "evadeCost": 25
+    },
+    {
+      "id": "MEDIUM",
+      "zh": "中装",
+      "en": "Medium",
+      "threshold": [
+        25.05,
+        50
+      ],
+      "penalty": 0.25,
+      "evade": "中闪避",
+      "iframe": 11,
+      "recovery": 22,
+      "evadeCost": 31.25
+    },
+    {
+      "id": "HEAVY",
+      "zh": "重装",
+      "en": "Heavy",
+      "threshold": [
+        50.05,
+        75
+      ],
+      "penalty": 0.5,
+      "evade": "重闪避",
+      "iframe": 10,
+      "recovery": 30,
+      "evadeCost": 37.5
+    },
+    {
+      "id": "ULTRA",
+      "zh": "超重",
+      "en": "Ultra",
+      "threshold": [
+        75.05,
+        100
+      ],
+      "penalty": 0.75,
+      "evade": "超重翻滚（Flop）",
+      "iframe": 15,
+      "recovery": 65,
+      "evadeCost": 43.75
+    }
+  ],
+  "acquisition": [
+    {
+      "id": "shop",
+      "zh": "商店",
+      "icon": "shop",
+      "color": "#63a86e",
+      "difficulty": 0
+    },
+    {
+      "id": "pickup",
+      "zh": "固定拾取",
+      "icon": "pickup",
+      "color": "#5bbcc6",
+      "difficulty": 0
+    },
+    {
+      "id": "craft",
+      "zh": "制作",
+      "icon": "craft",
+      "color": "#d9a13c",
+      "difficulty": 1
+    },
+    {
+      "id": "boss",
+      "zh": "头目掉落",
+      "icon": "boss",
+      "color": "#d75b50",
+      "difficulty": 2
+    },
+    {
+      "id": "puzzle",
+      "zh": "解谜",
+      "icon": "puzzle",
+      "color": "#d75b50",
+      "difficulty": 2
+    },
+    {
+      "id": "rng",
+      "zh": "随机",
+      "icon": "rng",
+      "color": "#a86fd8",
+      "difficulty": 2
+    },
+    {
+      "id": "unknown",
+      "zh": "未收录",
+      "icon": "question",
+      "color": "#6d7889",
+      "difficulty": -1
+    }
+  ],
+  "confidence": [
+    {
+      "id": "high",
+      "zh": "高可信",
+      "en": "high"
+    },
+    {
+      "id": "mid",
+      "zh": "中可信",
+      "en": "medium"
+    },
+    {
+      "id": "low",
+      "zh": "待验证",
+      "en": "low"
+    }
+  ],
+  "slots": [
+    {
+      "id": "longGun",
+      "zh": "长枪",
+      "en": "Long Gun",
+      "icon": "longgun",
+      "dataSlot": "long_gun"
+    },
+    {
+      "id": "handGun",
+      "zh": "手枪",
+      "en": "Hand Gun",
+      "icon": "handgun",
+      "dataSlot": "hand_gun"
+    },
+    {
+      "id": "melee",
+      "zh": "近战武器",
+      "en": "Melee",
+      "icon": "sword",
+      "dataSlot": "melee_weapon"
+    },
+    {
+      "id": "head",
+      "zh": "头盔",
+      "en": "Head",
+      "icon": "helmet",
+      "dataSlot": "head"
+    },
+    {
+      "id": "body",
+      "zh": "胸甲",
+      "en": "Body",
+      "icon": "chest",
+      "dataSlot": "body"
+    },
+    {
+      "id": "legs",
+      "zh": "腿甲",
+      "en": "Legs",
+      "icon": "legs",
+      "dataSlot": "legs"
+    },
+    {
+      "id": "gloves",
+      "zh": "手甲",
+      "en": "Gloves",
+      "icon": "gloves",
+      "dataSlot": "gloves"
+    },
+    {
+      "id": "amulet",
+      "zh": "项链",
+      "en": "Amulet",
+      "icon": "amulet",
+      "dataSlot": "amulet"
+    },
+    {
+      "id": "ring1",
+      "zh": "戒指 1",
+      "en": "Ring",
+      "icon": "ring",
+      "dataSlot": "ring"
+    },
+    {
+      "id": "ring2",
+      "zh": "戒指 2",
+      "en": "Ring",
+      "icon": "ring",
+      "dataSlot": "ring"
+    },
+    {
+      "id": "ring3",
+      "zh": "戒指 3",
+      "en": "Ring",
+      "icon": "ring",
+      "dataSlot": "ring"
+    },
+    {
+      "id": "ring4",
+      "zh": "戒指 4",
+      "en": "Ring",
+      "icon": "ring",
+      "dataSlot": "ring"
+    },
+    {
+      "id": "relic",
+      "zh": "圣物",
+      "en": "Relic",
+      "icon": "relic",
+      "dataSlot": "relic",
+      "alias": [
+        "遗物（社区旧称/旧版译名）"
+      ]
+    },
+    {
+      "id": "archetype1",
+      "zh": "主职业",
+      "en": "Archetype",
+      "icon": "archetype",
+      "dataSlot": "engram"
+    },
+    {
+      "id": "archetype2",
+      "zh": "副职业",
+      "en": "Archetype",
+      "icon": "archetype",
+      "dataSlot": "engram"
+    }
+  ],
+  "cats": [
+    {
+      "id": "all",
+      "zh": "全部",
+      "icon": "all"
+    },
+    {
+      "id": "weapon",
+      "zh": "武器",
+      "icon": "sword"
+    },
+    {
+      "id": "armor",
+      "zh": "护甲",
+      "icon": "armor"
+    },
+    {
+      "id": "ring",
+      "zh": "戒指",
+      "icon": "ring"
+    },
+    {
+      "id": "amulet",
+      "zh": "项链",
+      "icon": "amulet"
+    },
+    {
+      "id": "mod",
+      "zh": "武器改装",
+      "icon": "mod"
+    },
+    {
+      "id": "skill",
+      "zh": "技能",
+      "icon": "skill"
+    },
+    {
+      "id": "perk",
+      "zh": "职业专长",
+      "icon": "perk"
+    },
+    {
+      "id": "trait",
+      "zh": "特性",
+      "icon": "trait"
+    },
+    {
+      "id": "relic",
+      "zh": "圣物",
+      "icon": "relic",
+      "alias": [
+        "遗物（社区旧称/旧版译名）"
+      ]
+    },
+    {
+      "id": "consumable",
+      "zh": "消耗品",
+      "icon": "consumable"
+    },
+    {
+      "id": "gem",
+      "zh": "宝石",
+      "icon": "gem"
+    },
+    {
+      "id": "metagem",
+      "zh": "棱镜宝石",
+      "icon": "metagem"
+    },
+    {
+      "id": "engram",
+      "zh": "职业解锁",
+      "icon": "engram"
+    },
+    {
+      "id": "material",
+      "zh": "制作材料",
+      "icon": "material"
+    }
+  ],
+  "dlc": [
+    {
+      "id": "base",
+      "zh": "本体"
+    },
+    {
+      "id": "dlc1",
+      "zh": "真皇的苏醒"
+    },
+    {
+      "id": "dlc2",
+      "zh": "失落的王国"
+    },
+    {
+      "id": "dlc3",
+      "zh": "暗黑地平线"
+    },
+    {
+      "id": "dlc4",
+      "zh": "DLC4（未公布）",
+      "verified": false,
+      "note": "items.json pkg 存在 /World_DLC4/ 条目；官方名称未公布（最后公开补丁 453,438 / 2024-11-12）"
+    }
+  ],
+  "gameTags": [
+    {
+      "id": "Defense",
+      "zh": "伤害减免",
+      "en": "Defense",
+      "group": "defense",
+      "icon": "shield",
+      "desc": "影响减伤、护甲、抗性的词条",
+      "verified": "locres-partial",
+      "alias": []
+    },
+    {
+      "id": "Health",
+      "zh": "生命值",
+      "en": "Health",
+      "group": "defense",
+      "icon": "health",
+      "desc": "生命上限、生命回复相关",
+      "verified": "locres-partial",
+      "alias": []
+    },
+    {
+      "id": "Shield",
+      "zh": "护盾",
+      "en": "Shield",
+      "group": "defense",
+      "icon": "shield",
+      "desc": "提供或强化护盾",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "GreyHealth",
+      "zh": "灰色生命",
+      "en": "GreyHealth",
+      "group": "defense",
+      "icon": "health",
+      "desc": "灰色生命缓冲与转化（社区常称灰血）",
+      "verified": "locres",
+      "alias": [
+        "灰血"
+      ]
+    },
+    {
+      "id": "Lifesteal",
+      "zh": "吸血",
+      "en": "Lifesteal",
+      "group": "defense",
+      "icon": "health",
+      "desc": "造成伤害时回复生命",
+      "verified": "locres-partial",
+      "alias": []
+    },
+    {
+      "id": "Stamina",
+      "zh": "体力",
+      "en": "Stamina",
+      "group": "defense",
+      "icon": "stamina",
+      "desc": "体力上限、消耗与回复",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Evade",
+      "zh": "闪避",
+      "en": "Evade",
+      "group": "defense",
+      "icon": "dodge",
+      "desc": "闪避窗口、距离与速度",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "MoveSpeed",
+      "zh": "移动速度",
+      "en": "MoveSpeed",
+      "group": "defense",
+      "icon": "movespeed",
+      "desc": "移动速度与冲刺",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Damage",
+      "zh": "伤害加成",
+      "en": "Damage",
+      "group": "offense",
+      "icon": "damage",
+      "desc": "直接提升伤害的词条",
+      "verified": "locres-partial",
+      "alias": []
+    },
+    {
+      "id": "CritChance",
+      "zh": "暴击率",
+      "en": "CritChance",
+      "group": "offense",
+      "icon": "crit",
+      "desc": "提升暴击几率",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "CritDamage",
+      "zh": "暴击伤害",
+      "en": "CritDamage",
+      "group": "offense",
+      "icon": "crit",
+      "desc": "提升暴击伤害",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Weakspot",
+      "zh": "弱点伤害",
+      "en": "Weakspot",
+      "group": "offense",
+      "icon": "weakspot",
+      "desc": "提升弱点伤害",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "FireRate",
+      "zh": "射速",
+      "en": "FireRate",
+      "group": "offense",
+      "icon": "firerate",
+      "desc": "射速与攻击速度",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Ranged",
+      "zh": "远程",
+      "en": "Ranged",
+      "group": "offense",
+      "icon": "longgun",
+      "desc": "远程武器相关",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Melee",
+      "zh": "近战",
+      "en": "Melee",
+      "group": "offense",
+      "icon": "sword",
+      "desc": "近战武器相关",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Elemental",
+      "zh": "元素伤害",
+      "en": "Elemental",
+      "group": "offense",
+      "icon": "fire",
+      "desc": "火焰 / 电击 / 腐蚀元素",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Status",
+      "zh": "状态效果",
+      "en": "Status",
+      "group": "offense",
+      "icon": "sparkle",
+      "desc": "流血、燃烧、电击等持续伤害",
+      "verified": "locres",
+      "alias": [
+        "异常状态"
+      ]
+    },
+    {
+      "id": "AOE",
+      "zh": "范围伤害",
+      "en": "AOE",
+      "group": "offense",
+      "icon": "target",
+      "desc": "爆炸与范围效果",
+      "verified": "derived",
+      "alias": [
+        "群伤"
+      ]
+    },
+    {
+      "id": "Summon",
+      "zh": "召唤物",
+      "en": "Summon",
+      "group": "offense",
+      "icon": "archetype",
+      "desc": "召唤物与同伴",
+      "verified": "locres",
+      "alias": [
+        "召唤"
+      ]
+    },
+    {
+      "id": "Mod",
+      "zh": "武器改装",
+      "en": "Mod",
+      "group": "offense",
+      "icon": "mod",
+      "desc": "改装能量与改装效果",
+      "verified": "locres-partial",
+      "alias": []
+    },
+    {
+      "id": "Skill",
+      "zh": "技能",
+      "en": "Skill",
+      "group": "offense",
+      "icon": "skill",
+      "desc": "职业技能相关",
+      "verified": "locres",
+      "alias": []
+    },
+    {
+      "id": "Relic",
+      "zh": "圣物",
+      "en": "Relic",
+      "group": "utility",
+      "icon": "relic",
+      "desc": "圣物与圣物充能（社区旧称遗物）",
+      "verified": "locres",
+      "alias": [
+        "遗物"
+      ]
+    },
+    {
+      "id": "Special",
+      "zh": "特殊效果",
+      "en": "Special",
+      "group": "utility",
+      "icon": "sparkle",
+      "desc": "特殊机制或触发型词条",
+      "verified": "locres",
+      "alias": []
+    }
+  ],
+  "effectCategories": {
+    "offense": "输出",
+    "damage": "伤害",
+    "defense": "防御",
+    "utility": "功能",
+    "resource": "资源",
+    "status": "异常状态",
+    "other": "其它"
+  },
+  "effectCategoriesNote": {
+    "实际值": "items.json effect.lines[].category 的实测取值：utility / offense / damage / defense / resource（前五项）。",
+    "reserved": "status / other 为 labels.js EFFECT_ORDER 预留值，当前数据未使用。",
+    "已知缺口": "relic-archive/js/core/labels.js 的 EFFECT_CAT_ZH 只含 offense/defense/utility/status/other，缺 damage 与 resource（本文件已补，视图重构时应对齐本文件）。"
+  },
+  "archetypes": {
+    "Alchemist": "炼金术师",
+    "Challenger": "挑战者",
+    "Engineer": "工程师",
+    "Explorer": "探索者",
+    "Gunslinger": "枪手",
+    "Handler": "驯兽师",
+    "Hunter": "猎人",
+    "Invader": "入侵者",
+    "Medic": "医务兵",
+    "Summoner": "召唤师",
+    "Ritualist": "祭祀者",
+    "Invoker": "祈求者",
+    "Warden": "护卫者",
+    "Gambler": "赌徒",
+    "Paragon": "英杰",
+    "Archon": "执政官"
+  },
+  "archetypesNote": "16 个职业的官方中文映射（与 data/archetypes.json 同源；含补收的 Archon「执政官」与 DLC4 未实装的 Gambler/Paragon「赌徒/英杰」，zh 均为 locres 官方译文）。",
+  "relicFragment": {
+    "zh": "圣物碎片",
+    "en": "Relic Fragment",
+    "icon": "gem",
+    "verified": "locres",
+    "alias": [
+      "遗物碎片（社区旧称）"
+    ],
+    "note": "locres 中「圣物碎片」为官方串；旧版/社区常写作「遗物碎片」。"
+  }
+}
