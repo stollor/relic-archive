@@ -3,6 +3,8 @@
 > 《遗迹2》（Remnant II）**本地离线数据库 + 配装工作台 + 流派图鉴 + 机制知识库**。
 > 纯静态、无构建步骤、无 CDN、无外部字体、无联网请求；数据与图标全部随仓库分发。
 > 全程**只读游戏**：不启动、不注入、不读内存、不改存档或 pak。
+>
+> 🌐 在线：**https://stollor.github.io/relic-archive/** · 💾 仓库：[github.com/stollor/relic-archive](https://github.com/stollor/relic-archive)
 
 **四个领域**
 
