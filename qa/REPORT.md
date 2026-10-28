@@ -365,7 +365,7 @@ node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
 | `quick` | unit-js、audit、contrast、data-builds、data-schema | **5.9s** | 改完即跑（无浏览器） |
 | `data` | data-schema、data-builds、data-sync、unit-py | **19.9s** | 只改数据/生成链 |
 | `related` | quick 基线 + 按改动文件映射的相关检查 | 视改动（无浏览器改动≈6s；含浏览器≈30–200s） | 提交前小步验收 |
-| `full` | 16 项全量（真实 Chrome：截图/交互/竞态/子路径） | **706.5s** | 提交前 / 发布前 |
+| `full` | 16 项全量（真实 Chrome：截图/交互/竞态/子路径） | **≈700–1100s**（随机器负载；两轮实测 706.5s / 1094.7s） | 提交前 / 发布前 |
 | `deploy` | full + `deploy.py --dry-run` 预检 | full + ≈1s | 发布前最后一道 |
 
 退出码：`0` 通过 / `1` 有失败 / `2` 用法错误 / `3` 关键检查因环境不具备被跳过（不允许静默跳过）。
@@ -463,3 +463,20 @@ registry-plan-文档一致性），防止「门禁静默失效」。
 6. 交互用例仍是 67 项抽样，不覆盖每个面板/每种排序组合；截图门禁只判结构/错误，不做视觉回归（pixel diff）。
 7. 实验室引擎对「负总减伤」不做 0 下限 clamp（真实数据安全，口径已写入测试头注释；未来出现更强负词条会红提示复核）。
 8. `qa/baselines.json` 与当前用例清单绑定：有意增减用例必须 `--update-baseline`，否则门禁会拦（这是设计意图）。
+
+### 12.8 收尾验证（干净树 / 独立 clone / 门禁自身）
+
+| 验证 | 命令 | 结果 |
+|---|---|---|
+| 干净提交树全量（**基线生效**） | `node qa/gate.mjs full` | **16 PASS / 0 FAIL / 0 SKIP，1094.7s**（机器高负载轮；首轮 706.5s） |
+| 干净树快速/相关 | `gate quick` / `gate related`（无改动 → quick 基线） | 5/5 PASS，7–10s；工作树保持干净 |
+| 发布预检（干净树） | `gate deploy --only deploy-preflight` | PASS（deploy.py --dry-run 预检通过） |
+| 独立 clone（无 `.mimocode` 工作区） | `git clone . && node qa/gate.mjs quick` | 5/5 PASS，16.4s（含冷启动解析） |
+| 独立 clone 数据模式 | `node qa/gate.mjs data` | 3 PASS + **1 SKIP（data-sync，明确说明缺少上游工作区）**，exit 0 |
+| 独立 clone 浏览器 | `node qa/gate.mjs full --only shot-dark,components` | shot 54/54、components 20/20，exit 0 |
+| 门禁自检 | `qa/tests/gate.test.mjs` | 15/15（registry/plan/README/baselines 一致性） |
+| 基线拦截演示 | 临时把 `unit-js.min_pass` 改为 176 → 门禁 FAIL 并指出「通过数少于基线」→ 还原 | 正常拦截（证明「删测试/跳过」不会被放过） |
+| 失败定位演示（真实发生） | `lab-async` 在随机端口下报「视图就绪超时」→ 日志+脚本头定位到只认 `LAB_QA_BASE`/8777 → 修复后 8/8 | 无需遍历仓库即定位 |
+
+> 注意：`qa/results/*.json` 是带时间戳的运行产物，**不入库**（否则提交里的结果必然与最新门禁不一致）；
+> 需要证据时重新运行门禁即可，报告结论见本节与 §12.2。
