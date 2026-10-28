@@ -8,6 +8,7 @@ import { icon } from '../core/icons.js';
 import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import { openItemDetail } from '../components/item-detail.js';
+import { createEpoch, createScope, createTaskRunner } from '../core/task.js';
 import * as S from './state.js';
 import { panel, emptyState, emptyLine, miniPiece, classBadge, hardBadge, writeArmorBtn } from './parts.js';
 
@@ -66,6 +67,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     pendingPage: null,
     running: false,
     dirty: true,
+    error: null,
     elapsed: 0,
     candidates: [],
     result: null,
@@ -83,56 +85,106 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     });
   }
 
-  /* --------------------------- 穷举 --------------------------- */
-  function start() {
-    if (state.running) return;
-    state.running = true;
-    state.dirty = false;
-    state.result = null;
-    renderStatus();
-    renderList();
-    const picks = S.workbenchPicks(model);
-    const exclude = state.hideMissing ? S.missingSet() : null;
-    const owned = state.ownedOnly ? S.ownedSet() : null;
-    const en = E.createEnumeration({
-      picks,
-      scenarioId: S.scenarioId(),
-      classTarget: S.classTarget(),
-      exclude, owned,
-      top: TOP,
-    });
-    const t0 = performance.now();
-    const tick = () => {
-      const more = en.step(8);
-      if (more) {
-        statusEl.textContent = `穷举中 ${Math.round(en.progress() * 100)}%…`;
-        requestAnimationFrame(tick);
-        return;
-      }
-      const res = en.result();
-      state.elapsed = Math.round(performance.now() - t0);
-      state.candidates = res.top.map((entry) => ({ ...entry, hard: hardCount(model, entry.ids) }));
-      state.result = {
-        feasible: res.feasible, total: res.total, poolSize: res.poolSize,
-        excluded: res.excluded, pools: res.pools, classTarget: res.classTarget,
-      };
-      state.running = false;
-      if (state.pendingPage != null) {
-        state.page = state.pendingPage;
-        state.pendingPage = null;
-      } else {
-        state.page = 0;
-      }
-      syncQuery({ page: state.page === 0 ? '' : String(state.page + 1) });
-      renderStatus();
-      renderList();
-    };
-    requestAnimationFrame(tick);
-  }
+  /* --------------------------- 穷举（版本化调度） --------------------------- */
+  // 分帧穷举本身不变；调度交给 core/task.js：
+  //   · 条件一变就 start()，runner.run 会先取消上一次分帧并让其代际失效；
+  //   · 完成/失败回调只在「仍是当前代际」时落地，过期任务不写 state、不碰 DOM；
+  //   · destroy() → epoch.invalidate + runner.cancel + cleanup.dispose，之后的回调全部短路。
+  const epoch = createEpoch();
+  const cleanup = createScope();
+  let destroyed = false;
+  const runner = createTaskRunner({
+    onError: (err) => { console.error('[lab:recommend]', err); if (!destroyed) failRun(err); },
+  });
 
-  function rerunIfActive() {
+  function requestRun() {
+    if (destroyed) return;
     if (active) start();
     else state.dirty = true;
+  }
+
+  function failRun(err) {
+    if (destroyed) return;
+    epoch.invalidate();
+    state.running = false;
+    state.dirty = true;
+    state.error = String((err && err.message) || err || '未知错误');
+    state.result = null;
+    state.candidates = [];
+    renderBar();
+    renderStatus();
+    renderList();
+  }
+
+  function start() {
+    if (destroyed) return;
+    state.running = true;
+    state.dirty = false;
+    state.error = null;
+    state.result = null;
+    state.candidates = [];
+    renderBar();   // 运行中禁用「重新穷举」，结束后恢复
+    renderStatus();
+    renderList();
+    const token = epoch.next();
+    let en = null;
+    let t0 = 0;
+    try {
+      en = E.createEnumeration({
+        picks: S.workbenchPicks(model),
+        scenarioId: S.scenarioId(),
+        classTarget: S.classTarget(),
+        exclude: state.hideMissing ? S.missingSet() : null,
+        owned: state.ownedOnly ? S.ownedSet() : null,
+        top: TOP,
+      });
+      t0 = performance.now();
+    } catch (err) {
+      failRun(err);
+      return;
+    }
+    const isCurrent = () => !destroyed && epoch.isCurrent(token);
+    const stepFrame = () => {
+      if (!isCurrent()) return false;   // 已被新条件取代 / 已取消：不再推进
+      let more;
+      try {
+        more = en.step(8);
+      } catch (err) {
+        failRun(err);
+        return false;
+      }
+      if (!isCurrent()) return false;
+      if (more) {
+        statusEl.textContent = `穷举中 ${Math.round(en.progress() * 100)}%…`;
+        return true;
+      }
+      return false;
+    };
+    try {
+      runner.run(stepFrame, () => {
+        if (!isCurrent()) return;   // 过期任务的完成回调不落地（防旧结果覆盖新条件）
+        const res = en.result();
+        state.elapsed = Math.round(performance.now() - t0);
+        state.candidates = res.top.map((entry) => ({ ...entry, hard: hardCount(model, entry.ids) }));
+        state.result = {
+          feasible: res.feasible, total: res.total, poolSize: res.poolSize,
+          excluded: res.excluded, pools: res.pools, classTarget: res.classTarget,
+        };
+        state.running = false;
+        if (state.pendingPage != null) {
+          state.page = state.pendingPage;
+          state.pendingPage = null;
+        } else {
+          state.page = 0;
+        }
+        syncQuery({ page: state.page === 0 ? '' : String(state.page + 1) });
+        renderBar();
+        renderStatus();
+        renderList();
+      });
+    } catch (err) {
+      failRun(err);
+    }
   }
 
   /* --------------------------- 排序 / 过滤 --------------------------- */
@@ -207,11 +259,11 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
         h('div', { class: 'grow' }),
         switchEl('仅用我已拥有', state.ownedOnly, (v) => {
           state.ownedOnly = v; state.page = 0; syncQuery({ ownedOnly: v ? '1' : '', page: '' });
-          rerunIfActive();
+          requestRun();
         }, '可用池只保留已拥有护甲'),
         switchEl('隐藏含缺件', state.hideMissing, (v) => {
           state.hideMissing = v; state.page = 0; syncQuery({ hideMissing: v ? '' : '0', page: '' });
-          rerunIfActive();
+          requestRun();
         }, '开启时把缺件从可用池排除；关闭时保留但标记'),
         h('button', {
           class: 'btn btn--ghost btn--sm', type: 'button',
@@ -225,6 +277,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
   function renderStatus() {
     clear(statusEl);
     if (state.running) { statusEl.textContent = '穷举中…'; return; }
+    if (state.error) { statusEl.textContent = `穷举失败：${state.error}。修改设置或点「重新穷举」可重试。`; return; }
     const r = state.result;
     if (!r) { statusEl.textContent = '点「重新穷举」或在下方修改设置后自动重算。'; return; }
     const sort = SORT_BY_ID.get(state.sort) || SORTS[0];
@@ -275,6 +328,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
   function renderList() {
     clear(listHost);
     if (state.running) { listHost.append(emptyLine('正在穷举 812,224 组四件护甲…', 'refresh')); return; }
+    if (state.error) { listHost.append(emptyLine('穷举失败，未生成候选。修改设置或点「重新穷举」重试。', 'warning')); return; }
     const rows = filtered();
     if (!state.candidates.length) {
       const r = state.result;
@@ -319,6 +373,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
 
   /* --------------------------- 外部接口 --------------------------- */
   function applyParams(p) {
+    if (destroyed) return;
     const next = {
       sort: SORT_BY_ID.has(p.sort) ? p.sort : state.sort,
       ownedOnly: p.ownedOnly === '1',
@@ -330,7 +385,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     const hadPageParam = p.page != null && p.page !== '';
     Object.assign(state, next);
     if ((needRerun || state.running) && hadPageParam) state.pendingPage = next.page;
-    if (needRerun) { if (active) start(); else state.dirty = true; return; }
+    if (needRerun) { requestRun(); return; }
     renderBar();
     renderStatus();
     if (!state.running) renderList();
@@ -356,17 +411,19 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
   });
   root.append(panelEl);
 
-  const offs = [];
-  offs.push(S.on((reason) => {
+  cleanup.add(S.on((reason) => {
     if (!['missing', 'scenario', 'class-target', 'seed'].includes(reason)) return;
-    if (active) start(); else state.dirty = true;
+    requestRun();
   }));
   let timer = 0;
-  offs.push(store.on('build', () => {
+  cleanup.add(() => clearTimeout(timer));
+  cleanup.add(store.on('build', () => {
     clearTimeout(timer);
-    timer = setTimeout(() => { if (active) start(); else state.dirty = true; }, 220);
+    timer = setTimeout(requestRun, 220);
   }));
-  offs.push(store.on('owned', () => { if (active && state.ownedOnly) start(); else state.dirty = true; }));
+  cleanup.add(store.on('owned', () => {
+    if (active && state.ownedOnly) requestRun(); else state.dirty = true;
+  }));
 
   renderBar();
   renderStatus();
@@ -377,11 +434,15 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     el: root,
     activate,
     applyParams,
-    refresh: () => { if (active) start(); else state.dirty = true; },
+    refresh: () => requestRun(),
     start,
     destroy() {
-      for (const off of offs) { try { off(); } catch { /* ignore */ } }
-      clearTimeout(timer);
+      if (destroyed) return;
+      destroyed = true;
+      epoch.invalidate();
+      runner.cancel();
+      cleanup.dispose();
+      state.running = false;
     },
   };
 }
