@@ -142,8 +142,9 @@ hash 路由不改变文档 URL，因此：
 - **子路径部署**（GitHub Pages 项目站点 `https://<user>.github.io/relic-archive/`）：同样开箱即用，
   无需改任何路径（`./data/...` 会解析到 `/relic-archive/data/...`）。
 - 在线版本：**https://stollor.github.io/relic-archive/**（GitHub Pages，`main` 分支根目录）。
-- 注意：`qa/` 里的门禁脚本用绝对 URL 访问本机 `serve.py`（开发用）；对线上子路径跑 QA 时
-  只适合 `qa/shot.js`（它按 `--base` 拼接 URL），`qa/interactions.js` 的页面内 import 是根路径。
+- 注意：`qa/` 里的门禁脚本用绝对 URL 访问本机 `serve.py`（开发用）；对线上子路径跑 QA 时，
+  `qa/shot.js` 与 `qa/interactions.js` 都接受 `--base`，页面内资源 URL 由 `qa/lib/base.js` 的
+  `prefixOf()` 拼成「站点前缀 + 相对路径」，根路径与 `/relic-archive/` 子路径均可（见 ADR-6 / LESSONS #38）。
 
 ---
 

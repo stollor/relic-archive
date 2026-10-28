@@ -3,6 +3,33 @@
 > 只记「形态/能力」级变更与关键数字；细枝末节的改动见 `git log`。
 > 早期里程碑来自 `.mimocode` 工作区历史（站点曾是工作区内的 `web/`）。
 
+## v3.5 — 2026-10-28 · 第四阶段：性能、安全与长期可维护性（不新增功能、不改视觉/数值）
+
+- **性能基准（P2-1）**：新增 `qa/perf.mjs`（零依赖 CDP，S1–S8：四领域冷启/JSON 解析/领域首开/切换/搜索筛选/
+  内存/实验室穷举+帧率/390×844+CPU 4×），固定视口/主题/冷缓存、重复取中位数、自动起停 `serve.py --port 0`；
+  基线从 `git worktree @14653ce`（优化前 HEAD）采，入库 `qa/perf-baseline.json`（含数据 sha256，不含临时端口/绝对路径）；
+  `node qa/gate.mjs perf` 为独立参考模式（不设阈值、不进 full）。基线：items 211.9ms / codex 202.4ms / codex 8.31MB。
+- **按领域加载（P2-2）**：`boot()` 不再无条件 `await api.ready()`，改为 `router.start()` + dispatch 按需
+  （领域表 `bootstrap:false` 标记 codex）；模块/CSS 与数据并行；页脚统计异步。**codex 冷启传输 8.11MB→298.8KB（-96.3%）、
+  JSON 4→1、firstView 202.4→77.7ms（-61.6%）**；items/lab/builds 请求/字节不变、首屏不退化。
+- **渲染与计算（P2-3）**：资料库排序池缓存（Intl.Collator + WeakMap）→ 排序切换 129–145→25–30ms、名称排序搜索
+  68.7→8–10ms、重复同 chip 19.7→~1ms（0 mutation）；实验室同条件指纹去重 + applyParams 空更新早退 + tableB
+  WeakMap 缓存 → 场景变更穷举 2→1、完成帧 longtask 50–55ms→0、重挂载 tableB 104.7→16ms。数值/排序零变化
+  （660 预设对账 + top300 逐字节快照 A/B IDENTICAL + 13 组 UI 语义一致）。
+- **安全边界（P2-4）**：修复 `ui.confirm` 存档名进入 innerHTML 的**存储型 XSS**（string 一律纯文本）、`showTip`
+  白名单富文本渲染（244 个真实 data-tip 取证仅 b/br）、删除 `h()` 的 `html:` 入口、`href` 统一协议白名单
+  （javascript:/data:/blob:/协议相对一律拒绝）、saved 名称上限 80；`serve.py` 站点白名单（`.git`/`AGENTS.md`/`qa/`/
+  `pipeline/`/`docs/`/`.github/`/隐藏文件/穿越变体 由 200→403/404）、`/api/health` 与错误体不再暴露本机绝对路径。
+  新增 `qa/tests/security.test.mjs`(8) 与 `test_serve_security.py`(8) 守卫（修复前 32 处失败）。
+- **缺陷修复（P2-6 审计副产品）**：跨域导航浮层残留 + body 滚动锁死、toast 悬停后不消失、缺件状态双副本漂移、
+  矩阵 B 展开态被 build 变更破坏、replace 冗余订阅、calc/replace 死 root + 7 条死 CSS（像素 A/B 相同）。
+- **删减与文档（P2-5/P2-6）**：死代码第一批净删 60 行（零引用导出/死常量/未用 import，引用图 + Python AST 二遍复核）；
+  `AGENTS.md` 253→120 行，新增 `docs/AI_MAP.md`（模块职责/真实 import/必跑测试）与 `docs/TROUBLESHOOTING.md`
+  （18 条真实症状→根因→命令→修复）；最小定位上下文 -40%、排障 -51%；修正 `DEPLOY.md`/`pipeline README` 被转义吞掉的
+  `verify.ps1`、`DATA.md` 过时说明、`README.md` 旧验收命令与手抄数字。
+- **真实回归教训**：死代码清理误删 `js/lab/text.js` 的 `RES_ZH`（模板字符串引用），真实浏览器才暴露
+  `ReferenceError`；已恢复并修复，写入 LESSONS `#45–#49`（基线/模板引用/启动 await/性能不进硬门禁/HTML 入口收敛）。
+
 ## v3.4 — 2026-10-28 · 第三阶段：自动化验收与 AI 开发流水线（不新增功能、不改视觉）
 
 - **统一验收入口**：新增 `qa/gate.mjs`（PowerShell 包装 `verify.ps1`）与 `qa/gate/`（env/plan/registry/report），

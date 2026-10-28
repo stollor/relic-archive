@@ -73,7 +73,7 @@ python pipeline/sync-data.py --no-icons
 ```bash
 node qa/gate.mjs data     # 数据链路：Schema/引用/工作区漂移/数据脚本单测（不启浏览器）
 node qa/gate.mjs full     # 提交前完整回归（真实 Chrome 截图/交互/竞态/子路径）
-# 或 PowerShell：.erify.ps1 data / .erify.ps1 full
+# 或 PowerShell：.\verify.ps1 data / .\verify.ps1 full
 ```
 
 全部通过再提交。门禁说明见 [`qa/README.md`](../qa/README.md) 与 `qa/REPORT.md`。

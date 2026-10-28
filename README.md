@@ -51,11 +51,14 @@ Windows 也可以双击 `start.cmd`。
 | 文档 | 给谁看 | 内容 |
 |---|---|---|
 | [`AGENTS.md`](AGENTS.md) | **接手的人 / AI** | 入口：30 秒速览、必跑命令、高频任务配方、不变量、代码地图、已知坑 |
+| [`docs/AI_MAP.md`](docs/AI_MAP.md) | 定位模块 / AI | 模块职责、真实 import 依赖、改它必跑哪些测试 |
+| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | 遇到报错先查 | 18 条真实症状 → 根因 → 定位命令 → 修复 |
 | [`docs/UX_SPEC.md`](docs/UX_SPEC.md) | 改 UI/交互前 | 契约：IA / 交互 / 组件 / JS API / 术语 / 视觉 / 验收（**改页面前必读**） |
 | [`docs/DATA.md`](docs/DATA.md) | 改数据前 | 数据来源、schema、快照同步与再生、已知限制 |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | 发布/运维 | GitHub Pages 发布、线上验收、故障排查、回滚、凭据安全 |
+| [`docs/PERF.md`](docs/PERF.md) | 性能优化 / 回归 | 可重复测量方法、优化前后对比、评估后不做的候选 |
 | [`docs/LESSONS.md`](docs/LESSONS.md) | 想少踩坑 | 设计决策（ADR）+ 踩坑记录 + 有效工作法 + 反模式 + 数字基线 |
-| [`CHANGELOG.md`](CHANGELOG.md) | 了解演进 | v1 数据管线 → v2 单页应用 → v3 流派+双主题 → v3.1 仓库化 → v3.4 自动化验收 |
+| [`CHANGELOG.md`](CHANGELOG.md) | 了解演进 | v1 数据管线 → v2 单页应用 → v3 流派+双主题 → v3.1 仓库化 → v3.4 自动化验收 → v3.5 性能/安全 |
 | [`pipeline/README.md`](pipeline/README.md) | 改流派数据 | `mk_builds_json.py` / `sync-data.py` 用法与数据流向 |
 | [`qa/README.md`](qa/README.md) | 改测试 / 验收 | **统一门禁**用法、检查清单、报告结构与失败定位、环境探测与跳过语义 |
 | [`qa/REPORT.md`](qa/REPORT.md) | 验收 | 断言清单、历次结果与本轮验收记录 |
@@ -170,19 +173,20 @@ relic-archive/
 
 ---
 
-## 验收（一条命令跑完）
+## 验收（一个入口）
 
-```bash
-python serve.py &                       # 终端 A
-node qa/shot.js --theme dark            # 54 项截图 + console/HTTP 门禁
-node qa/shot.js --theme light           # 同上，亮色
-node qa/interactions.js                 # 67 项交互（含流派 7 项、主题 3 态、移动端）
-python qa/audit.py                      # 静态审计
-node qa/theme-contrast.mjs              # 双主题对比度
+```powershell
+.\verify.ps1 quick     # 快速自检（无浏览器，约 10s）
+.\verify.ps1 full      # 完整回归（真实 Chrome 截图/交互/竞态/子路径）
+.\verify.ps1 related   # 按本次改动挑相关检查
+.\verify.ps1 data      # 数据/生成链
+.\verify.ps1 deploy    # 发布前（full + deploy.py --dry-run）
 ```
 
-最近一轮（2026-10-28）结果：**shot 54/54 × 2、interactions 67/67、audit 0 FAIL、contrast 130/130**。
-详见 [`qa/REPORT.md`](qa/REPORT.md)。
+任意 shell 用 `node qa/gate.mjs <mode>`。门禁自己起 `serve.py`（随机端口），不需要手动起服务；
+退出码 `0` 通过 / `1` 失败 / `2` 用法错误 / `3` 关键检查被环境阻断。检查清单、报告字段与新增检查
+步骤见 [`qa/README.md`](qa/README.md)；通过数/跳过数基线只在 [`qa/baselines.json`](qa/baselines.json)
+（本文件不抄数字）。历史验收记录见 [`qa/REPORT.md`](qa/REPORT.md)。
 
 ---
 

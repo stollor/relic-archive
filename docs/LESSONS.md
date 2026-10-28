@@ -363,6 +363,48 @@
   `quick`/`data`/`full` 并在失败时归档报告。部署正确性仍由 `pipeline/deploy.py` 用线上内容指纹证明。
 - **规则**：CI 红 = 测试红；发布是否成功仍看 `deploy.py` 退出码与线上指纹。
 
+### 2.10 性能、安全与长期维护（2026-10-28 第四阶段）
+
+#### #45 性能基线必须从「优化前的提交」采，且优先看结构性指标
+- **现象**：在带游戏/IDE 负载的机器上直接测工作区，S1 首屏两轮相差 4–5 倍；同时工作区已有队友在途改动，
+  「before」测到的其实是改了一半的代码。
+- **正解**：用 `git worktree add <tmp> <优化前 HEAD>` 采 before（本阶段 `14653ce`），after 用同一份脚本、
+  同一数据哈希；每轮记录 `env.loadMonitor`（CPU 负载/重进程），把 **请求数/传输字节/JSON 解析次数/内存/DOM 重建次数**
+  这类结构性指标作为结论，wall-clock 只作方向参考；`--compare-only` 可复用结果复现对比表。
+- **规则**：优化前先落基线并入库（`qa/perf-baseline.json`），报告写清「哪些可作结论、哪些只是方向参考」；
+  不在同一轮里既改代码又采基线。
+
+#### #46 删「零引用」运行时符号必须把模板字符串算进引用，并跑真实浏览器路径
+- **现象**：死代码清理把 `js/lab/text.js` 的 `RES_ZH` 判为零引用删除，但它在 `` `${RES_ZH[rk]}抗性` ``
+  模板字符串里被使用；`node --check`、单元测试、架构守卫都绿，直到真实浏览器进 `#/lab` 才
+  `ReferenceError: RES_ZH is not defined`（lab 交互 7 项红）。
+- **正解**：引用审计必须解析导出符号的「直接引用 + 模板字符串 `${SYMBOL…}` + 属性访问链」；删除运行时符号后
+  必须跑真实浏览器路径（lab/详情/选择器）而不是只跑 node 单测；本阶段已恢复并修复，把「浏览器冒烟」列为删代码后的必跑项。
+- **规则**：宁删「确认无渲染/无事件/无模板引用」的代码；批量删除按小步提交，删完立刻全量浏览器子集回归。
+
+#### #47 首屏最大浪费往往在「全局 await 数据」而不是渲染
+- **现象**：`boot()` 无条件 `await api.ready()`（items 7.33MB + effects + icons ≈ 8MB）后才 `router.start()`，
+  连只依赖 78KB `codex/index.json` 的 `#/codex` 也要等 8MB。
+- **正解**：boot 只做壳（`router.start()`），数据加载下沉到「需要它的领域」：`bootstrap:false`（领域表标记）+
+  dispatch 里按需 `await api.ready()`，模块/CSS 与数据请求并行；页脚等非关键信息异步填充。
+  结果：codex 冷启传输 **8.11MB→0.30MB（-96%）**、firstView **202→78ms**，其余领域无退化。
+- **规则**：启动路径上任何 `await` 都要问「这个领域真的需要吗」；新增领域默认按需，只有明确依赖才标 `bootstrap`。
+
+#### #48 性能测量不进强制门禁，安全与正确性才进
+- **现象**：性能受机器负载影响巨大（本阶段 S1 同代码两轮差 4–5 倍），把阈值写进 full 门禁必然 flaky；
+  而安全/正确性回归（XSS、白名单 404、数值等价）可以稳定判定。
+- **正解**：`node qa/gate.mjs perf` 独立模式手动跑，只与 `qa/perf-baseline.json` 对比、不判失败；
+  安全与测试正确性用单测/DOM 断言进 `quick`/`full`（本阶段新增 security 8 + serve security 8 + boot 8 等）。
+- **规则**：能写成确定性断言的才进门禁；参考指标单独模式并在报告里标注口径与噪声。
+
+#### #49 任何「原始 HTML 写入」都是未来的 XSS 入口，默认纯文本/安全 DOM
+- **现象**：`ui.confirm(string body)` 被传入含用户存档名的字符串（`<img onerror>` 可执行）；
+  `showTip` 的 `innerHTML` 依赖每个生产点自己转义，漏一个即中。
+- **正解**：删除 `h()` 的 `html:` 入口；string 一律 `textContent`；确需富文本时走白名单 token 渲染
+  （只认 b/strong/i/em/br/code、无属性、实体解码）；`href` 统一协议白名单（只放行 #/相对/`/`/`?`/http(s)）；
+  开发服务器加站点白名单并去掉 health/错误体里的绝对路径。
+- **规则**：安全边界是「入口收敛」而不是「每个调用点自觉」；加源码守卫测试，防止以后再把口子开回来。
+
 ## 3. 有效工作法（推荐 AI 采用）
 
 1. **先契约后代码**：动 UI 前读 `docs/UX_SPEC.md`，动数据前读 `docs/DATA.md`，动发布前读 `docs/DEPLOY.md`。
@@ -439,3 +481,18 @@
 
 > 新增测试文件：`qa/tests/{router,build-state,lab-engine,components.browser,navigation.browser,env,gate,data-schema}`、
 > `test_serve_prefix.py`、`test_sync_data.py`（+7）。文档基线不再手抄，见 #39。
+
+### 5.2 第四阶段后的基线（2026-10-28，`node qa/gate.mjs full` + `perf`）
+
+> 唯一权威仍是 `qa/baselines.json` 与门禁输出；性能只认 `qa/perf-baseline.json`（手动模式）。
+
+| 项 | 结果 | 备注 |
+|---|---|---|
+| `gate quick` | 5/5 PASS，约 7–9s | unit-js（本轮增至 195+）、audit 60、contrast 130、data-builds、data-schema 38 |
+| `gate full` | 见 §13.7（本轮收尾实测） | 17 项（新增 `perf` 仅手动模式，不进 full） |
+| 新增用例 | boot 8、security 8、serve security 8、library-query +4、lab 语义/数值守卫沿用 | 测试数字以门禁为准，不手抄 |
+| codex 冷启 | 8.11MB→**298.8KB**、JSON 4→1、firstView 202.4→77.7ms | S1 同负载窗口 |
+| items/lab/builds 冷启 | 请求数/字节不变，首屏 -3.7~-14%（噪声内不退化） | 同口径 |
+| 实验室 | 场景变更穷举 2→1、完成帧 longtask 50–55ms→0、tableB 重挂载 104.7→16ms | 探针 + lab-engine 660 预设对账 |
+| 安全 | confirm XSS 修复、showTip 白名单、serve 白名单（.git/AGENTS/qa/pipeline 由 200→404）、health 去绝对路径 | 修复前证据在测试注释 |
+| 文档最小上下文 | 定位模块 -40%、排障 -51%（AGENTS 253→120 行 + AI_MAP + TROUBLESHOOTING） | 见 §13.4 |

@@ -484,3 +484,118 @@ registry-plan-文档一致性），防止「门禁静默失效」。
 > 收尾时还修掉一条**测试自身的不确定性**：`lab-engine`「两个独立实例枚举一致」把真实耗时 `elapsedMs`
 > （0/1ms 抖动）一起 deepEqual，约 1/20 概率假红；改为忽略耗时字段、并单独断言其为有限非负，
 > 连跑 12 次稳定。这是「测试必须独立、确定、可重复」的反例（见 LESSONS #39）。
+
+---
+
+## 13. 第四阶段：性能、安全与长期可维护性（P2）
+
+> 方法：**有证据才优化，有收益才保留**。性能基线/优化记录/放弃项见 [`docs/PERF.md`](../docs/PERF.md)；
+> 本节只记结论与验收。
+
+### 13.1 性能基准（可重复）
+
+新增 `qa/perf.mjs`（零依赖 CDP，复用 `qa/lib/cdp.js`）：固定 1440×1000 dark / 冷缓存（新 profile +
+`Network.clearBrowserCache` + `setCacheDisabled`）/ 每场景 3 次取中位数；S1 四领域冷启（请求数/字节/JSON/firstView）、
+S2 JSON fetch+parse、S3 领域首开、S4 切换、S5 搜索/筛选/排序、S6 内存（GC 后）、S7 实验室穷举+帧率、
+S8 390×844 + CPU 4× 节流；输出 `qa/results/perf.json` + 中文摘要；`--update-baseline`/`--compare`/`--compare-only`；
+自动起停 `serve.py --port 0`。
+
+基线从 **git worktree @ `14653ce`（优化前 HEAD）** 采（避免工作区在途改动污染），入库
+`qa/perf-baseline.json`（含 env/数据 sha256，不含临时端口/绝对路径）。**环境限制**：采集时本机有游戏 + IDE
+负载（43–69%），S1 前后两轮负载窗口一致、结论可用；S3/S5/S7/S8 绝对值仅方向参考；localhost 无 gzip，
+字节类结论不可外推线上。
+
+关键基线（before）：`firstView` items 211.9 / lab 228.9 / builds 220.7 / **codex 202.4ms**；codex 冷启
+**25 请求 / 8.31MB / 4 个 JSON**（含 items 7.33MB）；S4 切换 median 14.4ms；S5 sort 96.7ms；S6 heap
+11.26→13.65MB（增长 2.4MB）；S7 穷举 104ms / 6 帧 / 0 长任务。
+
+### 13.2 实施的优化（详见 `docs/PERF.md` §3）
+
+| # | 改动 | 前后（同口径） | 风险控制 |
+|---|---|---|---|
+| 1 | **按领域加载**：boot 不再无条件 `await api.ready()`，codex `bootstrap=false`；模块/CSS 与数据并行；页脚异步；dispatch 对需要数据的领域 mount 前保证 ready | codex 冷启 **8.11MB→298.8KB（-96.3%）**、JSON 4→1、**firstView 202.4→77.7ms（-61.6%）**；items/lab/builds 请求/字节不变、首屏 -3.7~-14%（噪声内不退化） | 四深链手测 + nav/nav-subpath/components + boot.test 8 条；items loading→内容不闪变、404 仍可重试 |
+| 2 | **资料库排序池缓存**（Intl.Collator + WeakMap 排序池）+ 同结果集跳过重建 | 排序切换 129–145→25–30ms；名称排序搜索 68.7→8–10ms；同 chip 重渲染 19.7→~1ms（0 mutation） | 全量顺序快照逐项一致 + 4 条新单测；shot/interactions 全绿 |
+| 3 | **实验室**：同条件指纹去重、applyParams 空更新早退、tableB 跨挂载 WeakMap 缓存 | 场景变更穷举 2→1 次、渲染 6→2；完成帧 longtask 50–55ms→0；tableB 重挂载 104.7→16ms | 数值/排序零变化：lab-engine 660 预设 + top300 逐字节快照 A/B IDENTICAL + lab-async 8/8 + 13 组 UI 语义一致 |
+| 4 | **壳层/实验室缺陷**：跨域浮层残留与滚动锁死、toast 悬停不消失、缺件双副本漂移、矩阵 B 展开态丢失、冗余订阅、死 CSS | 均为行为修复（探针 9/9 + 像素 A/B 一致），无性能回退 | quick/interactions/components/shot 全绿 |
+
+### 13.3 安全边界（P2-4）
+
+**修复的真实风险**（before 实测证据写进测试注释）：
+1. **存储型 XSS（高）**：`ui.confirm(string body)` 把存档名当 HTML 写入（`<img onerror>` 可执行）→ 字符串一律纯文本；
+   唯一富文本调用点改传 Node；真浏览器验证 img=0、无脚本执行。
+2. **提示气泡 XSS（中）**：`showTip` 的 `innerHTML` → 白名单富文本渲染器（仅 b/strong/i/em/br/code、无属性；
+   244 个真实 data-tip 取证仅 b/br），文本实体正确解码；注入 img/script 元素数 0。
+3. **HTML 入口收敛**：删除 `h()` 的 `html:` 原始入口；`href` 统一 `safeHref()`（#/相对/根路径/?/http(s)；
+   `javascript:`/`data:`/`vbscript:`/`file:`/`blob:`/协议相对一律不写 href）；http(s) 外链自动补 `rel=noopener noreferrer`。
+4. **localStorage**：saved 名称读取/保存/改名上限 80（只截断异常超长）；危险键仍跳过；确认无导入入口（导出只读）。
+5. **开发服务器**：`serve.py` 站点白名单（`/`、index/lab、favicon、`/css`、`/js`、`/data`、`/assets`、`/api/health`），
+   其余（`.git`、`AGENTS.md`、`qa/`、`pipeline/`、`docs/`、`.github/`、dotfiles、目录、穿越变体）403/404；
+   `/api/health` 与错误体不再暴露本机绝对路径。**修复前实测**：`/.git/config`、`/AGENTS.md`、`/serve.py`、
+   `/.github/workflows/qa.yml` 等均 200 —— 证据在 `qa/tests/test_serve_security.py` 注释。
+6. 未改：`icons.js`/`theme.js` 的静态常量 `innerHTML`（查表、无注入路径）；GitHub Pages 侧仓库文件公开
+   （静态托管形态决定，要隐藏需改发布结构 → 后续建议）。
+
+新增守卫：`qa/tests/security.test.mjs`（8 例：禁 eval/new Function/document.write、innerHTML 白名单、
+无 `html:`、href 协议、safeHref/richTextParts 纯函数、store 长名/危险键）与 `qa/tests/test_serve_security.py`
+（8 例：白名单 404/200、穿越/编码变体、health 无绝对路径；修复前 32 处失败）。
+
+### 13.4 删除或简化的无效代码（P2-6）
+
+- **死代码第一批**（提交 `3e1895e`，净删 60 行）：dom/qa gate/pipeline 中的零引用导出、死常量、未用 import
+  （清单见提交信息）；由零依赖引用图 + Python AST + 二遍复核确认无运行时/测试引用。
+- **行为修复替代「保留」**：lab-arch 审计发现 7 项真实缺陷（见 13.2 #4），修掉后删掉对应死 root 容器与 7 条死 CSS
+  （DOM 0 命中 + 像素 sha 前后相同）。
+- **文档**：`AGENTS.md` 253→120 行（-27% 字节），新增 `docs/AI_MAP.md`（69 行，模块职责/真实 import/必跑测试）与
+  `docs/TROUBLESHOOTING.md`（18 条真实症状→根因→命令→修复）；最小定位上下文 **-40%**、排障上下文 **-51%**；
+  删除与 `qa/README`/`ARCHITECTURE` 重复的段落并改为链接；修正 `DEPLOY.md`/`pipeline README` 中被转义吞掉的
+  `verify.ps1` 命令、`DATA.md` 过时说明、`README.md` 旧验收命令与手抄数字。
+- **评估后不删**：21 个 `export default`、重复小工具、重复配置（护甲数组 14 处等）、未用 CSS 候选、lifecycle
+  与 navigation 的重复覆盖用例 —— 理由见 `docs/PERF.md` §4 与本节「评估后不做」。
+- **真实回归与教训**：死代码删除把 `js/lab/text.js` 的 `RES_ZH` 当作零引用删掉，但它在**模板字符串** `${RES_ZH[rk]}`
+  中被使用；`node --check` 与单元测试不报错，真实浏览器进 `#/lab` 才 `ReferenceError`。已恢复并修复，
+  写入 LESSONS「删运行时符号必须跑真实浏览器路径；审计要计入模板字符串引用」。
+
+### 13.5 评估后不做（避免过度工程）
+
+`docs/PERF.md` §4 完整列表与证据；摘要：item_effects/icon_index 延后（并发且小、排序/搜索依赖）、跨域预取、
+index.html preload、items.json 拆分、图标缩略图管线（真实大头但属数据管线，后续建议）、Web Worker、
+statsFor memo/枚举剪枝（有改变排序风险）、图标 IO 控 src、事件委托、虚拟列表、未用 CSS 删除、export default 清理、
+重复工具/配置合并、开发服务器 ETag、IndexedDB/分片。**结论：当前瓶颈已通过 4 项低复杂度改动拿到主要收益，
+继续做收益递减且风险上升。**
+
+### 13.6 未解决风险与后续建议
+
+1. **图标与 items.json 体积**：首屏 items 仍 11.3MB（图标 46 张 ~2.9MB；items 7.33MB 未压缩原文，线上 gzip 约 1.0MB）。
+   真正的大头在发布资产管线（图标 ~65KB 显示 74px、items 列表字段可裁剪 24%），需要改数据生成/发布结构，属下一阶段。
+2. **实测噪声**：本机有游戏+IDE 长驻负载，S3/S5/S7/S8 只能作方向参考；若要硬性性能门禁，需要安静专用环境 +
+   阈值策略（当前刻意不做硬阈值，避免 flaky）。
+3. **GitHub Pages 侧暴露面**：静态托管会公开仓库内 `docs/qa/pipeline` 等文件；要隐藏需改发布结构（如只发布构建产物），
+   与「零构建、仓库即站点」冲突，需单独立项权衡。
+4. **死代码静态守卫缺失**：本轮模板字符串回归说明「零引用」判定不能只看 import/grep；建议后续加成本可控的
+   `${SYMBOL}` 引用扫描 + 删除后强制浏览器冒烟。
+5. **`qa/perf.mjs` 不进 full**：性能是参考指标，机器噪声大；如需回归守门，应先固定环境再定阈值。
+6. 线上 Pages 未在本阶段重新发布/复验（本轮不改变发布结构与数据；发布仍走 `deploy.py` 内容指纹）。
+
+### 13.7 最终回归
+
+<!-- PERF-FINAL-GATE:START -->
+**`node qa/gate.mjs full --update-baseline`（干净负载轮）= 16 PASS / 0 FAIL / 0 SKIP，484.2s**
+
+| 检查 | 结果 | 耗时 |
+|---|---|---|
+| unit-js | **195/195** | 4.2s |
+| unit-py | **45/45** | 3.3s |
+| audit / contrast | 60/60 · 130/130 | 0.3s · 0.1s |
+| data-builds / data-schema / data-sync | 1/1 · 38/38 · 无漂移 | 0.2/3.6/15.2s |
+| shot-dark / shot-light / shot-subpath | **54/54 · 54/54 · 25/25** | 79.5/78.0/46.9s |
+| interactions / lifecycle / lab-async | **67/67 · 25/25 · 8/8** | 129.7/42.1/37.5s |
+| components / nav / nav-subpath | 20/20 · 6+1skip · 7/7 | 1.0/19.8/22.1s |
+
+- `quick`：5/5 PASS，约 7–9s（unit-js 195 + audit 60 + contrast 130 + data-builds + data-schema 38）。
+- `perf` 模式：`node qa/gate.mjs perf` 走统一入口调度 `qa/perf.mjs`（参考指标、不设阈值），结果 `qa/results/perf.json`。
+- 基线已 `--update-baseline` 更新（unit-js 175→195、unit-py 37→45；新增 boot 8 / security 8 / serve security 8 并入）。
+- 浏览器子集回归（各 owner 在代码改动后自跑）：shot-dark/light 各 54/54、interactions 67/67、lifecycle 25/25、
+  nav 6+1skip、nav-subpath 7/7、lab-async 8/8、components 20/20；像素 A/B 证明死 CSS 删除零视觉变化。
+- **性能数值**：见 `docs/PERF.md`（codex 冷启 -96.3% 传输 / -61.6% firstView；实验室穷举 2→1 次；排序切换 ~4–9×）；
+  性能不进 full 硬门禁（噪声原因见 13.6）。
+<!-- PERF-FINAL-GATE:END -->

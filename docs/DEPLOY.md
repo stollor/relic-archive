@@ -32,9 +32,9 @@
 cd .mimocode/relic-archive
 
 # 1) 发布前门禁（一个入口；自动起服务、自动判环境）
-.erify.ps1 deploy        # = full（真实 Chrome 全量）+ deploy.py --dry-run 预检；不推送
+.\verify.ps1 deploy        # = full（真实 Chrome 全量）+ deploy.py --dry-run 预检；不推送
 # 任意 shell：node qa/gate.mjs deploy
-# 只想快速确认：.erify.ps1 quick / related（见 AGENTS.md §1）
+# 只想快速确认：.\verify.ps1 quick / related（见 AGENTS.md §1）
 
 # 2) 提交（一次只做一件事）
 git status                                          # 只应有预期文件
