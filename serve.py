@@ -11,6 +11,12 @@
   python serve.py                 # 默认 http://127.0.0.1:8777/
   python serve.py --port 8780
   python serve.py --host 0.0.0.0 --port 8777 --open
+  python serve.py --prefix /relic-archive    # 模拟 GitHub Pages 子路径部署
+  python serve.py --port 0                   # 随机端口（自动化测试用）
+
+`--prefix` 会让站点只在前缀下可用（`/relic-archive/`、`/relic-archive/data/...`），
+根路径 `/` 302 到前缀首页；缺前缀的资源请求返回 404——这样「页面对根路径写死绝对路径」
+的 bug 在本地就会暴露，而不是等发布到 Pages 才发现。
 
 额外提供 GET /api/health（JSON）：数据/图标/CLI 就绪状态，前端与自测共用。
 """
@@ -112,13 +118,14 @@ def _png_inventory() -> dict:
     return result
 
 
-def build_health() -> dict:
+def build_health(prefix: str = "") -> dict:
     icons = _png_inventory()
     return {
         "ok": True,
         "service": "remnant2-item-archive",
         "version": "1.0.0",
         "time": datetime.now().isoformat(timespec="seconds"),
+        "prefix": prefix,
         "web_dir": _file_info(WEB_DIR),
         "data_dir": _file_info(DATA_DIR),
         "assets_dir": _file_info(ASSETS_DIR),
@@ -146,6 +153,12 @@ def build_health() -> dict:
     }
 
 
+class ArchiveServer(ThreadingHTTPServer):
+    """带站点前缀的服务器：prefix='' 为根路径，'/relic-archive' 模拟 Pages 子路径。"""
+    daemon_threads = True
+    prefix = ""
+
+
 class ArchiveHandler(BaseHTTPRequestHandler):
     server_version = "Remnant2Archive/1.0"
     protocol_version = "HTTP/1.1"
@@ -157,13 +170,36 @@ class ArchiveHandler(BaseHTTPRequestHandler):
     def do_HEAD(self) -> None:  # noqa: N802
         self._serve(send_body=False)
 
+    @property
+    def prefix(self) -> str:
+        return getattr(self.server, "prefix", "") or ""
+
     def _serve(self, send_body: bool) -> None:
         started = time.perf_counter()
         parsed = urlsplit(self.path)
         raw_path = unquote(parsed.path)
+        prefix = self.prefix
+
+        # 子路径模式：只在前缀下提供站点；根路径给人留一个跳转，其余缺前缀的请求一律 404。
+        if prefix:
+            if raw_path in ("", "/"):
+                self._send_redirect(f"{prefix}/", send_body)
+                self._log_request(started, HTTPStatus.FOUND, 0)
+                return
+            if raw_path == "/api/health":
+                # 根下的健康检查也保留：工具/脚本在被注入前缀前后都能探活。
+                pass
+            elif raw_path == prefix or raw_path.startswith(prefix + "/"):
+                raw_path = raw_path[len(prefix):] or "/"
+            else:
+                self._send_error(HTTPStatus.NOT_FOUND, f"未知路由：{raw_path}", send_body,
+                                 extra={"hint": f"子路径模式：资源必须以 {prefix}/ 开头"
+                                                "（页面对根路径写死绝对路径会在 Pages 上 404）"})
+                self._log_request(started, HTTPStatus.NOT_FOUND, 0)
+                return
 
         if raw_path == "/api/health":
-            payload = json.dumps(build_health(), ensure_ascii=False, indent=1).encode("utf-8")
+            payload = json.dumps(build_health(prefix), ensure_ascii=False, indent=1).encode("utf-8")
             self._send_bytes(HTTPStatus.OK, payload, "application/json; charset=utf-8",
                              cache="no-store", send_body=send_body)
             self._log_request(started, HTTPStatus.OK, len(payload))
@@ -171,10 +207,7 @@ class ArchiveHandler(BaseHTTPRequestHandler):
 
         if raw_path == "/favicon.ico":
             # 浏览器默认请求：指向 SVG 图标，避免 404 噪音
-            self.send_response(HTTPStatus.FOUND)
-            self.send_header("Location", "/favicon.svg")
-            self.send_header("Content-Length", "0")
-            self.end_headers()
+            self._send_redirect(f"{prefix}/favicon.svg", send_body)
             self._log_request(started, HTTPStatus.FOUND, 0)
             return
 
@@ -263,6 +296,13 @@ class ArchiveHandler(BaseHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
+    def _send_redirect(self, location: str, send_body: bool) -> None:
+        self.send_response(HTTPStatus.FOUND)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+        _ = send_body  # 302 无 body
+
     def _send_error(self, status: HTTPStatus, message: str, send_body: bool,
                     extra: dict | None = None) -> None:
         body = {"ok": False, "status": int(status), "error": message}
@@ -282,8 +322,8 @@ class ArchiveHandler(BaseHTTPRequestHandler):
         pass
 
 
-def print_banner(host: str, port: int) -> None:
-    url = f"http://{host}:{port}/"
+def print_banner(host: str, port: int, prefix: str = "") -> None:
+    url = f"http://{host}:{port}{prefix}/"
     items = ITEMS_JSON
     items_state = f"{items.stat().st_size / 1024 / 1024:.2f} MB" if items.is_file() else "缺失！"
     index_state = "已生成" if ICON_INDEX.is_file() else "未生成 → 前端使用占位图"
@@ -305,13 +345,35 @@ def print_banner(host: str, port: int) -> None:
     print(line, flush=True)
 
 
+def normalize_prefix(raw: str) -> str:
+    """把 --prefix 归一为 ''（根）或 '/a/b'（无尾斜杠）。"""
+    p = (raw or "").strip()
+    if p in ("", "/"):
+        return ""
+    if not p.startswith("/"):
+        p = "/" + p
+    p = p.rstrip("/")
+    if any(seg in ("", ".", "..") for seg in p.strip("/").split("/")):
+        raise ValueError(f"非法前缀：{raw!r}（示例：/relic-archive）")
+    return p
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="REMNANT II 遗物档案 · 本地静态服务器（标准库实现，同源提供 web/ + /data/ + /assets/）")
     parser.add_argument("--host", default=DEFAULT_HOST, help=f"监听地址（默认 {DEFAULT_HOST}）")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help=f"监听端口（默认 {DEFAULT_PORT}）")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT,
+                        help=f"监听端口（默认 {DEFAULT_PORT}；0=随机空闲端口）")
+    parser.add_argument("--prefix", default="",
+                        help="站点前缀（模拟 GitHub Pages 子路径，如 /relic-archive；默认根路径）")
     parser.add_argument("--open", action="store_true", help="启动后在浏览器打开页面")
     args = parser.parse_args(argv)
+
+    try:
+        prefix = normalize_prefix(args.prefix)
+    except ValueError as exc:
+        print(f"[error] {exc}", file=sys.stderr)
+        return 2
 
     if not (WEB_DIR / "index.html").is_file():
         print(f"[error] 找不到前端文件：{WEB_DIR / 'index.html'}", file=sys.stderr)
@@ -320,16 +382,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[warn] 数据集不存在：{ITEMS_JSON}（页面会显示加载错误）", file=sys.stderr)
 
     try:
-        httpd = ThreadingHTTPServer((args.host, args.port), ArchiveHandler)
+        httpd = ArchiveServer((args.host, args.port), ArchiveHandler)
     except OSError as exc:
         print(f"[error] 无法监听 {args.host}:{args.port} -> {exc}", file=sys.stderr)
         print(f"[hint] 端口可能被占用，换一个：python serve.py --port {args.port + 1}", file=sys.stderr)
         return 1
 
-    httpd.daemon_threads = True
-    print_banner(args.host, args.port)
+    httpd.prefix = prefix
+    actual_port = httpd.server_address[1]
+    print_banner(args.host, actual_port, prefix)
+    base = f"http://{args.host}:{actual_port}{prefix}/"
     if args.open:
-        webbrowser.open(f"http://{args.host}:{args.port}/")
+        webbrowser.open(base)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
