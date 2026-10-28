@@ -37,6 +37,7 @@ import sys
 import time
 import webbrowser
 from datetime import datetime
+from email.utils import formatdate
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -276,7 +277,24 @@ class ArchiveHandler(BaseHTTPRequestHandler):
 
         ctype = _mime(target)
         cache = "no-cache" if target.suffix.lower() in (".json", ".jsonl", ".html", ".js", ".css") else "public, max-age=60"
-        self._send_bytes(HTTPStatus.OK, payload, ctype, cache=cache, send_body=send_body)
+        # 协商缓存：内容指纹（mtime+size）→ 304，避免开发时每次刷新重下 7MB items.json
+        try:
+            st = target.stat()
+            etag = f'"{st.st_mtime_ns:x}-{st.st_size:x}"'
+            last_modified = formatdate(st.st_mtime, usegmt=True)
+        except OSError:
+            etag = last_modified = None
+        if etag:
+            inm = self.headers.get("If-None-Match")
+            if inm and etag in [token.strip() for token in inm.split(",")]:
+                self.send_response(HTTPStatus.NOT_MODIFIED)
+                self.send_header("ETag", etag)
+                self.send_header("Cache-Control", cache)
+                self.end_headers()
+                self._log_request(started, HTTPStatus.NOT_MODIFIED, 0)
+                return
+        self._send_bytes(HTTPStatus.OK, payload, ctype, cache=cache, send_body=send_body,
+                         etag=etag, last_modified=last_modified)
         self._log_request(started, HTTPStatus.OK, len(payload))
 
     def _resolve(self, raw_path: str) -> tuple[Path | None, str]:
@@ -316,11 +334,16 @@ class ArchiveHandler(BaseHTTPRequestHandler):
         return target, head
 
     def _send_bytes(self, status: HTTPStatus, payload: bytes, content_type: str,
-                    cache: str = "no-cache", send_body: bool = True) -> None:
+                    cache: str = "no-cache", send_body: bool = True,
+                    etag: str | None = None, last_modified: str | None = None) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(payload)))
         self.send_header("Cache-Control", cache)
+        if etag:
+            self.send_header("ETag", etag)
+        if last_modified:
+            self.send_header("Last-Modified", last_modified)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Access-Control-Allow-Origin", "same-origin")
         self.end_headers()

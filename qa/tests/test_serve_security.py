@@ -147,18 +147,21 @@ class ServeSecurityTest(unittest.TestCase):
 
     # ------------------------------ HTTP 工具 ------------------------------
     @classmethod
-    def _request(cls, path: str, method: str = "GET") -> tuple[int, dict[str, str], bytes]:
+    def _request(cls, path: str, method: str = "GET",
+                 headers: dict[str, str] | None = None) -> tuple[int, dict[str, str], bytes]:
         """http.client 直发原始 path（不规范化 ../，不跟随重定向）。"""
         conn = http.client.HTTPConnection(cls.host, cls.port, timeout=15)
         try:
             conn.putrequest(method, path, skip_host=False, skip_accept_encoding=True)
             conn.putheader("Host", f"{cls.host}:{cls.port}")
             conn.putheader("Connection", "close")
+            for key, value in (headers or {}).items():
+                conn.putheader(key, value)
             conn.endheaders()
             resp = conn.getresponse()
             body = resp.read()
-            headers = {k.lower(): v for k, v in resp.getheaders()}
-            return resp.status, headers, body
+            headers_out = {k.lower(): v for k, v in resp.getheaders()}
+            return resp.status, headers_out, body
         finally:
             conn.close()
 
@@ -314,6 +317,21 @@ class ServeSecurityTest(unittest.TestCase):
         self.assertEqual(body, b"")
 
         self.assertStatus("/js/main.js?v=2026", 200)
+
+    def test_static_assets_have_etag_and_304(self) -> None:
+        """静态资源带 ETag/Last-Modified；带 If-None-Match 的复请求返回 304（开发时省 7MB 重载）。"""
+        for path in ("/js/main.js", "/data/items.json", "/css/tokens.css"):
+            with self.subTest(path=path):
+                status, headers, body = self._request(path)
+                self.assertEqual(status, 200)
+                etag = headers.get("etag")
+                self.assertTrue(etag, f"{path} 缺少 ETag")
+                self.assertTrue(headers.get("last-modified"), f"{path} 缺少 Last-Modified")
+                self.assertTrue(body, f"{path} 首次请求应有 body")
+                status2, headers2, body2 = self._request(path, headers={"If-None-Match": etag})
+                self.assertEqual(status2, 304, f"{path} 带 If-None-Match 应 304，实际 {status2}")
+                self.assertEqual(headers2.get("etag"), etag)
+                self.assertEqual(body2, b"", "304 不得带 body")
 
 
 if __name__ == "__main__":
