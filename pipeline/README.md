@@ -59,22 +59,24 @@ python pipeline/sync-data.py --no-icons
   已写入的文件：新增的删除、更新的恢复原内容与原 mtime）。
 - 上游已删除、但快照里仍存在的图标默认**不删除**，输出「快照独有 N 个」提示（`--check`
   不计为漂移，避免门禁因历史残留误红）。
-- 写盘前先做完整计划与源文件校验，单文件用「同目录临时文件 + `os.replace`」原子替换；
+- 写盘前先做完整计划与源文件校验（含**所有 `.json` 源的语法校验**：损坏会输出
+  `[x] 源 JSON 损坏：<路径>:<行>:<列>：<原因>` 并退出码 2，**零写入**；`--check` 同样生效，
+  避免把损坏的上游数据静默搬进发布快照），单文件用「同目录临时文件 + `os.replace`」原子替换；
   可反复运行，第二次应全部「相同」。
+- 数据**结构与引用**契约不在本脚本里做，而由 `qa/lib/data-schema.mjs` + `qa/tests/data-schema.test.mjs`
+  覆盖（`node qa/gate.mjs data` 会一起跑）。
 
 单独 clone 本仓库时**不需要**它。
 
 ## 4. 改了数据之后必须做的
 
 ```bash
-python pipeline/mk_builds_json.py --check      # 引用完整性
-node qa/shot.js --theme dark && node qa/shot.js --theme light   # 截图/console 门禁
-node qa/interactions.js                        # 交互契约（67 项）
-python qa/audit.py                             # 静态审计（硬编码色/裸英文/a11y）
-node qa/theme-contrast.mjs                     # 双主题对比度（130 组）
+node qa/gate.mjs data     # 数据链路：Schema/引用/工作区漂移/数据脚本单测（不启浏览器）
+node qa/gate.mjs full     # 提交前完整回归（真实 Chrome 截图/交互/竞态/子路径）
+# 或 PowerShell：.erify.ps1 data / .erify.ps1 full
 ```
 
-全部通过再提交。门禁说明见 `qa/REPORT.md`。
+全部通过再提交。门禁说明见 [`qa/README.md`](../qa/README.md) 与 `qa/REPORT.md`。
 
 提交后发布用一键脚本（推送 + 等 Pages 自动重建 + 线上验收，详见 [`docs/DEPLOY.md`](../docs/DEPLOY.md) §2）：
 

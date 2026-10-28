@@ -44,20 +44,24 @@
 - **原因**：仓库 70 MB 可发布（图标 58 MB + 数据 9 MB）；上游工具链 + 原始资产 3.7 GB 只适合本地。
 - **后果**：GitHub 上 clone 的人只能跑站点与数据生成脚本，不能重跑解包；文档里已明确标注。
 
-### ADR-5 GitHub Pages 用 legacy 构建 + `.nojekyll`，不引入 CI workflow
+### ADR-5 GitHub Pages 用 legacy 构建 + `.nojekyll`；CI 只跑测试，不参与部署
 
 - **决策**：Pages source = `main / (root)`，`build_type=legacy`，仓库根放空 `.nojekyll`。
-- **原因**：站点无构建步骤，不需要 Actions；`.nojekyll` 让 Pages 直接静态下发，规避 Jekyll 忽略 `_` 前缀目录
+  另加 `.github/workflows/qa.yml`，在 push / PR 上跑 `node qa/gate.mjs quick|data|full`（测试门禁）。
+- **原因**：站点无构建步骤，不需要 Actions 来「构建」；`.nojekyll` 让 Pages 直接静态下发，规避 Jekyll 忽略 `_` 前缀目录
   （`pipeline/_source/` 会被 Jekyll 排除，虽然运行时不用，但保留完整性更省心）。
-- **后果**：推送后 20–60 秒自动重建；不要改 `build_type=workflow` 除非真的加 CI。
+  测试需要可移植的执行环境（Linux + Chrome + Python），keeper 是 CI 而不是部署本身。
+- **后果**：推送后 20–60 秒自动重建；**不要**把 Pages 改成 `build_type=workflow`（那会把部署交给 Actions 并引入失败点）。
+  CI 红只代表测试红，发布仍由 `pipeline/deploy.py` 校验线上内容指纹。
 
 ### ADR-6 资产一律相对路径（兼容根路径与子路径部署）
 
 - **背景**：Pages 项目站点在 `/relic-archive/` 子路径下；早期实现用 `/data/*`、`/assets/*`，上线会全 404。
 - **决策**：`js/core/api.js` 的 `URLS` 用 `./data/*`，图标路径 `./assets/icons/*.png`。
 - **原因**：页面都在站点根 + hash 路由不改文档 URL，`./` 解析在根路径与子路径都正确。
-- **后果**：新增资产引用必须用相对路径；`qa/interactions.js` 的页面内 `import('/js/...')` 是绝对路径，
-  只适合对本地根路径跑（线上只跑 `qa/shot.js --base`）。
+- **后果**：新增资产引用必须用相对路径。QA 侧同步遵守：`qa/interactions.js` 的页面内 import/fetch
+  一律经 `qa/lib/base.js` 的 `prefixOf(base)` 拼前缀，因此**既能对本地根路径跑，也能对 `/relic-archive/` 子路径跑**
+  （第三阶段已实测：两种 base 下 interactions 均 67/67）。新增 QA 页面内脚本禁止再写 `/js/...` 这类根绝对路径。
 
 ### ADR-7 QA 用零依赖 Chrome CDP，而不是 Playwright/Puppeteer
 
@@ -181,8 +185,10 @@
 - **价值**：一次就暴露「漏提交、绝对路径、仓库不自包含、gitignore 误伤」四类问题。发布前必做。
 
 #### #19 门禁是数字化的，回归要对比数字
-- 基线：`shot 54/54 × 2`、`interactions 67/67`、`audit 0 FAIL`、`contrast 130/130`（见 §5）。
-- 数量变化是信号：新增路由/用例要同步更新基线并写进 `qa/REPORT.md`。
+- 第三阶段起：**只有** `qa/baselines.json` 是基线（`node qa/gate.mjs <mode> --update-baseline` 维护），
+  文档不再手抄数字（`qa/REPORT.md` §0 与 `AGENTS.md` §1 只写「以门禁输出为准」）。
+- 数量变化是信号：门禁会拦住「通过数低于基线」「跳过数超允许」「截图条数 ≠ 路由推导期望」，
+  新增/删除用例要显式 `--update-baseline` 并在提交信息说明。
 
 ### 2.6 文件与协作
 
@@ -301,6 +307,62 @@
 
 ---
 
+### 2.9 自动化验收与测试工程（2026-10-28 第三阶段）
+
+#### #37 测试入口分散 = AI 的隐性税
+- **现象**：同一套验收要记 8 条命令（起服务 / 两主题截图 / 交互 / 审计 / 对比度 / 数据检查 / 三套回归），
+  顺序错了、忘了起服务、忘了引号，都会得到「看起来失败」或「看起来通过」的假信号。
+- **正解**：一个入口 `qa/gate.mjs` + `verify.ps1`，检查清单在 `qa/gate/registry.mjs` 单一来源；
+  门禁自己起服务、自己探测环境、自己汇总退出码。
+- **规则**：新增测试只改 registry/plan 两处，不再往 `AGENTS.md` 堆命令；文档只指向入口。
+
+#### #38 测试脚本不得假设端口 / Chrome 路径 / 站点根路径
+- **现象**：`lab-async.browser.mjs` 只认 `LAB_QA_BASE` 与 8777，gate 用随机端口起服务后 8 项全红
+  （T7 反而「PASS」——因为页面根本没加载，console 没错误）。`interactions.js` 页面内 `import('/js/...')`
+  在 `/relic-archive/` 子路径下必挂。
+- **正解**：站点地址统一 `--base` / `QA_BASE`；页面内路径用 `new URL('js/…', location.href)` 或
+  `qa/lib/base.js` 的 `prefixOf(base)`；Chrome 路径统一 `resolveChrome()`（`qa/lib/cdp.js`）。
+- **规则**：测试脚本的环境假设要能通过参数覆盖；「没加载起来」不能被判成「没有错误」（先断言视图就绪）。
+
+#### #39 用例数量要用基线守住，但基线只放一处
+- **现象**：历史 `qa/REPORT.md` / `AGENTS.md` 手抄的 54/54、67/67、69 等数字与脚本实际输出漂移；
+  删掉/跳过测试也不会有人发现。
+- **正解**：`qa/baselines.json` 是唯一基线（`min_pass` / `max_skip`），`--update-baseline` 维护；
+  截图类检查的期望条数不写死，由真实路由推导（`27 路由 × 2 视口`），少一条即 FAIL。
+- **规则**：文档不手抄数字；有意增减用例必须更新基线并在提交信息说明（diff 即审计线索）。
+
+#### #40 子路径 bug 只能靠子路径环境提前暴露
+- **现象**：Pages 子路径部署的 404 只有上线后才暴露；本地根路径永远看不出绝对路径问题。
+- **正解**：`serve.py --prefix /relic-archive` 在本地复现子路径（`/` 302 到前缀、缺前缀资源 404），
+  gate 增加 `shot-subpath` / `nav-subpath` 两项；`interactions.js` 两种 base 都是 67/67。
+- **规则**：新增页面内资源引用后，至少跑一次子路径模式的检查；本地子路径 404 = 线上 404。
+
+#### #41 测试设施自己也要有测试
+- **现象**：门禁会因「检查 id 拼错」「模式漏挂」「baseline 指向不存在的检查」「文档漏写检查」静默少跑，
+  表面仍 PASS。
+- **正解**：`qa/tests/gate.test.mjs` 解析真实 registry/plan/README/baselines 做一致性守卫；`env.test.mjs`
+  静态守卫「shot.js 不得再出现硬编码 Chrome 路径」「interactions.js 不得再有根绝对路径」。
+- **规则**：新增检查必须同时过 gate.test.mjs 与 qa/README 表格；让「门禁失效」本身变红。
+
+#### #42 失败必须能定位，否则等于没测
+- **现象**：并行改造期出现过「某个检查红了，但只有一行 FAIL，没有模块/日志/复跑命令」，需要重新遍历仓库。
+- **正解**：每个检查在 registry 声明 `module/hint/repro/artifacts`；执行器保留 `qa/results/logs/<id>.log`，
+  失败时控制台贴末尾 12 行；报告 JSON 里 `failed[]` 带用例名与错误摘要。
+- **规则**：新增检查时必须填 module/hint/repro（gate.test.mjs 会检查字段齐全）。
+
+#### #43 红证（故意改坏）只在影子副本做，绝不留工作树
+- **现象**：验证「测试确实会红」时，有人把 150ms 竞态注入和 `if (false)` 代际判断直接写进 `js/main.js`，
+  中途被其它 agent 看到，差点提交。
+- **正解**：复制仓库到 `%TEMP%` / 用 `git worktree` 做红证；改完用 `git checkout -- <file>` 或 md5 校验还原，
+  并跑 `git status --short` 确认干净。
+- **规则**：工作树里任何 `QA-redcheck`/`INJECTED` 标记都属于高危残留；收尾前全树 grep 一次。
+
+#### #44 CI 只承担「测试」，不接管「部署」
+- **现象**：容易顺手把 Pages 切成 Actions 部署，引入新的失败点。
+- **正解**：Pages 保持 legacy + `.nojekyll`（push 即重建）；`.github/workflows/qa.yml` 只跑
+  `quick`/`data`/`full` 并在失败时归档报告。部署正确性仍由 `pipeline/deploy.py` 用线上内容指纹证明。
+- **规则**：CI 红 = 测试红；发布是否成功仍看 `deploy.py` 退出码与线上指纹。
+
 ## 3. 有效工作法（推荐 AI 采用）
 
 1. **先契约后代码**：动 UI 前读 `docs/UX_SPEC.md`，动数据前读 `docs/DATA.md`，动发布前读 `docs/DEPLOY.md`。
@@ -356,3 +418,24 @@
 > 与当前 `shot 54 项（27 路由 × 2 视口）/ 双主题 = 108 张`、`interactions 67/67` 不一致；
 > 该文件正文 §9 已是 v3 数字，以本表与门禁脚本输出为准。另：`sync-data.py --check` 曾长期为红，
 > 原因是文本换行归一缺失（见 #25），本轮已修。
+
+### 5.1 第三阶段后的基线（2026-10-28，`node qa/gate.mjs full`）
+
+> 唯一权威是 `qa/baselines.json`；下表只是快照，数字变了以门禁输出为准。
+
+| 检查 | 结果 | 备注 |
+|---|---|---|
+| `gate quick` | 5/5 PASS，**5.9s** | unit-js 175 + audit 60 + contrast 130 + data-builds + data-schema 38 |
+| `gate full` | **16 PASS / 0 FAIL / 0 SKIP，706.5s** | 含真实 Chrome 全量（下表逐项） |
+| `unit-js` | 175/175 | 架构守卫 16 + library-query 21 + store 23 + task 9 + router 10 + build-state 7 + lab-engine 16 + data-schema 38 + gate 15 + 既有 = 175 |
+| `unit-py` | 37/37 | sync-data 30 + serve 子路径 7 |
+| `shot-dark` / `shot-light` | 54/54 ×2 | 27 路由 × 2 视口，含 console/异常/4xx 门禁 |
+| `shot-subpath` | 25/25 | `/relic-archive/` 前缀（桌面，四领域子集） |
+| `interactions` | 67/67 | 根路径；子路径同样 67/67（`--base …/relic-archive`） |
+| `lifecycle` / `lab-async` | 25/25 / 8/8 | 生命周期竞态 / 分帧计算版本控制 |
+| `components` / `nav` / `nav-subpath` | 20/20 / 6+1skip / 7/7 | 组件契约 / 路由竞态（N7 根模式设计性 SKIP） |
+| 数据 | data-schema 38/38、data-builds 1/1、data-sync 无漂移 | 真实数据 0 error、3 类已知 warning |
+| 页面数据 / 图标 / 模块 | 1126 真道具 / 16 职业 / 13 篇 / 7 流派 / 1004 图标 / 42 JS 模块 11,099 行 | 与第二阶段相同（本轮不改业务与数据） |
+
+> 新增测试文件：`qa/tests/{router,build-state,lab-engine,components.browser,navigation.browser,env,gate,data-schema}`、
+> `test_serve_prefix.py`、`test_sync_data.py`（+7）。文档基线不再手抄，见 #39。

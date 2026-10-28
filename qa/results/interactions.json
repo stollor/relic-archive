@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-28T03:54:47.535Z",
-  "base": "http://127.0.0.1:8777",
+  "generated_at": "2026-10-28T11:28:29.206Z",
+  "base": "http://127.0.0.1:6240",
   "pass": 67,
   "fail": 0,
   "skip": 0,
@@ -433,7 +433,7 @@
       "id": "G10",
       "name": "主题：三态循环 / Alt+T / localStorage 持久化 / 首屏属性一致",
       "status": "PASS",
-      "detail": "循环 auto:light → light:light → dark:dark → auto:light；刷新保持 light；Alt+T→dark；theme-color 随主题更新"
+      "detail": "循环 auto:dark → light:light → dark:dark → auto:dark；刷新保持 light；Alt+T→dark；theme-color 随主题更新"
     },
     {
       "area": "mobile",

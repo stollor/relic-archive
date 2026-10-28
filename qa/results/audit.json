@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-10-28T11:56:24",
+  "generated_at": "2026-10-28T19:42:16",
   "root": "D:\\Platforms\\Steam\\steamapps\\common\\Remnant2\\.mimocode\\relic-archive",
   "summary": {
     "fail": 0,
     "warn": 0,
-    "info": 65,
+    "info": 60,
     "by_area": {
       "D": {
         "FAIL": 0,
         "WARN": 0,
-        "INFO": 65
+        "INFO": 60
       }
     },
     "pass": true
@@ -21,58 +21,8 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/builds.js",
-      "line": 190,
-      "snippet": "return h('button', { class: cls, type: 'button', attrs, on: { click: () => openItemDetail(e.id) } }, kids);",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/views/builds.js",
-      "line": 391,
-      "snippet": "h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/views/builds.js",
-      "line": 452,
-      "snippet": "? h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/views/builds.js",
-      "line": 515,
-      "snippet": "return h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/views/builds.js",
-      "line": 554,
-      "snippet": "return h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/views/builds.js",
-      "line": 794,
-      "snippet": "h('button', {",
+      "line": 61,
+      "snippet": "actions: [h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
     {
@@ -81,7 +31,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/codex.js",
-      "line": 109,
+      "line": 112,
       "snippet": "const btn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -91,7 +41,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/codex.js",
-      "line": 403,
+      "line": 413,
       "snippet": "const tocBtn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -101,8 +51,8 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/codex.js",
-      "line": 461,
-      "snippet": "h('button', {",
+      "line": 474,
+      "snippet": "actions: [h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
     {
@@ -111,7 +61,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/lab.js",
-      "line": 84,
+      "line": 135,
       "snippet": "const b = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -121,7 +71,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 355,
+      "line": 111,
       "snippet": "const btn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -131,7 +81,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 405,
+      "line": 161,
       "snippet": "const b = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -141,7 +91,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 423,
+      "line": 179,
       "snippet": "R.moreBtn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -151,7 +101,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 517,
+      "line": 273,
       "snippet": "R.resetBtn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -161,7 +111,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 522,
+      "line": 278,
       "snippet": "R.filtersDone = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -171,7 +121,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 564,
+      "line": 320,
       "snippet": "R.filterToggle = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -181,7 +131,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 710,
+      "line": 466,
       "snippet": "const b = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -191,7 +141,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 850,
+      "line": 537,
       "snippet": "const btn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -201,8 +151,8 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 987,
-      "snippet": "h('button', {",
+      "line": 687,
+      "snippet": "actions: [h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
     {
@@ -211,8 +161,8 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 1002,
-      "snippet": "h('button', {",
+      "line": 706,
+      "snippet": "actions: [h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
     {
@@ -221,7 +171,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 1107,
+      "line": 805,
       "snippet": "const install = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -231,7 +181,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/views/library.js",
-      "line": 1305,
+      "line": 954,
       "snippet": "const item = (icoName, label, hint, fn) => h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -241,7 +191,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/calc.js",
-      "line": 96,
+      "line": 95,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -251,7 +201,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/calc.js",
-      "line": 114,
+      "line": 113,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -261,7 +211,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/parts.js",
-      "line": 153,
+      "line": 127,
       "snippet": "wrap.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -271,7 +221,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/parts.js",
-      "line": 170,
+      "line": 144,
       "snippet": "return h('button', { class: 'btn btn--ghost btn--sm', type: 'button', on: { click: onClick } },",
       "note": "动态检查见 interactions.js G7"
     },
@@ -281,7 +231,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/recommend.js",
-      "line": 178,
+      "line": 230,
       "snippet": "seg.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -291,7 +241,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/recommend.js",
-      "line": 216,
+      "line": 268,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -301,7 +251,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/recommend.js",
-      "line": 308,
+      "line": 362,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -311,7 +261,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/recommend.js",
-      "line": 313,
+      "line": 367,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -321,7 +271,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/replace.js",
-      "line": 42,
+      "line": 34,
       "snippet": "tools.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -331,7 +281,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/replace.js",
-      "line": 65,
+      "line": 57,
       "snippet": "h('button', { class: 'btn btn--primary btn--sm', type: 'button', on: { click: () => onOpenPanel?.('recommend') } },",
       "note": "动态检查见 interactions.js G7"
     },
@@ -341,7 +291,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/replace.js",
-      "line": 85,
+      "line": 77,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -351,7 +301,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/replace.js",
-      "line": 98,
+      "line": 90,
       "snippet": "alts.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -361,7 +311,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/saved.js",
-      "line": 109,
+      "line": 95,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -371,7 +321,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/saved.js",
-      "line": 140,
+      "line": 126,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -381,7 +331,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/saved.js",
-      "line": 144,
+      "line": 130,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -391,7 +341,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/saved.js",
-      "line": 187,
+      "line": 173,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -401,7 +351,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/saved.js",
-      "line": 203,
+      "line": 189,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -411,7 +361,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/saved.js",
-      "line": 230,
+      "line": 216,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -421,7 +371,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/lab/tiers.js",
-      "line": 57,
+      "line": 78,
       "snippet": "h('button', { class: 'btn btn--ghost btn--sm', type: 'button', on: { click: () => loadRow(b.ids) } },",
       "note": "动态检查见 interactions.js G7"
     },
@@ -430,88 +380,8 @@
       "area_zh": "可访问性",
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 102,
-      "snippet": "return h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 139,
-      "snippet": "h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 191,
-      "snippet": "h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 234,
-      "snippet": "h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 238,
-      "snippet": "h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 283,
-      "snippet": "const dec = h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 287,
-      "snippet": "const inc = h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 333,
-      "snippet": "wrap.append(h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 359,
+      "file": "js/lab/wb-result.js",
+      "line": 27,
       "snippet": "resultSeg.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -520,9 +390,9 @@
       "area_zh": "可访问性",
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 569,
-      "snippet": "slotsTools.append(h('button', {",
+      "file": "js/lab/wb-settings.js",
+      "line": 53,
+      "snippet": "const dec = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
     {
@@ -530,9 +400,89 @@
       "area_zh": "可访问性",
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/lab/workbench.js",
-      "line": 588,
+      "file": "js/lab/wb-settings.js",
+      "line": 57,
+      "snippet": "const inc = h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-settings.js",
+      "line": 103,
+      "snippet": "wrap.append(h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-settings.js",
+      "line": 131,
       "snippet": "h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-slots.js",
+      "line": 54,
+      "snippet": "return h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-slots.js",
+      "line": 91,
+      "snippet": "h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-slots.js",
+      "line": 147,
+      "snippet": "h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-slots.js",
+      "line": 190,
+      "snippet": "h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-slots.js",
+      "line": 194,
+      "snippet": "h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/lab/wb-slots.js",
+      "line": 233,
+      "snippet": "host.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
     {
@@ -550,8 +500,18 @@
       "area_zh": "可访问性",
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
+      "file": "js/components/item-detail-sections.js",
+      "line": 363,
+      "snippet": "h('button', {",
+      "note": "动态检查见 interactions.js G7"
+    },
+    {
+      "area": "D",
+      "area_zh": "可访问性",
+      "severity": "INFO",
+      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/item-detail.js",
-      "line": 80,
+      "line": 32,
       "snippet": "const ownedBtn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -561,7 +521,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/item-detail.js",
-      "line": 92,
+      "line": 44,
       "snippet": "const favBtn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -571,7 +531,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/item-detail.js",
-      "line": 109,
+      "line": 61,
       "snippet": "return h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -581,7 +541,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/item-detail.js",
-      "line": 126,
+      "line": 78,
       "snippet": "const btn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -590,18 +550,8 @@
       "area_zh": "可访问性",
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
-      "file": "js/components/item-detail.js",
-      "line": 454,
-      "snippet": "h('button', {",
-      "note": "动态检查见 interactions.js G7"
-    },
-    {
-      "area": "D",
-      "area_zh": "可访问性",
-      "severity": "INFO",
-      "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 184,
+      "line": 174,
       "snippet": "const clearBtn = h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -611,7 +561,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 278,
+      "line": 268,
       "snippet": "famRow.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -621,7 +571,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 283,
+      "line": 273,
       "snippet": "famRow.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -631,7 +581,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 302,
+      "line": 292,
       "snippet": "row.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -641,7 +591,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 334,
+      "line": 324,
       "snippet": "activeRow.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -651,7 +601,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 378,
+      "line": 368,
       "snippet": "h('button', {",
       "note": "动态检查见 interactions.js G7"
     },
@@ -661,7 +611,7 @@
       "severity": "INFO",
       "title": "button 跨行构造（静态不可判定，由动态 G7 判定）",
       "file": "js/components/picker.js",
-      "line": 413,
+      "line": 404,
       "snippet": "list.append(h('button', {",
       "note": "动态检查见 interactions.js G7"
     }

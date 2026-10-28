@@ -180,19 +180,27 @@ index.html ──→ js/main.js ──→ js/domains.js ──→ js/views/<doma
 
 ## 6. 验收（改完必须全绿）
 
-```bash
-node --test "qa/tests/*.test.mjs"            # 单元 + 架构守卫（含依赖方向/循环/单一实现）
-node qa/shot.js --theme dark                 # 54 项：路由×视口 + console/4xx 门禁
-node qa/shot.js --theme light
-node qa/interactions.js                      # 67 项真实交互
-python qa/audit.py                           # 静态审计（硬编码色/裸英文/重复标题/a11y）
-node qa/theme-contrast.mjs                   # 130 组 WCAG AA
-node qa/tests/lifecycle.browser.mjs          # 生命周期/竞态/损坏 localStorage（25）
-node qa/tests/lab-async.browser.mjs          # 实验室分帧计算版本控制（8）
+统一入口只有一个（详见 [`AGENTS.md`](../AGENTS.md) §1 与 [`qa/README.md`](../qa/README.md)）：
+
+```powershell
+.\verify.ps1 quick      # 单元 + 静态审计 + 对比度 + 数据契约（无浏览器，目标 <10s）
+.\verify.ps1 related    # 按 git 改动挑相关回归
+.\verify.ps1 full       # 完整：真实 Chrome 截图/交互/竞态/子路径（提交前）
+.\verify.ps1 data       # 数据链路（Schema/引用/同步/脚本单测）
+.\verify.ps1 deploy     # 发布前：full + deploy.py 预检
 ```
 
-浏览器用例需要先 `python serve.py`（默认 8777）。数据侧另跑 `python pipeline/mk_builds_json.py --check`、
-`python pipeline/sync-data.py --check`。
+门禁会自动起 `serve.py`（随机端口，无需手动起服务）、探测 Chrome/Python/上游工作区；
+环境不具备时明确 SKIP 并说明原因（关键检查缺 Chrome 会退出码 3，不算通过）。
+结果：`qa/results/gate.json`（机器可读）+ `qa/results/logs/<id>.log`（逐检查日志）+ 中文摘要与失败定位。
+
+真正的测试能力仍由既有零依赖设施提供，gate 只做调度与判定：
+`qa/shot.js`（截图 + console/异常/4xx 门禁）、`qa/interactions.js`（真实交互）、`qa/audit.py`（静态审计）、
+`qa/theme-contrast.mjs`（WCAG）、`qa/tests/*.test.mjs|*.browser.mjs|test_*.py`（回归测试）。
+数据侧另有 `pipeline/mk_builds_json.py --check`（流派引用）与 `pipeline/sync-data.py --check`（工作区漂移，独立 clone 下为 SKIP）。
+
+判定基线在 `qa/baselines.json`（非文档）：门禁会拦住用例被静默删除/跳过；有意增减用例时
+`--update-baseline` 并在提交信息说明。单个检查仍可单独跑（调试用），但不要把它们再拼成手工验收流程。
 
 ---
 

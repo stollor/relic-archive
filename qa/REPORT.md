@@ -1,7 +1,7 @@
 # 遗迹 2 · 遗物档案 —— QA 验收报告（v3「流派 + 亮暗双主题」· 最新）
 
-> **最新一轮（2026-10-28，第一阶段可靠性治理）：四套门禁 + 回归测试全绿 —— 见文末 [§10](#10-第一阶段可靠性治理回归2026-10-28)。**
-> 本报告由 `qa/` 下门禁脚本自动产出数据、人工整理结论。
+> **最新一轮（2026-10-28，第三阶段自动化验收流水线）：`node qa/gate.mjs full` → 16 PASS / 0 FAIL / 0 SKIP（706.5s），见文末 [§12](#12-第三阶段自动化验收与-ai-开发流水线2026-10-28)。**
+> 本报告由 `qa/` 下门禁脚本自动产出数据、人工整理结论；日常验收请直接用 `verify.ps1`（见 §0）。
 > 契约：`docs/UX_SPEC.md` §0 / §2 / §3 / §7 / §8 / §10 + **§11 v2 修订（优先）** + 本轮「效果原文优先」口径。
 
 - **验收日期**：2026-10-27（效果原文优先轮快照 23:1x；各结果 JSON 内有 `generated_at`）
@@ -11,29 +11,31 @@
 
 ---
 
-## 0. 一条命令跑完全部验收
+## 0. 一条命令跑完全部验收（第三阶段起）
 
-```bash
-# 在 .mimocode 目录下执行；三条全过 = 门禁绿，任一非 0 即为红
-node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
-echo "EXIT=$?"   # 0 = PASS；非 0 = 有 FAIL
+```powershell
+.\verify.ps1 quick      # 快速自检：单元 + 静态审计 + 对比度 + 数据契约（无浏览器，<10s）
+.\verify.ps1 related    # 按 git 改动文件挑相关回归
+.\verify.ps1 full       # 完整回归：真实 Chrome 截图/交互/竞态/子路径
+.\verify.ps1 data       # 数据链路：Schema/引用/同步/数据脚本单测
+.\verify.ps1 deploy     # 发布前：full + deploy.py 预检（不推送）
 ```
 
-| 脚本 | 作用 | 退出码 |
+`verify.ps1` 只是 `node qa/gate.mjs` 的 PowerShell 包装，任意 shell 可用后者。门禁会自动起本地服务器
+（`serve.py --port 0`，随机端口）、探测 Node/Python/Chrome/上游工作区，按环境跳过并说明原因，
+输出中文摘要 + 机器可读 `qa/results/gate.json` + 逐检查日志 `qa/results/logs/<id>.log`；
+失败时给出模块、失败用例、日志尾部与复跑命令。设计、检查清单与扩展方式见 [`qa/README.md`](qa/README.md)。
+
+| 模式 | 覆盖 | 何时用 |
 |---|---|---|
-| `node qa/shot.js --all` | 27 条路由 × 1440×1000 / 390×844 = 54 项/单主题（双主题两跑共 108 张截图）；收集 console/异常/4xx | `0` 全 PASS；`1` 有错误；`2` 启动失败 |
-| `node qa/interactions.js` | **67 项真实交互**（CDP 真实鼠标+键盘） | `0` 全 PASS；`1` 有 FAIL；`2` 启动失败 |
-| `python qa/audit.py` | 静态审计：硬编码色值 / 裸英文 / 重复标题 / a11y / 禁用词 / 外链 | `0` 无 FAIL；`1` 有 FAIL；`2` 路径错误 |
-| `node qa/theme-contrast.mjs` | 130 组 WCAG AA 对比度（双主题） | `0` 全 PASS |
-| `node --test "qa/tests/*.test.mjs"` | 29 项 JS 单元（core/task + core/store） | `0` 全 PASS |
-| `node qa/tests/lifecycle.browser.mjs` | 25 项生命周期/竞态/损坏 localStorage（需 serve.py） | `0` 全 PASS |
-| `node qa/tests/lab-async.browser.mjs` | 8 项实验室分帧计算版本控制（需 serve.py） | `0` 全 PASS |
-| `python -m unittest discover -s qa/tests -p "test_*.py"` | 23 项 sync-data 语义 | `0` OK |
+| `quick` | unit-js、audit、contrast、data-builds、data-schema | 每次改完代码先跑 |
+| `related` | quick + 按改动模块映射的检查（可能含浏览器） | 提交前小步验收 |
+| `full` | 全部检查（含 Chrome 截图/交互/lifecycle/lab-async/导航/子路径） | 提交前、发布前 |
+| `data` | data-schema、data-builds、data-sync、unit-py | 只改数据/生成链 |
+| `deploy` | full + deploy-preflight | 发布前最后一道 |
 
-> 注：本文件 §1–§9 保留 v2.1/v3 历史快照（其中「36/36」「59 项」是当时的数字）；
-> 当前基线以本节表格与文末 §10 为准。
-
----
+> 历史基线不再手抄在文档里：`qa/baselines.json` 是唯一基线，门禁会拦住「用例被静默删除/跳过」；
+> 本文 §1–§11 保留历次快照（其中 36/36、54/54、59 项等是当时的数字），当前数字以门禁输出为准。
 
 ## 1. 最终结论速览
 
@@ -345,3 +347,119 @@ node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
    如需强约束可在架构守卫里加类名白名单）。
 3. `core/api.js` 里 `terms()/stats()/buildData()` 零调用；`core/theme.js` 的 `store.on('ui')` 常驻不退订（壳级，可接受）。
 4. 实验室 `engine.js` 内部的 `round1/round4` 未并入 `fmt.round`（数据层口径冻结，避免动对拍基线）。
+
+---
+
+## 12. 第三阶段：自动化验收与 AI 开发流水线（2026-10-28）
+
+> 目标：把已有零散测试能力组织成**统一、快速、可靠、可诊断**的自检体系；不新增业务功能、不引入依赖与构建步骤。
+> 设计说明见 [`qa/README.md`](README.md)；AI 验收规则见 [`AGENTS.md`](../AGENTS.md) §1.1。
+
+### 12.1 统一入口
+
+`qa/gate.mjs`（PowerShell 包装 `verify.ps1`）是唯一入口；门禁自动起 `serve.py --port 0`（随机端口，含子路径）、
+探测 Node/Python/Chrome/上游工作区、按环境 SKIP 并说明原因，输出 `qa/results/gate.json` + `qa/results/logs/<id>.log`。
+
+| 模式 | 内容 | 实测耗时 | 用途 |
+|---|---|---|---|
+| `quick` | unit-js、audit、contrast、data-builds、data-schema | **5.9s** | 改完即跑（无浏览器） |
+| `data` | data-schema、data-builds、data-sync、unit-py | **19.9s** | 只改数据/生成链 |
+| `related` | quick 基线 + 按改动文件映射的相关检查 | 视改动（无浏览器改动≈6s；含浏览器≈30–200s） | 提交前小步验收 |
+| `full` | 16 项全量（真实 Chrome：截图/交互/竞态/子路径） | **706.5s** | 提交前 / 发布前 |
+| `deploy` | full + `deploy.py --dry-run` 预检 | full + ≈1s | 发布前最后一道 |
+
+退出码：`0` 通过 / `1` 有失败 / `2` 用法错误 / `3` 关键检查因环境不具备被跳过（不允许静默跳过）。
+
+### 12.2 全量门禁结果（`node qa/gate.mjs full`，2026-10-28）
+
+| # | 检查 | 结果 | 耗时 | 判定口径 |
+|---|---|---|---|---|
+| 1 | `unit-js` | **175/175** | 2.7s | 纯函数单测 + 架构守卫 + 数据契约 + 门禁自检 |
+| 2 | `unit-py` | **37/37** | 2.0s | sync-data 语义/异常/幂等（30）+ serve 子路径（7） |
+| 3 | `audit` | **0 FAIL / 0 WARN / 60 INFO** | 0.2s | 硬编码色/裸英文/重复标题/a11y/外链 |
+| 4 | `contrast` | **130/130** | 0.1s | 双主题 WCAG AA |
+| 5 | `data-builds` | **1/1** | 0.2s | 流派引用完整性 |
+| 6 | `data-schema` | **38/38** | 2.5s | 9 个 JSON 的结构/引用/版本契约 |
+| 7 | `data-sync` | **1/1（无漂移）** | 1.3s | 仓库快照 vs 上游工作区（独立 clone 下 SKIP） |
+| 8 | `shot-dark` | **54/54** | 109.5s | 27 路由 × 2 视口 + console/异常/4xx |
+| 9 | `shot-light` | **54/54** | 93.9s | 同上（亮色） |
+| 10 | `shot-subpath` | **25/25** | 54.2s | `/relic-archive/` 前缀下资源加载（桌面） |
+| 11 | `interactions` | **67/67** | 179.2s | 真实鼠标/键盘交互 |
+| 12 | `lifecycle` | **25/25** | 133.4s | dispatch 代际/卸载/损坏 localStorage |
+| 13 | `lab-async` | **8/8** | 38.7s | 分帧计算版本控制/取消/失败恢复 |
+| 14 | `components` | **20/20** | 2.2s | states/panel 行为契约（真实 DOM） |
+| 15 | `nav` | **6/7（N7 设计性 SKIP）** | 30.8s | 路由快切/深链/回退/卸载清理 |
+| 16 | `nav-subpath` | **7/7** | 55.3s | 同上 + 子路径资源归属 |
+
+**汇总：16 PASS / 0 FAIL / 0 SKIP（环境阻断 0），706.5s。** 基线写入 `qa/baselines.json`（唯一基线来源）。
+
+### 12.3 新增工程回归测试（P1-2）
+
+| 场景（P1-2 清单） | 测试 | 用例数 | 类型 |
+|---|---|---|---|
+| ① 快速路由切换/异步竞态 | `navigation.browser.mjs` N1/N2 + 既有 `lifecycle` G1/G5 | 2 + 既有 | 浏览器 |
+| ② 卸载后事件与任务清理 | `navigation.browser.mjs` N6 + 既有 `lifecycle` G6/G8 | 1 + 既有 | 浏览器 |
+| ③ localStorage 损坏 / 旧档迁移 | 既有 `store.test.mjs` 23 + `build-state.test.mjs`「任一 key 损坏不影响其他」 | 23 + 7 | 纯函数 |
+| ④ URL 查询解析/序列化/回退 | `router.test.mjs`（parse/setQuery/replaceSilently/回退）+ 既有 `library-query` | 10 | 纯函数 |
+| ⑤ 共享组件行为契约 | `components.browser.mjs`（states/panel 结构/文本转义/确定性/重试） | 20 | 浏览器 |
+| ⑥ 配装状态与拥有/收藏隔离 | `build-state.test.mjs`（跨 key 事件与持久化字节隔离） | 7 | 纯函数 |
+| ⑦ 数据缺失/错误类型/重复 ID/失效引用 | `data-schema.test.mjs`（真实数据 errors=0 + 内存负向夹具） | 38 | 纯函数 |
+| ⑧ GitHub Pages 子路径兼容 | `shot-subpath` + `nav-subpath` + `serve_prefix`（7） | 25 + 7 + 7 | 浏览器/Python |
+| ⑨ 实验室计算确定性与过期结果保护 | `lab-engine.test.mjs`（16）+ 既有 `lab-async`（8） | 16 + 8 | 纯函数/浏览器 |
+| ⑩ 数据同步异常处理与幂等 | `test_sync_data.py` 新增 7（缺失源/损坏 JSON/无工作区/连续 --check/重复同步） | 30（含原 23） | Python |
+
+另：`env.test.mjs`（20）覆盖环境探测与子路径工具；`gate.test.mjs`（15）覆盖门禁自身（解析器/跳过判定/改动映射/
+registry-plan-文档一致性），防止「门禁静默失效」。
+
+### 12.4 数据 Schema 与契约（P1-3）
+
+- 新增 `qa/lib/schema.mjs`（通用校验器：纯数据规则、RFC6901 JSON Pointer、`required` 必须带 why、
+  `nullable`/`enum`/`uniqueBy`/`additionalProperties`）与 `qa/lib/data-schema.mjs`（9 个运行时文件的契约 +
+  跨文件引用 + 版本策略 + 模块级缓存）。
+- 契约覆盖：items（唯一 id/枚举/counts 对账/套装引用）、builds（槽位引用解析：items id ∪ i18n ∪ `_source`）、
+  site_data（公式常数/preset 唯一/引用）、archetypes、codex（分类/block 类型与视图同步）、terms、
+  item_effects（key ⊆ items）、icon_index（count 对账）、acq（标签/引用）。
+- **真实数据 errors=0**；3 类已知缺口只报 warning（不改数据）：items 23 条 `icon_asset` 不在 icon_index、
+  builds 6 条 `inherent_mod` 为英文显示名、icon_index 4 条 failures。
+- `pipeline/sync-data.py` 增加最小 JSON 语法校验：源 JSON 损坏 → stderr 输出 `路径:行:列`、退出码 2、**零写入**
+  （`--check` 同样生效），避免把损坏数据静默搬进发布快照。
+
+### 12.5 环境自适应与发布门禁（P1-4）
+
+- **Chrome 探测**：`qa/lib/cdp.js` 新增 `resolveChrome()`（`CHROME_PATH`/`CHROME_BIN` → 平台候选（含 Edge/Chromium）→
+  `where`/`which`；失败抛 `ChromeNotFoundError` 含搜索清单与修复建议），`shot.js` 删除硬编码路径；
+  `shot.js --chrome <path>` 可覆盖。
+- **路由表唯一来源**：`qa/lib/routes.mjs`（27 条由真实数据推导）被 `shot.js` 与 gate 共用；gate 用推导条数
+  校验截图总数（`54 = 27×2`），路由被静默丢弃会 FAIL。
+- **子路径真机等价**：`serve.py` 新增 `--prefix /relic-archive`（`/` 302 到前缀首页；缺前缀资源 404 —— 本地即暴露
+  根绝对路径 bug；健康检查带 `prefix` 字段）。`qa/interactions.js` 20 处页面内根路径改为 `prefixOf(base)` 拼接：
+  **根路径 67/67、子路径 67/67（全部真跑，无排除）**。
+- **独立 clone / CI**：`data-sync` 缺上游工作区时明确 SKIP（可选，不阻断），其他检查照常运行；`gate quick` 无浏览器依赖。
+- **CI**：新增 `.github/workflows/qa.yml`（push/PR：`quick` → `data` → `full`），**只测试，不改变 Pages 静态部署**
+  （legacy 构建仍是 push 自动重建）；失败也上传 `gate.json` + 日志为 artifact。
+- **文档基线漂移**：删除文档中手抄的用例数字（`qa/REPORT.md` §0、`AGENTS.md` §1 改为「以门禁输出与
+  `qa/baselines.json` 为准」），基线由 `--update-baseline` 维护；门禁会拦截用例被删除/跳过。
+
+### 12.6 结构化报告与故障定位（P1-5）
+
+`qa/results/gate.json` 每次运行落盘，字段：`mode/env/plan/checks[]/summary`；每个 check 含
+`status/total/pass/fail/skip/duration_ms/module/error/failed[]/log/artifacts/hint/repro`。
+控制台摘要同时给出：实际执行环境（Node/Python/Chrome 来源/git sha/工作区）、逐项 PASS/FAIL/SKIP 与耗时、
+失败定位（模块 → 失败用例 → 日志尾部 12 行 → 证据文件 → 排查入口 → 复跑命令）。
+单检查日志：`qa/results/logs/<id>.log`（含完整命令与 stdout/stderr）。
+
+**定位实例（本轮真实发生）**：`lab-async` 在 gate 随机端口下报 `视图就绪超时：#/lab`，按日志与脚本头定位到
+「只认 `LAB_QA_BASE`/8777、不读 `--base`」；修复后 8/8。若无模块/日志/复跑信息，这类问题会表现为 8 条无头绪红。
+
+### 12.7 仍未覆盖的高风险行为
+
+1. `lifecycle.browser.mjs` / `lab-async.browser.mjs` 页面内仍有根绝对路径 import（gate 只在根路径调度它们；
+   子路径路径由 `nav-subpath`/`shot-subpath` 覆盖，但这两个脚本尚不能对子路径跑）。
+2. GitHub Actions 工作流已写好并用**本地等价命令**验证（`quick`/`data`/`full` 同一脚本），但**尚未在 GitHub 上真实执行**
+   （需推送后触发）；Linux 下 Chrome 版本/字体差异可能影响截图外观（门禁只判错误，不做像素比对）。
+3. 真实线上发布未在本阶段重跑（`deploy.py` 未改；上一阶段已验证）。
+4. 缺 Chrome 的端到端路径未实测（本机有 Chrome；`ChromeNotFoundError` 仅纯逻辑单测），退出码 3 的语义未真机验证。
+5. 数据契约只校验**仓库快照**；上游工作区语义错误需同步后再由 `gate data` 暴露。
+6. 交互用例仍是 67 项抽样，不覆盖每个面板/每种排序组合；截图门禁只判结构/错误，不做视觉回归（pixel diff）。
+7. 实验室引擎对「负总减伤」不做 0 下限 clamp（真实数据安全，口径已写入测试头注释；未来出现更强负词条会红提示复核）。
+8. `qa/baselines.json` 与当前用例清单绑定：有意增减用例必须 `--update-baseline`，否则门禁会拦（这是设计意图）。

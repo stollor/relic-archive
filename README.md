@@ -34,6 +34,10 @@ python serve.py --open          # 启动后自动开浏览器
 
 Windows 也可以双击 `start.cmd`。
 
+> 开发者验收（需要 Node 22+ / Python / Chrome）：`./verify.ps1 quick`（或 `node qa/gate.mjs quick`）——一个入口
+> 覆盖单元、静态审计、对比度、数据契约与真实浏览器回归；门禁自动起服务、按环境跳过并输出结构化报告，
+> 详见 [`qa/README.md`](qa/README.md) 与 [`AGENTS.md`](AGENTS.md) §1。
+
 > ⚠️ 必须通过本地服务器访问：`file://` 下浏览器会拦截 ES module 与 `fetch`。
 > 部署到静态托管（GitHub Pages / Netlify / 任意 Nginx）同样可用，把整个目录作为站点根即可；
 > 数据与图标均使用**相对路径**（`./data/*`、`./assets/*`），所以既能部署在域名根路径，
@@ -50,10 +54,11 @@ Windows 也可以双击 `start.cmd`。
 | [`docs/UX_SPEC.md`](docs/UX_SPEC.md) | 改 UI/交互前 | 契约：IA / 交互 / 组件 / JS API / 术语 / 视觉 / 验收（**改页面前必读**） |
 | [`docs/DATA.md`](docs/DATA.md) | 改数据前 | 数据来源、schema、快照同步与再生、已知限制 |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | 发布/运维 | GitHub Pages 发布、线上验收、故障排查、回滚、凭据安全 |
-| [`docs/LESSONS.md`](docs/LESSONS.md) | 想少踩坑 | 8 条设计决策（ADR）+ 23 条踩坑记录 + 有效工作法 + 反模式 + 数字基线 |
-| [`CHANGELOG.md`](CHANGELOG.md) | 了解演进 | v1 数据管线 → v2 单页应用 → v3 流派+双主题 → v3.1 仓库化发布 |
+| [`docs/LESSONS.md`](docs/LESSONS.md) | 想少踩坑 | 设计决策（ADR）+ 踩坑记录 + 有效工作法 + 反模式 + 数字基线 |
+| [`CHANGELOG.md`](CHANGELOG.md) | 了解演进 | v1 数据管线 → v2 单页应用 → v3 流派+双主题 → v3.1 仓库化 → v3.4 自动化验收 |
 | [`pipeline/README.md`](pipeline/README.md) | 改流派数据 | `mk_builds_json.py` / `sync-data.py` 用法与数据流向 |
-| [`qa/REPORT.md`](qa/REPORT.md) | 验收 | 四套门禁的断言清单与历史结果 |
+| [`qa/README.md`](qa/README.md) | 改测试 / 验收 | **统一门禁**用法、检查清单、报告结构与失败定位、环境探测与跳过语义 |
+| [`qa/REPORT.md`](qa/REPORT.md) | 验收 | 断言清单、历次结果与本轮验收记录 |
 
 ---
 

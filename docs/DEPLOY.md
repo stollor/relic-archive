@@ -19,7 +19,8 @@
 | 构建耗时 | 通常 20–60 秒 |
 | 发布方式 | `git push origin main` 自动触发 |
 
-> 为什么不用 GitHub Actions：站点没有构建步骤。Workflow 只会增加维护成本与失败点。
+> 为什么部署不用 GitHub Actions：站点没有构建步骤，`push` 触发 legacy 构建即可。
+> **测试**用 `.github/workflows/qa.yml`（quick / data / full）在 PR 与 push 时跑门禁——CI 只测试，不改变部署方式。
 > 为什么加 `.nojekyll`：legacy 构建默认走 Jekyll，会忽略 `_` 前缀目录（如 `pipeline/_source/`），
 > 且无谓加工静态文件；`.nojekyll` 让它原样下发。
 
@@ -30,15 +31,10 @@
 ```bash
 cd .mimocode/relic-archive
 
-# 1) 本地自检（四套门禁，全绿才提交）
-python serve.py &                                  # 或单独开终端
-node qa/shot.js --theme dark
-node qa/shot.js --theme light
-node qa/interactions.js
-python qa/audit.py
-node qa/theme-contrast.mjs
-python pipeline/mk_builds_json.py --check
-python pipeline/sync-data.py --check               # 若来自工作区同步
+# 1) 发布前门禁（一个入口；自动起服务、自动判环境）
+.erify.ps1 deploy        # = full（真实 Chrome 全量）+ deploy.py --dry-run 预检；不推送
+# 任意 shell：node qa/gate.mjs deploy
+# 只想快速确认：.erify.ps1 quick / related（见 AGENTS.md §1）
 
 # 2) 提交（一次只做一件事）
 git status                                          # 只应有预期文件

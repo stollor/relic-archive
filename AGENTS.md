@@ -18,8 +18,10 @@ relic-archive/
 ├─ assets/icons/            1004 张 PNG（页面经 api.iconUrl 用 ./assets/icons/*.png）
 ├─ docs/                    UX_SPEC（交互）/ ARCHITECTURE（分层与配方）/ DATA / DEPLOY / LESSONS / screenshots
 ├─ pipeline/                builds.json 生成器 + 工作区数据同步（开发用）
-├─ qa/                      零依赖验收（截图/交互/审计/对比度）+ REPORT.md
-├─ serve.py start.cmd       本地静态服务器（Python 标准库）/ Windows 启动脚本
+├─ qa/                      零依赖验收：统一门禁 qa/gate.mjs（quick/related/full/data/deploy）
+│                             + 截图/交互/审计/对比度/回归测试 + REPORT.md
+├─ verify.ps1               PowerShell 7 包装入口（等价 node qa/gate.mjs，任意 shell 可直接用后者）
+├─ serve.py start.cmd       本地静态服务器（Python 标准库，支持 --prefix 模拟 Pages 子路径）/ Windows 启动脚本
 └─ README.md CHANGELOG.md
 ```
 
@@ -30,34 +32,59 @@ relic-archive/
 
 ---
 
-## 1. 必跑命令
+## 1. 验收：一个入口（不要再背命令）
 
-```bash
-# 本地跑起来
-python serve.py                    # → http://127.0.0.1:8777/
-python serve.py --port 8780
+```powershell
+# 日常开发：改完先跑（无浏览器，目标 <10 秒）
+.\verify.ps1 quick
 
-# 四套门禁（改完代码/数据必须全绿再提交）
-node qa/shot.js --theme dark       # 54 项：27 路由 × 1440/390，含 console/异常/4xx 门禁
-node qa/shot.js --theme light      # 54 项：同上，亮色
-node qa/interactions.js            # 67 项真实交互（含流派 7 项、主题三态、移动端）
-python qa/audit.py                 # 静态审计：硬编码色/裸英文/重复标题/a11y
-node qa/theme-contrast.mjs         # 130 组 WCAG AA 对比度
+# 按改动文件自动挑相关回归（quick 基线 + 受影响模块的浏览器用例）
+.\verify.ps1 related
 
-# 数据侧自检
-python pipeline/mk_builds_json.py --check    # 流派数据引用完整性
-python pipeline/sync-data.py --check         # 仓库快照 vs .mimocode 工作区 是否有漂移（只读）
+# 提交前 / 发布前：完整回归（真实 Chrome：截图/交互/竞态/子路径）
+.\verify.ps1 full
 
-# 回归测试（零依赖；浏览器用例需先 python serve.py）
-node --test "qa/tests/*.test.mjs"            # JS 单元 + 架构守卫（依赖方向/循环/单一实现）
-node qa/tests/lifecycle.browser.mjs          # 页面生命周期/竞态/损坏 localStorage 恢复
-node qa/tests/lab-async.browser.mjs          # 实验室分帧计算：版本控制/取消/最后条件生效
-python -m unittest discover -s qa/tests -p "test_*.py" -v   # sync-data.py 同步语义
+# 数据链路（Schema/引用/工作区漂移/数据脚本单测）
+.\verify.ps1 data
+
+# 发布前：full + deploy.py 预检（不推送）
+.\verify.ps1 deploy
+
+# 查看某模式会跑哪些检查 / 帮助
+.\verify.ps1 list full
+node qa/gate.mjs --help
 ```
 
-期望结果：`54/54 × 2`、`67/67`、`0 FAIL`、`130/130`；回归测试 `node --test` 全绿、
-两个浏览器用例 `PASS=n FAIL=0`、Python `OK`。任何一项红的都 **不要提交**。
-注意 `node --test qa/tests/`（目录参数）在 Node 24+ 会报 MODULE_NOT_FOUND，用上面的 glob 写法。
+`verify.ps1` 是 `node qa/gate.mjs` 的 PowerShell 7 包装；任意 shell 都可直接 `node qa/gate.mjs <mode>`。
+门禁会自动：起本地服务器（随机端口，**不需要**先手动 `python serve.py`）→ 探测 Chrome/Python/上游工作区 →
+按环境跳过并说明原因 → 输出中文摘要 + 机器可读 `qa/results/gate.json` + 逐检查日志 `qa/results/logs/`。
+失败时直接给：对应模块、失败用例、日志尾部、复跑命令。退出码：0 通过 / 1 有失败 / 2 用法错误 / 3 关键检查环境不具备。
+
+判定：`quick` 必须 PASS 才继续；`related`/`full` 全绿才提交；`deploy` 全绿才 `python pipeline/deploy.py`。
+SKIP 必须读原因（独立 clone 缺上游工作区属预期；缺 Chrome 属环境阻断，不算通过）。
+**期望数字不写死在文档里**：`qa/baselines.json` 是唯一基线，门禁会拦住「用例被静默删除/跳过」，
+有意增减用例时用 `--update-baseline` 并在提交信息里说明。
+
+> 单个检查仍可单独跑（调试用）：`node qa/shot.js --theme dark|light`、`node qa/interactions.js`、
+> `python qa/audit.py`、`node qa/theme-contrast.mjs`、`node --test "qa/tests/*.test.mjs"`、
+> `node qa/tests/lifecycle.browser.mjs`、`node qa/tests/lab-async.browser.mjs`、
+> `python -m unittest discover -s qa/tests -p "test_*.py" -v`。
+> 注意 `node --test qa/tests/`（目录参数）在 Node 24+ 会报 MODULE_NOT_FOUND，用 glob 写法。
+
+### 1.1 改动类型 → 最少验收（AI 必跑）
+
+| 你改了什么 | 典型文件 | 最少验收 | 提交前 |
+|---|---|---|---|
+| UI / 布局 / 组件 / CSS | `js/views/**` `js/components/**` `css/**` | `.\verify.ps1 related`（审计/对比度/截图/对应交互） | `full` |
+| 状态 / 持久化 | `js/core/store.js` `js/lab/state.js` | `related`（单元 + lifecycle） | `full` |
+| 数据 / 生成链 | `data/**` `pipeline/**` | `.\verify.ps1 data` | `full` |
+| 路由 / 导航 / 领域 | `js/main.js` `js/core/router.js` `js/domains.js` | `related`（nav + lifecycle + 深链） | `full` |
+| 计算引擎 / 实验室 | `js/lab/engine.js` `js/lab/*` | `related`（lab-engine 单测 + lab-async） | `full` |
+| 测试设施本身 | `qa/**` | `related`（unit-js/unit-py 自检） | `full` |
+| 发布 | — | `.\verify.ps1 deploy` | — |
+
+硬规则：**不允许**为了通过而删测试、放宽断言或改预期数字；确实要增减用例时跑 `--update-baseline`，
+并在提交信息里说明（`qa/baselines.json` 的 diff 就是审计线索）。
 
 ---
 
@@ -117,13 +144,15 @@ node qa/shot.js --theme dark --only builds  # 看 7 套详情是否还正常
 
 ### 3.7 发布
 ```bash
+.\verify.ps1 deploy                    # 发布前门禁：full + deploy.py 预检（不推送）
 git add -A && git commit -m "feat: ..."
-python pipeline/deploy.py        # 推送 + 等 Pages 自动重建 + 线上冒烟（推荐）
+python pipeline/deploy.py              # 推送 + 等 Pages 自动重建 + 线上冒烟（推荐）
 ```
-GitHub Pages 会自动重建（约 20–60 秒，legacy 构建，无 CI）。`deploy.py` 会校验远端 sha、轮询线上内容指纹确认真的换了版本，
+GitHub Pages 会自动重建（约 20–60 秒，legacy 构建，无 CI 构建步骤）。`deploy.py` 会校验远端 sha、轮询线上内容指纹确认真的换了版本，
 再跑线上 `qa/shot.js`；失败给出退出码（2 预检 / 3 推送 / 4 发布超时 / 5 sha 不一致 / 1 冒烟）。
 手动等价：用系统 Git `push origin main` 后执行 `python pipeline/deploy.py --verify-only`。
 ⚠️ 本机推送必须用系统 Git（见 LESSONS #3），脚本已自动优先选它。
+`.github/workflows/qa.yml` 只跑测试门禁（quick/data/full），**不参与部署**，Pages 仍保持静态零构建。
 
 ---
 
@@ -171,7 +200,11 @@ GitHub Pages 会自动重建（约 20–60 秒，legacy 构建，无 CI）。`de
 | `css/tokens.css` | 设计变量（双主题唯一色值来源） |
 | `data/` | 运行时数据（见 `docs/DATA.md` §2） |
 | `pipeline/` | 数据生成/同步（开发用，不参与运行时） |
-| `qa/` | 验收脚本与报告（不参与运行时） |
+| `qa/gate.mjs` + `qa/gate/*` | **统一验收入口**：检查注册表（registry）、执行/环境探测（env）、改动映射（plan）、报告解析与渲染（report） |
+| `qa/baselines.json` | 各检查的最低通过数/允许跳过数（防「用例被静默删除/跳过」）；`--update-baseline` 维护 |
+| `qa/tests/*.test.mjs` `*.browser.mjs` `test_*.py` | 回归测试：纯函数单测 + 真实浏览器用例 + 数据脚本用例 |
+| `qa/shot.js` `qa/interactions.js` `qa/audit.py` `qa/theme-contrast.mjs` | 被 gate 调度的具体测试能力 |
+| `qa/REPORT.md` | 历史基线、断言清单与本轮验收记录 |
 
 ---
 
@@ -180,7 +213,10 @@ GitHub Pages 会自动重建（约 20–60 秒，legacy 构建，无 CI）。`de
 - GitHub Pages 部署在 **子路径** `/relic-archive/`：所有资产必须用相对路径（`./data/`、`./assets/`）；绝对 `/data/` 会 404。
 - Pages 用 **legacy + `.nojekyll`**：否则 Jekyll 会忽略 `_` 开头的目录（如 `pipeline/_source/`）。
 - 本机 `git push` 用 **`C:\Program Files\Git\cmd\git.exe`**；DSH 自带 ucrt64 git 上传会卡死（dry-run 却正常）。
-- `qa/interactions.js` 的页面内 import 是根路径（`/js/...`），只适合对本地根路径跑；线上子路径只能跑 `qa/shot.js --base`。
+- QA 页面内脚本不要写根绝对路径（`/js/...`、`/data/...`）：`interactions.js` 已改用 `qa/lib/base.js` 的 `prefixOf(base)`，
+  根路径与 `/relic-archive/` 子路径都能跑；新增页面内 import 一律 `new URL('js/…', location.href)`。
+- Chrome 路径不要硬编码：用 `qa/lib/cdp.js` 的 `resolveChrome()`（`CHROME_PATH` 可覆盖），`shot.js --chrome` 可临时指定。
+- 用 `serve.py --prefix /relic-archive` 可在本地复现 Pages 子路径；缺前缀资源返回 404 是**预期**（本地提前暴露绝对路径 bug）。
 - `data/builds.json` 的 `armor.weight_class` 有源数据重复词（「轻 轻量」），视图侧归一化显示，**不要回写数据**。
 - 29 个纯文本实体（碎片/棱镜传奇词条）没有本地 id：显示只读 chip，点不开详情，这是正确行为。
 - 移动端顶栏 4 个领域入口必须保持 ≥32×32 点击区（`interactions M5` 会抽检）。
@@ -212,4 +248,6 @@ GitHub Pages 会自动重建（约 20–60 秒，legacy 构建，无 CI）。`de
 - 提交信息用中文 + conventional 前缀：`feat:` / `fix:` / `docs:` / `data:` / `deploy:` / `chore:`。
 - 一次提交只做一件事；数据更新与页面改动分开提交。
 - 改 UI/交互必须同步更新 `docs/UX_SPEC.md`；改数据格式必须同步更新 `docs/DATA.md`。
-- 发布 = `git push origin main`；Pages 自动重建；线上跑一遍 `qa/shot.js --base`.
+- 发布 = `git push origin main`；Pages 自动重建；线上跑一遍 `node qa/shot.js --base`.
+- 提交前必须 `.\verify.ps1 full`（或至少 `related` 且其覆盖了你的改动）全绿；测试数字以门禁输出与 `qa/baselines.json` 为准，
+  不在文档里手抄基线（文档与基线不一致会误导下一个 AI）。

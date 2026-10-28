@@ -118,7 +118,13 @@ python pipeline/mk_builds_json.py --check # 校验所有引用可解析
 python pipeline/mk_builds_json.py         # 写 data/builds.json
 
 # 3) 跑门禁再提交（见 README「验收」）
+node qa/gate.mjs data      # Schema/引用/工作区漂移 + 数据脚本单测（推荐）
+node qa/gate.mjs full      # 提交前完整回归
 ```
+
+数据结构契约在 `qa/lib/data-schema.mjs`（9 个运行时 JSON 的字段/类型/唯一性/跨文件引用/版本兼容），
+由 `qa/tests/data-schema.test.mjs` 验证；真实数据当前 **0 error / 3 类已知 warning**（见 `qa/REPORT.md` §12.4）。
+`sync-data.py` 只做语法层校验（损坏即退出码 2、零写入），语义契约由 data-schema 负责。
 
 `pipeline/sync-data.py` 可反复运行（幂等）：文本 JSON 按换行归一后比较、统一 LF 落盘，二进制原样复制；
 只有真正的内容差异才会复制。退出码：0 成功/已最新、1 `--check` 有漂移、2 工作区缺失/不完整、3 写盘失败（已回滚）；

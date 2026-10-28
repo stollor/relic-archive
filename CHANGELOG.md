@@ -3,6 +3,39 @@
 > 只记「形态/能力」级变更与关键数字；细枝末节的改动见 `git log`。
 > 早期里程碑来自 `.mimocode` 工作区历史（站点曾是工作区内的 `web/`）。
 
+## v3.4 — 2026-10-28 · 第三阶段：自动化验收与 AI 开发流水线（不新增功能、不改视觉）
+
+- **统一验收入口**：新增 `qa/gate.mjs`（PowerShell 包装 `verify.ps1`）与 `qa/gate/`（env/plan/registry/report），
+  一条命令取代原来「先起服务再拼 8 条命令」：`quick`（单元+审计+对比度+数据契约，**5.9s**，无浏览器）、
+  `related`（按 git 改动文件映射相关检查）、`full`（16 项，含真实 Chrome 截图/交互/竞态/子路径，**706.5s**）、
+  `data`（数据链路）、`deploy`（full + `deploy.py --dry-run` 预检）。门禁自动起 `serve.py --port 0`（随机端口）、
+  探测 Chrome/Python/上游工作区，区分「环境不具备 SKIP」与「真失败」（关键检查被跳过 → 退出码 3，不假装通过）。
+- **结构化报告与失败定位**：`qa/results/gate.json`（mode/env/plan/checks/summary；每项含
+  status/total/pass/fail/skip/module/error/failed[]/log/artifacts/hint/repro）+ `qa/results/logs/<id>.log`；
+  控制台中文摘要给出实际执行环境、逐项耗时、失败用例、日志尾部与复跑命令。
+- **新增工程回归测试**（零依赖，全部纳入门禁）：`router.test.mjs` 10（URL 解析/序列化/回退/地址栏归属）、
+  `build-state.test.mjs` 7（配装 vs 拥有/收藏隔离）、`lab-engine.test.mjs` 16（计算确定性/不污染输入/公式不变量/
+  660 预设对账）、`components.browser.mjs` 20（states/panel 真实 DOM 契约）、`navigation.browser.mjs` 7
+  （同 tick 路由竞态/同路径参数快切/深链刷新/未知领域回退/卸载清理/子路径）、`env.test.mjs` 20
+  （Chrome 探测/子路径工具/静态守卫）、`gate.test.mjs` 15（门禁自身：解析器/跳过判定/改动映射/registry-文档一致性）。
+- **数据 Schema 与契约**：新增 `qa/lib/schema.mjs` + `qa/lib/data-schema.mjs`（9 个运行时 JSON 的结构/类型/唯一性/
+  跨文件引用/版本兼容；RFC6901 Pointer 精确定位），`data-schema.test.mjs` 38（真实数据 errors=0 + 内存负向夹具）。
+  真实数据仅 3 类已知 warning（icon_asset 23 条 / inherent_mod 6 条 / icon_index failures 4 条），**未改任何数据**。
+- **数据同步异常处理**：`pipeline/sync-data.py` 在 plan 阶段校验源 JSON 语法，损坏 → `路径:行:列` + 退出码 2 + 零写入
+  （`--check` 同样生效）；`test_sync_data.py` 23→30（缺失源/损坏/无工作区/连续 --check/重复同步幂等）。
+- **环境自适应与子路径**：`qa/lib/cdp.js` 新增 `resolveChrome()`（CHROME_PATH → 平台候选 → where/which，
+  失败给修复建议），`qa/shot.js` 删除硬编码 Chrome 路径；新增 `qa/lib/routes.mjs`（27 条路由唯一来源，
+  shot 与 gate 共用，gate 用推导条数校验截图总数）；`serve.py` 新增 `--prefix /relic-archive` 本地复现 Pages 子路径
+  （`/`→302、缺前缀 404）；`qa/interactions.js` 页面内根绝对路径全部改为 `prefixOf(base)`：
+  **根路径 67/67、子路径 67/67 全真跑**；`test_serve_prefix.py` 7 例覆盖前缀/health/目录穿越。
+- **CI 只测试不部署**：新增 `.github/workflows/qa.yml`（push/PR 跑 `quick`→`data`→`full`，失败也归档报告），
+  GitHub Pages 仍是 legacy 静态零构建（ADR-5 修订）；CI 红只代表测试红，发布仍由 `pipeline/deploy.py` 验证线上内容指纹。
+- **验收规则进入 AGENTS.md**：§1 一个入口 + §1.1「改动类型 → 最少验收」矩阵（UI/状态/数据/路由/计算/测试/发布），
+  基线只认 `qa/baselines.json`（`--update-baseline` 维护，门禁拦截用例被静默删除/跳过，文档不再手抄数字）。
+- **门禁结果**：`node qa/gate.mjs full` → **16 PASS / 0 FAIL / 0 SKIP（环境阻断 0），706.5s**：
+  unit-js 175、unit-py 37、audit 0 FAIL、contrast 130、data-builds 1、data-schema 38、data-sync 无漂移、
+  shot-dark/light 各 54、shot-subpath 25、interactions 67、lifecycle 25、lab-async 8、components 20、nav 6+1skip、nav-subpath 7。
+
 ## v3.3 — 2026-10-28 · 第二阶段：工程架构收口与开发工具化（不新增功能、不改视觉）
 
 - **领域注册表**（新增 `js/domains.js`）：领域的 id / 中文名 / 标题 / 图标 / 路径 / 快捷键 / 顶栏角标 / 视图样式 /
