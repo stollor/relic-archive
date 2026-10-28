@@ -1,0 +1,62 @@
+name: QA
+
+# 只做「测试门禁」，不改变部署方式：GitHub Pages 仍是静态零构建（legacy，push 自动重建）。
+# 本工作流的价值：在 PR / push 时用可移植的检查提前抓住回归，而不是等发布后才发现。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: 验收门禁
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 确认 Chrome（截图/交互检查所需；runner 自带 stable）
+        run: |
+          google-chrome --version || chromium --version || true
+
+      - name: 快速门禁（单元 / 静态 / 数据契约，无浏览器）
+        run: node qa/gate.mjs quick
+
+      - name: 数据链路门禁（Schema / 引用 / 同步语义）
+        run: node qa/gate.mjs data
+
+      - name: 完整门禁（真实 Chrome：截图 / 交互 / 竞态 / 子路径）
+        run: node qa/gate.mjs full
+
+      - name: 归档验收报告（失败也要留证据）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-report
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            qa/results/gate.json
+            qa/results/logs/
+            qa/results/audit.json
+            qa/results/interactions.json

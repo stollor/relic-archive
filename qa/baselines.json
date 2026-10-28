@@ -1,0 +1,69 @@
+{
+  "checks": {
+    "unit-js": {
+      "min_pass": 175,
+      "max_skip": 0
+    },
+    "unit-py": {
+      "min_pass": 37,
+      "max_skip": 0
+    },
+    "audit": {
+      "min_pass": 60,
+      "max_skip": 0
+    },
+    "contrast": {
+      "min_pass": 130,
+      "max_skip": 0
+    },
+    "data-builds": {
+      "min_pass": 1,
+      "max_skip": 0
+    },
+    "data-schema": {
+      "min_pass": 38,
+      "max_skip": 0
+    },
+    "data-sync": {
+      "min_pass": 1,
+      "max_skip": 0
+    },
+    "shot-dark": {
+      "min_pass": 54,
+      "max_skip": 0
+    },
+    "shot-light": {
+      "min_pass": 54,
+      "max_skip": 0
+    },
+    "shot-subpath": {
+      "min_pass": 25,
+      "max_skip": 0
+    },
+    "interactions": {
+      "min_pass": 67,
+      "max_skip": 0
+    },
+    "lifecycle": {
+      "min_pass": 25,
+      "max_skip": 0
+    },
+    "lab-async": {
+      "min_pass": 8,
+      "max_skip": 0
+    },
+    "components": {
+      "min_pass": 20,
+      "max_skip": 0
+    },
+    "nav": {
+      "min_pass": 6,
+      "max_skip": 1
+    },
+    "nav-subpath": {
+      "min_pass": 7,
+      "max_skip": 0
+    }
+  },
+  "_说明": "各检查的最低通过数与允许跳过数；有意增减用例后用 node qa/gate.mjs <mode> --update-baseline 更新。"
+}
