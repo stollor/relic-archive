@@ -34,23 +34,36 @@ export function toast(msg, kind = 'info', opts = {}) {
     icon(TOAST_ICON[kind] || 'info', { size: 14 }),
     h('span', { text: msg }),
   );
+  const total = opts.timeout ?? (opts.action ? 6000 : 2600);
+  let timer = 0;
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    clearTimeout(timer);
+    timer = 0;
+    if (!el.isConnected) return;
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(4px)';
+    setTimeout(() => el.remove(), 160);
+  };
   if (opts.action) {
     el.append(h('button', {
       class: 'toast__act', type: 'button', text: opts.action.label,
       on: { click: () => { opts.action.fn(); close(); } },
     }));
   }
-  const close = () => {
-    if (!el.isConnected) return;
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(4px)';
-    setTimeout(() => el.remove(), 160);
-  };
   toasts.append(el);
   // 最多 3 条
   while (toasts.children.length > 3) toasts.firstElementChild.remove();
-  const timer = setTimeout(close, opts.timeout ?? (opts.action ? 6000 : 2600));
-  el.addEventListener('mouseenter', () => clearTimeout(timer));
+  timer = setTimeout(close, total);
+  // 悬停暂停自动关闭；移出后按「最多 1.2s」重启，避免鼠标扫过一次就永久驻留
+  el.addEventListener('mouseenter', () => { clearTimeout(timer); timer = 0; });
+  el.addEventListener('mouseleave', () => {
+    if (closed || !el.isConnected) return;
+    clearTimeout(timer);
+    timer = setTimeout(close, Math.min(1200, total));
+  });
   return close;
 }
 
@@ -190,6 +203,22 @@ export function closeModal({ silent = false } = {}) {
   if (!silent && cb) cb();
 }
 
+/**
+ * 关闭全部浮层（弹窗 / 抽屉 / 悬浮说明）。导航切换、视图卸载时由应用壳调用，
+ * 避免「旧页面打开的浮层留在新页面上」并归还 body 滚动锁。
+ * silent 默认 true：不触发 onClose —— 已卸载视图的回调不应再写 DOM/路由。
+ * 不关闭 Toast：它是非阻塞通知，跨页面保留有意义（例如「已保存」）。
+ * @returns {{ modal:boolean, drawer:boolean }} 本次实际关闭了哪些（便于调用方判断/日志）
+ */
+export function closeOverlays({ silent = true } = {}) {
+  const modalWasOpen = !!modalState.open;
+  const drawerWasOpen = !!drawerState.open;
+  if (modalWasOpen) closeModal({ silent });
+  if (drawerWasOpen) closeDrawer({ silent });
+  hideTip();
+  return { modal: modalWasOpen, drawer: drawerWasOpen };
+}
+
 /* ============================ 确认框 ============================ */
 export function confirm({
   title = '确认操作', body = '', ok = '确定', cancel = '取消', danger = false,
@@ -317,7 +346,7 @@ export async function confirmDanger(title, body, ok = '删除') {
 
 export const ui = {
   toast, confirm, confirmDanger,
-  openDrawer, closeDrawer, openModal, closeModal,
+  openDrawer, closeDrawer, openModal, closeModal, closeOverlays,
   showTip, hideTip, initUI,
   get isDrawerOpen() { return drawerState.open; },
   get isModalOpen() { return modalState.open; },

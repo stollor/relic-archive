@@ -31,7 +31,6 @@ export function createCalc(model, { query = null } = {}) {
   const E = model.engine;
   const calc = loadCalc();
   if (!calc.scenario) calc.scenario = S.scenarioId();
-  const root = h('div', { class: 'lab-calc' });
   const outHost = h('div', { class: 'lab-calc__out' });
   const inputHost = h('div');
 

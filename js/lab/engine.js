@@ -793,7 +793,6 @@ export function createEngine(site) {
   }
 
   /* -------------------- 逐槽替代 top3 -------------------- */
-  const subCache = new Map();
   /**
    * substitutesFor(ids, acc, sc, {exclude, limit})
    * 保持其余三件不变，逐槽枚举替代件，按 Δ场景分 排序。

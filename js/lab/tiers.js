@@ -103,16 +103,21 @@ export function createTiers(model) {
   }
 
   function render() {
+    // build/owned 变更只影响上方「四档极限」；矩阵 B 只依赖固定口径，已算表与展开态一律复用，
+    // 避免调一个槽位就把用户正在看的矩阵收起、或重复穷举 812,224 组合。
+    const prevDet = host.querySelector('details');
+    const wasOpen = !!(prevDet && prevDet.open);
     clear(host);
     host.append(renderFrontier());
-    tableBStarted = false;
-    clear(tableBHost);
+    if (!tableBStarted) clear(tableBHost);
     host.append(h('details', { class: 'lab-details', attrs: { style: 'margin-top:12px' } },
       h('summary', {}, icon('matrix', { size: 14 }), h('span', { text: '展开矩阵 B：场景 × 抗性特化（坚韧满级口径）' })),
       h('div', { class: 'lab-details__body' }, tableBHost),
     ));
     const det = host.querySelector('details');
-    if (det) det.addEventListener('toggle', () => { if (det.open) renderTableB(); }, { once: false });
+    if (!det) return;
+    det.addEventListener('toggle', () => { if (det.open) renderTableB(); }, { once: false });
+    if (wasOpen) det.open = true;   // 还原展开态；表已算好时直接复用，未算好则 toggle 处理会补算
   }
 
   const shell = panel('档位对照', { iconName: 'matrix', sub: '四档极限护甲 + 抗性特化矩阵' });

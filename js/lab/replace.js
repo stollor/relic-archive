@@ -17,7 +17,6 @@ const SLOT_KEYS = ['head', 'body', 'legs', 'gloves'];
 
 export function createReplace(model, { onOpenPanel = null } = {}) {
   const E = model.engine;
-  const root = h('div', { class: 'lab-replace' });
   const host = h('div', { class: 'lab-replace__body' });
   const tools = h('div', { class: 'row', attrs: { style: 'gap:6px' } });
   const nameOf = (id) => model.nameOf(id);
@@ -115,7 +114,7 @@ export function createReplace(model, { onOpenPanel = null } = {}) {
   const refresh = () => render();
   scope.add(S.on((reason) => { if (['missing', 'scenario', 'class-target', 'seed'].includes(reason)) render(); }));
   scope.add(store.on('build', render));
-  scope.add(store.on('owned', render));
+  // 不订阅 owned：本面板只按护甲数值/缺件计算候选，不读拥有状态（P2-6 审计：多余整面板重渲染）。
   render();
 
   return { el: shell.el, refresh, applyParams() { render(); }, destroy() { scope.dispose(); } };

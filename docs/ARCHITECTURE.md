@@ -3,6 +3,10 @@
 > 目的：让「加一个筛选 / 加一个领域 / 加一个实验室面板」这类改动**知道该动哪 1–3 个文件**，
 > 而不是先读完整套源码。这里的每条规则都有对应的自动守卫：`qa/tests/architecture.test.mjs`。
 > 改动前先看 [`UX_SPEC.md`](UX_SPEC.md)（交互契约）与 [`LESSONS.md`](LESSONS.md)（踩过的坑）。
+>
+> **怎么读文档**：先 [`../AGENTS.md`](../AGENTS.md)（规则 + 任务路径）→ [`AI_MAP.md`](AI_MAP.md)
+> （模块职责/真实依赖/改它跑什么）；遇到报错查 [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)。
+> 本文件只保留分层规则与扩展配方；模块明细与验收清单在别的文档，不在此重复。
 
 ---
 
@@ -211,3 +215,65 @@ index.html ──→ js/main.js ──→ js/domains.js ──→ js/views/<doma
 - 不把实验室引擎口径、流派评分表、游戏数据语义抽成「通用抽象」。
 - 不新增 localStorage key、不改 hash 路由形态、不改 GitHub Pages 子路径相对路径约定。
 - 不在视图里直接 `fetch` / 读写 `localStorage` / 自己拼浮层。
+
+---
+
+## 8. 状态 / 事件 / 缓存权威表（P2-6 审计结论）
+
+> 2026-10-28 只读审计（CDP 行为验证）：3 轮四领域切换 + 25 次实验室重挂后，store 订阅回基线、
+> lab state 订阅归零、document 监听器恒定 10 个、DOM 节点/JS 监听器计数恒定、heap 13.09→13.63MB 后趋平，
+> **未发现监听器/观察者泄漏**。本节固化「谁是权威、哪些常驻是设计」。
+
+### 8.1 状态权威（单一事实源）
+
+| 状态 | 唯一权威 | 其它形态（允许的派生/缓存） |
+|---|---|---|
+| 拥有 / 收藏 / 配装槽位 / 存档 / 偏好 | `js/core/store.js`（localStorage 唯一入口） | `store.build.meta()` 只读派生；`lab/state.js` 的 `meta()` 每次读取并归一，不保留副本 |
+| 缺件 `lab.missing` | `store.ui['lab.missing']` | `lab/state.js` 只做**按数组引用记忆化读**（外部 `store.ui.set` 换引用后自动同步）；写入仍走 store |
+| 资料库筛选/排序态 | URL（`#/items?…`，`js/library/query.js` 解析） | 视图模块级 `state` 是每次 `handleRoute` 重建的派生副本，不跨 mount 保留 |
+| 实验室面板参数 | URL query（`PANELS` 的 `paramKeys` 声明） | 面板内部对象是运行时副本，`applyParams` 时由 URL 覆盖 |
+| 详情打开态 | 调用方视图（`detailOpenId`）+ 地址栏 `#/items/<id>` | 二者由视图同时维护（`replaceSilently` 打开 / `router.go` 关闭）；详情组件不拥有 URL（§3） |
+| 游戏数据 | `data/*.json` → `js/core/api.js` | `api.S.*`、`model.ENGINE_CACHE`、`buildEntityCache` 均为静态快照派生缓存，**不需要失效** |
+
+### 8.2 事件与生命周期
+
+- 路由：只有 `js/main.js` 订阅 `router.onChange`；视图只实现 `onRoute(ctx)`（实测 3 轮切换新增 0）。
+- `store.on` / `S.on` 订阅必须**成对释放**（`createScope` 或 unmount 里的 off）；面板/工作台 `destroy()` 恰好一次。
+- 浮层（modal/drawer/tip）生命周期归 `js/core/ui.js`：导航切换/视图卸载时由应用壳调用
+  `ui.closeOverlays({ silent: true })`（返回 `{modal, drawer}`；silent 不触发 onClose，Toast 不清）。
+  视图不得把 `#modal`/`#drawer` 留在页面上 —— 否则旧浮层会盖住新页面并锁死滚动。
+- 应用壳生命周期常驻监听（**无需释放，属设计**）：`theme.js` 的 `store.on('ui')`（`inited` 守卫一次）+
+  Alt+T keydown + `prefers-color-scheme`；`main.js` 的 `store.on(owned/fav/build/storage-error)` +
+  快捷键 keydown + `hashchange`；`ui.js` 的 5 个 document tip 监听 + Esc + scrim。
+  新增常驻监听前先确认它是否真的跟随进程生命周期，否则按视图/面板释放。
+
+### 8.3 缓存层级
+
+| 缓存 | 键 / 范围 | 失效策略 |
+|---|---|---|
+| `api` 数据（`cache` Map + `S.*` + `buildEntityCache`） | 静态 JSON / 引用字符串 | 一次加载即不可变；`buildEntityCache` 有界（7 套 247 引用→175 唯一，实测同 ref 同对象） |
+| `model.ENGINE_CACHE`（WeakMap） | `api.site()` 对象引用 | 跨 `#/lab` 挂载复用 tableA/B/C/frontier；数据对象被替换时自动失效 |
+| `main.moduleCache` / `styleLinks` | 领域 id / CSS href | 进程生命周期；视图加载失败重试时删 module（CSS 失败目前不重试） |
+| `builds` / `codex` 视图 DATA | 静态数据对象 | 跨 mount 复用，不失效 |
+| `library/query.availableSortIds` | `items` 数组身份（WeakMap） | 数据快照变化自动失效 |
+
+原则：能明确失效的用**对象引用**做键（WeakMap），静态快照可以常驻；不要为「可能变」手写版本号。
+
+### 8.4 已知配置重复（暂不合并；改动时按表同步）
+
+| 配置 | 位置 | 备注 |
+|---|---|---|
+| 15 槽中文名 | `js/core/labels.js SLOT_ZH` / `js/lab/model.js SLOT_LABEL` | 值完全相等；model 侧待后续改为引用 |
+| 护甲四槽数组 | `labels` / `store.BUILD_SLOTS` / `lab/engine.SLOT_KEYS` / `lab/model.SLOT_GROUPS` / `lab/replace.SLOT_KEYS` / `lab/wb-slots.ARMOR_SLOTS` / `builds/ui.ARMOR_SLOTS` / `library/present.ARMOR_FAMS` / `views/library` / `item-card` / `item-detail-sections` 等 14 处 | 改槽位口径时 grep `head.*body.*legs.*gloves` 全部同步 |
+| 槽位分组顺序 | `store.BUILD_SLOTS`（注释「全站唯一」）vs `lab/model.SLOT_GROUPS` | 同 ids/顺序各一份；增加槽位必须两处同步 |
+| 五类抗性键 | `api.RES_KEYS` vs `lab/engine.RES_KEYS` | engine 为纯数据层不 import api（可独立单测），保留副本 |
+| 领域中文名 | `js/domains.js` vs `views/codex.js DOMAIN='知识库'`、`builds/ui.js DOMAIN='流派'` | 新领域以 `domains.js` 为准；视图内字符串后续可改 `domainLabel(id)` |
+| 排序词表 | `library/query.SORT_DEFS/NUM_SORT` / `picker.SORT_BY_MODE` / `item-detail-sections` | 上下文不同，保留三份；改数值键时同步 |
+| 主题三图标 | `js/core/theme.js` 内联 3 个 SVG（sun/moon/auto） | `core/icons.js` 无这三个；head 早期模块避免拉图标模块，属已知例外 |
+
+### 8.5 未解决 backlog（产品决策）
+
+- **配装特性双表示**：资料库详情「加入特性」写 `store.build.traits`（字符串数组），实验室只读
+  `build.meta.traitLevels`（等级表）；实测 `setTraits(['Trait_Fortify'])` 后实验室仍显示「特性 0/10」，
+  `build.traits` 无其它读者。两者表示同一事实但不同步；统一方案（实验室展示未定级特性 / 详情不再写 traits /
+  加迁移桥）需产品确认，本轮代码不动。

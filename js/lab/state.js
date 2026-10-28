@@ -206,30 +206,38 @@ export function migrateLegacyMeta(model) {
 }
 
 /* ----------------------------- 缺件（可用池，独立于 owned） ----------------------------- */
-const readMissing = () => {
-  const v = store.ui.get(UI.missing);
-  return new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x) : []);
-};
-const missingState = { set: readMissing() };
-const saveMissing = () => store.ui.set(UI.missing, [...missingState.set]);
+/* 唯一权威是 store.ui['lab.missing']；这里只按「数组引用」记忆化读取，不保留可写副本。
+   外部写入（resetAll / 其它模块）会换引用 → 下次读取自动同步；本模块写入仍走 saveMissing。
+   注意：写入必须经 store.ui.set（会换引用），直接原地修改同一数组不会被感知。 */
+const readMissing = (v) => new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x) : []);
+let missingSrc = null;
+let missingCache = readMissing(null);
+function missingNow() {
+  const src = store.ui.get(UI.missing);
+  if (src !== missingSrc) { missingSrc = src; missingCache = readMissing(src); }
+  return missingCache;
+}
+const saveMissing = () => store.ui.set(UI.missing, [...missingNow()]);
 
-export function isMissing(id) { return missingState.set.has(id); }
-export function missingCount() { return missingState.set.size; }
-export function missingIds() { return [...missingState.set]; }
+export function isMissing(id) { return missingNow().has(id); }
+export function missingCount() { return missingNow().size; }
+export function missingIds() { return [...missingNow()]; }
 export function toggleMissing(id) {
   if (typeof id !== 'string' || !id) return false;
-  if (missingState.set.has(id)) missingState.set.delete(id); else missingState.set.add(id);
+  const set = missingNow();
+  if (set.has(id)) set.delete(id); else set.add(id);
   saveMissing();
-  emit('missing', { id, missing: missingState.set.has(id) });
-  return missingState.set.has(id);
+  emit('missing', { id, missing: set.has(id) });
+  return set.has(id);
 }
 export function clearMissing() {
-  if (!missingState.set.size) return;
-  missingState.set.clear();
+  const set = missingNow();
+  if (!set.size) return;
+  set.clear();
   saveMissing();
   emit('missing', { cleared: true });
 }
-export function missingSet() { return new Set(missingState.set); }
+export function missingSet() { return new Set(missingNow()); }
 
 /* ----------------------------- 拥有池 ----------------------------- */
 export function ownedSet() {

@@ -220,7 +220,6 @@
 .lab-tiers .tbl tr.is-hi td { background: var(--gold-dim); }
 
 /* ============================ 计算器 ============================ */
-.lab-calc,
 .lab-calc__wrap,
 .lab-calc__wrap > *,
 .lab-calc__form,
@@ -234,12 +233,8 @@
 .lab-field--num .input--num { width: 100%; }
 .lab-field--num .field__label { display: flex; align-items: center; gap: 4px; }
 .lab-calc__side { display: flex; flex-direction: column; gap: var(--sp-3); }
-.lab-calc .panel { margin-bottom: 0; }
-.lab-calc .panel__head { flex-wrap: wrap; row-gap: 4px; }
-.lab-calc .panel__title { white-space: nowrap; }
-.lab-calc .panel__body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.lab-calc .formula { overflow-x: auto; max-width: 100%; }
-.lab-calc .statgrid, .lab-calc .lab-statgrid { margin-bottom: 2px; }
+/* 计算器面板根容器（.lab-calc）在 DOM 中不存在：面板骨架由 components/panel.js 提供，
+   因此不再保留 `.lab-calc .panel*` 之类永远不会命中的后代选择器。 */
 
 /* ============================ 存档导出 ============================ */
 .lab-export {
@@ -303,7 +298,6 @@
   .lab-statgrid, .lab-statgrid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-calc__grid, .lab-calc__grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-tiers .tbl { min-width: 940px; }
-  .lab-calc .formula { font-size: 11px; }
 }
 
 @media (hover: none) {
