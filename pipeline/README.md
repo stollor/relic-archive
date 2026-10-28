@@ -8,6 +8,7 @@ pipeline/
 ├─ mk_builds_json.py   # 生成 data/builds.json（流派视图的唯一数据源）
 ├─ sync-data.py        # 从 .mimocode 工作区同步运行时数据/图标快照（开发用）
 ├─ deploy.py           # 一键发布：推送 → 等 GitHub Pages 自动重建 → 线上冒烟
+├─ minify_icons.py     # 发布资产：图标长边缩到 148px 并同步 icon_index（需要 Pillow，仅开发机）
 ├─ _source/            # 配装源数据快照（上游 build/ui_data.json、loadouts.json、builds.json）
 └─ README.md
 ```
@@ -40,6 +41,16 @@ python pipeline/mk_builds_json.py --source ../../build
 校验项：每套配装的槽位/护甲/武器改装 id 必须能在 `data/items.json` 找到，或是
 `_source/builds.json` 的 `i18n` 里登记过的纯文本实体（遗物碎片 / 棱镜传奇词条），
 否则视为坏引用（脚本会逐条列出）。
+
+## 2.1 压缩图标（发布资产，需要 Pillow）
+
+```bash
+python pipeline/minify_icons.py --check   # 只报告：会缩多少、目标尺寸
+python pipeline/minify_icons.py --apply   # 缩放 assets/icons 并同步 data/icon_index.json
+```
+
+页面最大显示 74px（2× DPR 需 148px）；图标由上游 `tools/tex_build.py` 生成，`MAX_SIDE` 已同步为 148。
+重跑上游生成链后需再执行 `--apply`（或依赖已改的 MAX_SIDE），然后 `sync-data.py --check` 必须无漂移。
 
 ## 3. 从工作区同步快照（仅开发机）
 

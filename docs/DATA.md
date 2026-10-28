@@ -42,11 +42,16 @@
 | `data/acq.json` | 52 KB | 获取途径文本 + 难度标签 + DLC；未收录留空，不编造 | 资料库详情 |
 | `data/item_effects.json` | 151 KB | **官方效果句** 323 条（游戏内 tooltip 的机制原文，不是风味描述） | 资料库详情/列表/搜索 |
 | `data/codex/index.json` | 77 KB | 知识库 13 篇（分类/结论/公式/表格/证据/来源） | `#/codex` |
-| `data/icon_index.json` | 525 KB | 道具资产 → PNG 相对路径 | `api.js` |
-| `assets/icons/*.png` | 58 MB / 1004 张 | 256px RGBA 图标 | 全站 |
+| `data/icon_index.json` | 554 KB | 道具资产 → PNG 相对路径（含 w/h/png_bytes） | `api.js` |
+| `assets/icons/*.png` | 24 MB / 1004 张 | 148px RGBA 图标（长边，2× 74px 显示） | 全站 |
 
 `pipeline/_source/` 另存三份**配装源数据快照**（`ui_data.json` / `loadouts.json` / `builds.json`），
 只被 `pipeline/mk_builds_json.py` 读取，不参与运行时。
+
+图标由上游 `tools/tex_build.py` 生成（当前长边 ≤148px：页面最大显示 74px，2× DPR 只需 148px；
+原始解码产物仍可复跑生成）。若要重新压缩：在仓库根执行 `python pipeline/minify_icons.py --apply`
+（需要 Pillow，仅发布数据时用），它会同步 `icon_index.json` 的 `w/h/png_bytes/max_side`，
+之后 `python pipeline/sync-data.py --check` 应无漂移。
 
 ---
 
