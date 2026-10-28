@@ -60,14 +60,15 @@ function equipButton(item) {
   if (item.family === 'trait') {
     return h('button', {
       class: 'btn btn--primary btn--sm', type: 'button',
-      attrs: { title: '加入配装特性', 'aria-label': `加入特性：${item.zh}` },
+      attrs: { title: '加入配装特性（1 级，可在实验室调整等级）', 'aria-label': `加入特性：${item.zh}` },
       on: {
         click: () => {
-          const cur = store.build.traits();
-          if (cur.includes(item.id)) { ui.toast('该特性已在配装中', 'info'); return; }
-          if (cur.length >= 10) { ui.toast('特性已满 10 个，请先移除一个', 'warn'); return; }
-          store.build.setTraits([...cur, item.id]);
-          ui.toast(`已加入特性：${item.zh}`, 'ok');
+          const res = store.build.addTrait(item.id);
+          if (!res.ok && res.reason === 'exists') { ui.toast('该特性已在配装中', 'info'); return; }
+          if (!res.ok && res.reason === 'cap') { ui.toast('特性已满 10 个，请先移除一个', 'warn'); return; }
+          if (!res.ok) { ui.toast('无法加入该特性', 'err'); return; }
+          // 与实验室同一事实源（meta.traitLevels），加入后实验室立即可见并可调等级
+          ui.toast(`已加入特性：${item.zh}（1 级）`, 'ok');
         },
       },
     }, icon('plus', { size: 13 }), h('span', { text: '加入特性' }));

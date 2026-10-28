@@ -131,12 +131,12 @@ test('build：slots/mods/traits/meta/name/updated 脏数据归一，未知字段
   assert.equal(b.slots.head, null);
   assert.equal(b.slots.ring1, null);
   assert.equal('bogus' in b.slots, false, '未知槽位键必须丢弃');
-  assert.equal(b.traits.length, 10);
-  assert.deepEqual(b.traits.slice(0, 3), ['t1', 't2', 't3']);
-  assert.equal(new Set(b.traits).size, b.traits.length);
-  assert.ok(b.traits.every((t) => typeof t === 'string'));
+  assert.deepEqual(b.traits, [], 'traits 字段不再保留（已迁移为 meta.traitLevels）');
+  const levels = Object.keys(b.meta.traitLevels);
+  assert.equal(levels.length, 10, '旧 traits 迁移为 10 个 1 级特性（上限 10）');
+  assert.deepEqual(levels.slice(0, 3), ['t1', 't2', 't3']);
+  assert.ok(Object.values(b.meta.traitLevels).every((v) => v === 1));
   assert.deepEqual(b.mods, { longGun: null, handGun: null });
-  assert.deepEqual(b.meta, {});
   assert.equal(b.updated, 0);
   assert.deepEqual(b.futureField, { keep: true }, '未知 build 字段保留以兼容未来');
   assert.equal(store.build.get('bogus'), null);
@@ -178,7 +178,7 @@ test('build API：非法 slot / id / mods / traits 写不进去，合法值正�
   store.build.setMod('longGun', 7);
   assert.equal(store.build.mods().longGun, null);
   store.build.setMeta('bad-patch');
-  assert.deepEqual(store.build.meta(), {});
+  assert.deepEqual(store.build.meta(), { traitLevels: { a: 1, b: 1 } });
 });
 
 /* =============================================================================
@@ -204,12 +204,13 @@ test('saved.list：部分损坏保留合法记录、丢弃非法项，读取不�
   assert.equal(list[0].name, '甲');
   assert.equal(list[0].ts, 11);
   assert.equal(list[0].build.slots.longGun, 'lg');
-  assert.deepEqual(list[0].build.meta, { scenario: 'boss' });
+  assert.deepEqual(list[0].build.meta, { scenario: 'boss', traitLevels: { t1: 1 } });
   assert.equal(list[1].build.slots.longGun, null, '损坏 build 归空但记录本身保留');
   assert.equal(list[2].name, '未命名配装');
   assert.equal(list[2].ts, 42);
   assert.equal(list[2].build.slots.longGun, 'p1', '记录级旧 slots（primary）按别名归到 longGun');
-  assert.deepEqual(list[2].build.traits, ['t2']);
+  assert.deepEqual(list[2].build.traits, []);
+  assert.deepEqual(list[2].build.meta.traitLevels, { t2: 1 });
   assert.equal(storage.raw(KEY.saved), rawBefore, 'list() 只读，不得写回或清空数据');
 
   assert.equal(store.saved.load('bad-build'), true, '损坏 build 的存档载入不抛错');
@@ -228,7 +229,8 @@ test('saved API：save/load/rename/remove 全程使用归一化数据，同名�
   assert.equal(typeof rec.id, 'string');
   assert.equal(store.saved.count(), 1);
   assert.equal(store.saved.list()[0].build.slots.longGun, 'lg');
-  assert.deepEqual(store.saved.list()[0].build.traits, ['t1']);
+  assert.deepEqual(store.saved.list()[0].build.traits, []);
+  assert.deepEqual(store.saved.list()[0].build.meta.traitLevels, { t1: 1 });
 
   const rec2 = store.saved.save('测试配装');
   assert.equal(store.saved.count(), 1, '同名覆盖不新增');
@@ -406,7 +408,8 @@ test('迁移：saved 旧档记录转新格式，新档可用时不迁移', async
   assert.equal(list[0].ts, 1000);
   assert.equal(list[0].build.slots.longGun, 'p1');
   assert.equal(list[0].build.slots.ring2, 'r2');
-  assert.deepEqual(list[0].build.traits, ['t1']);
+  assert.deepEqual(list[0].build.traits, []);
+  assert.deepEqual(list[0].build.meta.traitLevels, { t1: 1 });
   assert.ok(typeof list[1].id === 'string' && list[1].id.length > 0, '无 id 旧档生成可用 id');
   assert.equal(list[1].build.slots.head, 'h1');
 

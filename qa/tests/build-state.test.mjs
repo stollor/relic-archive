@@ -93,7 +93,7 @@ function assertOtherKeysBaseline(store, skipKey) {
     assert.equal(store.build.get('head'), 'h0');
     assert.deepEqual(store.build.traits(), ['t0']);
     assert.deepEqual(store.build.mods(), { longGun: 'm0', handGun: null });
-    assert.deepEqual(store.build.meta(), { scenario: 'boss' });
+    assert.deepEqual(store.build.meta(), { scenario: 'boss', traitLevels: { t0: 1 } });
     assert.equal(store.state.build.name, '基线配装');
   }
   if (skipKey !== 'saved') {
@@ -102,7 +102,8 @@ function assertOtherKeysBaseline(store, skipKey) {
     assert.equal(list[0].id, 's1');
     assert.equal(list[0].name, '存档一');
     assert.equal(list[0].build.slots.handGun, 'hg0');
-    assert.deepEqual(list[0].build.traits, ['st0']);
+    assert.deepEqual(list[0].build.traits, [], 'traits 已迁移为 traitLevels');
+    assert.deepEqual(list[0].build.meta.traitLevels, { st0: 1 });
   }
   if (skipKey !== 'ui') {
     assert.equal(store.ui.theme(), 'dark');
@@ -154,7 +155,8 @@ test('隔离：设置槽位/特性/模组/meta 不写 owned/fav，也不触发�
 
   const persistedBuild = JSON.parse(storage.raw(KEY.build));
   assert.equal(persistedBuild.slots.longGun, 'lg1');
-  assert.deepEqual(persistedBuild.traits, ['t1', 't2']);
+  assert.deepEqual(persistedBuild.traits, [], 'traits 不再持久化');
+  assert.deepEqual(persistedBuild.meta.traitLevels, { t1: 1, t2: 1 });
   assert.equal(persistedBuild.mods.longGun, 'mod1');
 });
 

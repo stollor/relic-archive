@@ -474,6 +474,10 @@ async function runItems() {
     await sleep(350);
     const n1 = await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); return store.build.traits().length; })()`, { awaitPromise: true });
     assert(n1 === 1, `首次加入后特性数 ${n1} ≠ 1`);
+    // 与实验室同一事实源：必须写入 meta.traitLevels（否则实验室看不到）
+    const lv = await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js');
+      const m = store.build.meta() || {}; return (m.traitLevels || {})[${JSON.stringify(itemId)}] || 0; })()`, { awaitPromise: true });
+    assert(lv === 1, `加入后 meta.traitLevels 应为 1，实际 ${lv}`);
     await page.click(`[...document.querySelectorAll('#modal button')].find((x) => /加入特性/.test(x.textContent || ''))`, { label: '加入特性（重复）' });
     await sleep(350);
     const toastInfo = await page.ev(`(document.querySelector('#toasts') || {}).textContent || ''`);

@@ -93,6 +93,24 @@ function emptyBuild() {
 const LEGACY_SLOT_ALIASES = { primary: 'longGun', secondary: 'handGun', helmet: 'head' };
 const BUILD_KNOWN_KEYS = new Set(['name', 'slots', 'traits', 'mods', 'consumables', 'meta', 'updated', 'mod', 'updatedAt']);
 
+/**
+ * 特性等级（唯一事实源）：build.meta.traitLevels = { [traitId]: 1..10 }。
+ * 旧数据里的 build.traits（只有 id、无等级）在读取时迁移为 1 级，之后不再保留 traits 字段。
+ */
+function sanitizeTraitLevels(raw) {
+  const levels = {};
+  if (!isPlainObject(raw)) return levels;
+  for (const [id, level] of Object.entries(raw)) {
+    if (DANGEROUS_KEYS.has(id) || typeof id !== 'string' || !id) continue;
+    if (typeof level !== 'number' || !Number.isFinite(level)) continue;
+    const lv = Math.min(10, Math.max(0, Math.round(level)));
+    if (lv > 0) levels[id] = lv;
+  }
+  return levels;
+}
+
+const activeTraitIds = (levels) => Object.keys(levels).filter((id) => levels[id] > 0);
+
 /** 旧格式（或记录级旧 slots）→ 当前 build 结构；供迁移与 saved 兼容读取共用 */
 function legacyToBuildSource(raw) {
   const source = {
@@ -130,11 +148,18 @@ function normalizeBuild(raw) {
   if (isPlainObject(raw.slots)) {
     for (const slot of ALL_SLOTS) out.slots[slot] = normalizeId(raw.slots[slot]);
   }
-  out.traits = uniqueStrings(raw.traits, MAX_TRAITS);
+  // 特性：唯一事实源是 meta.traitLevels；旧 traits（仅 id）迁移为 1 级后丢弃
+  out.traits = [];
   const mods = isPlainObject(raw.mods) ? raw.mods : (isPlainObject(raw.mod) ? raw.mod : null);
   if (mods) out.mods = { longGun: normalizeId(mods.longGun), handGun: normalizeId(mods.handGun) };
   out.consumables = uniqueStrings(raw.consumables);
   out.meta = copyPlainObject(raw.meta);
+  const levels = sanitizeTraitLevels(out.meta.traitLevels);
+  for (const id of uniqueStrings(raw.traits, MAX_TRAITS)) {
+    if (!levels[id] && activeTraitIds(levels).length < MAX_TRAITS) levels[id] = 1;
+  }
+  if (Object.keys(levels).length) out.meta.traitLevels = levels;
+  else delete out.meta.traitLevels;
   out.updated = Number.isFinite(raw.updated) ? raw.updated : (Number.isFinite(raw.updatedAt) ? raw.updatedAt : 0);
   Object.assign(out, copyUnknown(raw, BUILD_KNOWN_KEYS));
   return out;
@@ -142,7 +167,7 @@ function normalizeBuild(raw) {
 
 function isBuildEmpty(build) {
   return !build.name
-    && !build.traits.length
+    && !activeTraitIds(sanitizeTraitLevels(build.meta && build.meta.traitLevels)).length
     && !build.mods.longGun && !build.mods.handGun
     && !build.consumables.length
     && !Object.keys(build.meta).length
@@ -478,11 +503,33 @@ const store = {
     slots() { return { ...state.build.slots }; },
     ids() { return Object.values(state.build.slots).filter(Boolean); },
     filled() { return store.build.ids().length; },
-    traits() { return [...state.build.traits]; },
+    /** 已启用特性 id（派生自 meta.traitLevels；旧 traits 已在读取时迁移） */
+    traits() { return activeTraitIds(sanitizeTraitLevels(state.build.meta.traitLevels)); },
+    /**
+     * @deprecated 旧接口，等同「把给定 id 设为 1 级并清空其它特性」；新代码用 addTrait / setMeta。
+     * 保留是为了兼容旧测试与可能的旧调用方。
+     */
     setTraits(list) {
-      state.build.traits = uniqueStrings(list, MAX_TRAITS);
+      const levels = {};
+      for (const id of uniqueStrings(list, MAX_TRAITS)) levels[id] = 1;
+      state.build.traits = [];
+      state.build.meta = { ...copyPlainObject(state.build.meta), traitLevels: levels };
       writeJSON(KEY.build, state.build);
-      emit('build', { traits: [...state.build.traits] });
+      emit('build', { traits: activeTraitIds(levels) });
+    },
+    /** 加入一个特性（1 级）；已存在/已满返回 {ok:false,reason} */
+    addTrait(id) {
+      const traitId = normalizeId(id);
+      if (!traitId) return { ok: false, reason: 'bad' };
+      const levels = sanitizeTraitLevels(state.build.meta.traitLevels);
+      if (levels[traitId] > 0) return { ok: false, reason: 'exists' };
+      if (activeTraitIds(levels).length >= MAX_TRAITS) return { ok: false, reason: 'cap' };
+      levels[traitId] = 1;
+      state.build.meta = { ...copyPlainObject(state.build.meta), traitLevels: levels };
+      state.build.updated = Date.now();
+      writeJSON(KEY.build, state.build);
+      emit('build', { traits: activeTraitIds(levels) });
+      return { ok: true, level: 1 };
     },
     mods() { return { ...state.build.mods }; },
     /** 附加状态（增益档 / 场景 / 缺件标记等，随配装一起存档） */
