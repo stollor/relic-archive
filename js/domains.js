@@ -19,6 +19,8 @@
  *   purpose   帮助面板里的一句话用途
  *   styles    进入该领域时注入的视图样式（相对路径，兼容 GitHub Pages 子路径部署）
  *   load      视图模块懒加载器
+ *   bootstrap false = 该领域首屏不依赖全量 items（进入前不必等 api.ready()；默认 true）。
+ *             目前只有 codex 为 false：它首屏只读 data/codex/index.json。
  */
 export const DOMAINS = [
   {
@@ -42,6 +44,7 @@ export const DOMAINS = [
   {
     id: 'codex', zh: '知识库', title: '知识库', icon: 'book', path: '/codex', shortcut: '4',
     purpose: '机制为什么这样',
+    bootstrap: false,
     styles: ['css/view-codex.css'],
     load: () => import('./views/codex.js'),
   },

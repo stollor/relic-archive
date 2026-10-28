@@ -96,6 +96,8 @@ async function loadView(domain) {
 
 /** 进入干净错误态：丢弃已卸载的视图句柄，保证「重试」从零 mount 一次 */
 function failDispatch(err, domain, ctx) {
+  // 错误态覆盖全屏前，先关掉上/当前视图的浮层：避免 modal / body 滚动锁跨域残留
+  closeViewOverlays();
   if (mounted) {
     try { mounted.view.unmount?.(); } catch (e) { console.error('[view unmount]', e); }
     mounted = null;
@@ -131,15 +133,40 @@ async function dispatch(ctx) {
   }
   const token = epoch.next();
   try {
+    // 跨域切换先关掉上一个视图留下的浮层（同领域 onRoute 分支不经过这里，浮层归视图自己管）。
+    // 否则 history.back() 回到别的领域后 #modal 还开着、body 滚动锁死（P0 审计）。
+    closeViewOverlays();
     if (mounted) {
       try { mounted.view.unmount?.(); } catch (e) { console.error('[view unmount]', e); }
       mounted = null;
     }
     // 无论是否有旧视图都清空容器：错误态重试/并发派发后必须从干净 DOM 开始
     clear(root);
-    const mod = await loadView(domain);
-    // 等待模块/样式期间可能已有更新的 dispatch：过期就放弃，绝不能把旧视图挂到新页面上
+    // 首屏/切换期间保持载入态：视图模块与数据都可能需要等待，不能留空白区
+    root.append(loadingState());
+    // 模块/样式与数据并行加载；挂载前两者都必须就位（无样式首屏 / 图标先占位再替换都是回归）
+    const modP = loadView(domain);
+    if (needsReady(domain)) {
+      try {
+        await api.ready();
+      } catch (err) {
+        // 数据失败与模块加载互相独立：先吞掉模块侧拒绝，避免未处理拒绝，再由 failDispatch 渲染错误态
+        modP.catch(() => {});
+        if (!epoch.isCurrent(token)) {
+          console.error('[dispatch]', err);
+          return;
+        }
+        console.error('[dispatch]', err);
+        failDispatch(readyError(err), domain, ctx);
+        return;
+      }
+      // 页脚事实（footCount/footStamp）非首屏关键路径：就绪后异步填，绝不阻塞 mount
+      fillFooterFacts();
+    }
+    const mod = await modP;
+    // 等待模块/样式/数据期间可能已有更新的 dispatch：过期就放弃，绝不能把旧视图挂到新页面上
     if (!epoch.isCurrent(token)) return;
+    clear(root);
     const viewRoot = h('div', { class: 'view fade-in' });
     root.append(viewRoot);
     const handle = mod.mount(viewRoot, ctx);
@@ -232,36 +259,65 @@ function wireShell() {
   });
 }
 
+/* ----------------------------- 数据前置 ----------------------------- */
+/**
+ * 该领域首屏是否需要全量数据（items + item_effects + icon_index）。
+ * 由注册表 js/domains.js 的 bootstrap 字段决定：false 的领域（目前只有 codex）
+ * 进入前不调用 api.ready()，直链 #/codex 因此不会下载 7.3MB 的 items。
+ */
+function needsReady(domain) {
+  const def = domainById(domain);
+  return !!def && def.bootstrap !== false;
+}
+
+/** 全量数据读取失败的统一提示（保留旧 boot 错误态里的本地服务器指引） */
+function readyError(err) {
+  const out = new Error('无法读取 /data/items.json —— 请用 python serve.py 启动本地服务后访问 http://127.0.0.1:8777/');
+  out.cause = err;
+  return out;
+}
+
+/** 页脚事实：数据就绪后异步填充，绝不阻塞首屏。
+ *  codex 直链不会触发（保持 HTML 里的「—」占位），直到用户首次进入需要数据的领域。 */
+let footerFilled = false;
+async function fillFooterFacts() {
+  if (footerFilled) return;
+  footerFilled = true;
+  try {
+    const items = await api.items();
+    const meta = api.meta();
+    const countEl = $('#footCount');
+    const stampEl = $('#footStamp');
+    if (countEl) countEl.textContent = fmt.num(items.filter((it) => it.isItem).length);
+    if (stampEl && meta && meta.generated_at) {
+      stampEl.textContent = String(meta.generated_at).replace('T', ' ').slice(0, 16);
+    }
+  } catch (err) {
+    footerFilled = false;   // 数据暂时不可用：下次进入领域再试，别把页脚永久卡死
+    console.warn('[boot] 页脚统计不可用', err);
+  }
+}
+
+/**
+ * 跨域切换 / 进入错误态前，关闭上一个视图自己的浮层（modal / drawer / tip）并归还 body 滚动锁。
+ * 统一实现见 core/ui.js 的 closeOverlays；silent: 已卸载视图的 onClose 不得再写 DOM/路由。
+ */
+function closeViewOverlays() {
+  try {
+    ui.closeOverlays({ silent: true });
+  } catch (err) {
+    console.warn('[dispatch] 关闭浮层失败', err);
+  }
+}
+
 /* ----------------------------- 启动 ----------------------------- */
 async function boot() {
   wireShell();
   clear(root);
   root.append(loadingState());
-
-  try {
-    await api.ready();
-  } catch (err) {
-    console.error('[boot]', err);
-    clear(root);
-    root.append(errorState({
-      err: new Error('无法读取 /data/items.json —— 请用 python serve.py 启动本地服务后访问 http://127.0.0.1:8777/'),
-      onRetry: () => location.reload(),
-    }));
-    return;
-  }
-
-  // 页脚事实
-  try {
-    const meta = api.meta();
-    const items = await api.items();
-    const real = items.filter((i) => i.isItem).length;
-    $('#footCount').textContent = fmt.num(real);
-    if (meta && meta.generated_at) {
-      $('#footStamp').textContent = String(meta.generated_at).replace('T', ' ').slice(0, 16);
-    }
-  } catch { /* 页脚信息非关键 */ }
-
-  clear(root);
+  // boot 不再等待全量数据：路由立即启动，视图各自加载数据。
+  // 需要 items+icons 才能正确首屏的领域由 dispatch 在 mount 前等待 api.ready()（见 needsReady）；
+  // codex 这类 bootstrap:false 的领域直链不会触发 items/effects/icons 下载。
   router.onChange(dispatch);
   router.start();
 }
