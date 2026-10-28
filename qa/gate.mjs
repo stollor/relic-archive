@@ -67,6 +67,7 @@ function parseArgs(argv) {
       if (!Number.isFinite(v) || v <= 0) die('--timeout-scale 需要正数');
       opts.timeoutScale = v;
     } else if (a.startsWith('-')) die(`未知选项：${a}`);
+    else if (a === 'list') opts.list = true;
     else if (!opts.mode) opts.mode = a;
     else die(`多余参数：${a}（模式只接受一个）`);
   }
