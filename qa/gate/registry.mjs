@@ -302,6 +302,26 @@ const navSubpath = {
   },
 };
 
+/* --------------------------------- 性能 ---------------------------------- */
+/**
+ * 性能基准（P2-1）：只做「可重复测量 + 与基线对比」，不设硬阈值（机器负载波动大）。
+ * 单独模式手动跑：node qa/gate.mjs perf（约 3–5 分钟）；不进 full，避免拖慢提交前门禁。
+ */
+const perfCheck = {
+  id: 'perf', label: '性能基准（参考指标，手动跑）', kind: 'browser', requires: ['chrome'], server: 'root',
+  cost: 'manual', timeout: 900000, module: '全部（真实浏览器冷缓存；结果见 qa/results/perf.json）',
+  hint: '性能是参考指标，不判 FAIL；看 S1/S3/S5/S7 中位数与 qa/perf-baseline.json 对比（--compare）',
+  repro: 'node qa/perf.mjs --all --compare',
+  artifacts: ['qa/results/perf.json'], baseline: null, optional: true,
+  run: (ctx) => node(['qa/perf.mjs', '--all', '--base', ctx.base, '--json', 'qa/results/perf.json', '--quiet']),
+  parse: (ctx) => {
+    const data = artifact(ctx, 'qa/results/perf.json');
+    if (!data || !data.scenarios) return null;
+    const n = Object.keys(data.scenarios).length;
+    return { pass: n, total: n, skip: 0, failed: [], note: `${n} 个场景（参考指标，不设阈值）` };
+  },
+};
+
 /* --------------------------------- 发布 ---------------------------------- */
 const deployPreflight = {
   id: 'deploy-preflight', label: '发布预检（分支/工作树/远端）', kind: 'deploy', requires: ['python'], server: null,
@@ -362,6 +382,8 @@ export const CHECKS = {
   components,
   nav: navigation,
   'nav-subpath': navSubpath,
+  // 性能（手动模式）
+  perf: perfCheck,
   // 发布
   'deploy-preflight': deployPreflight,
 };
@@ -372,6 +394,7 @@ export const CHECK_ORDER = [
   'shot-dark', 'shot-light', 'shot-subpath', 'interactions', 'interactions-items', 'interactions-lab',
   'interactions-builds', 'interactions-codex', 'interactions-global',
   'lifecycle', 'lab-async', 'components', 'nav', 'nav-subpath',
+  'perf',
   'deploy-preflight',
 ];
 

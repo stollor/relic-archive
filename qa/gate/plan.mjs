@@ -83,6 +83,8 @@ export const MODE_CHECKS = {
   ],
   // related 由文件推导，见 planRelated()
   related: [],
+  // 性能基准（参考指标，不设阈值；约 3–5 分钟，单独手动跑，不进 full）
+  perf: ['perf'],
 };
 
 export const MODE_DESC = {
@@ -91,6 +93,7 @@ export const MODE_DESC = {
   full: '完整回归：全部检查，含真实 Chrome 截图/交互/竞态/子路径',
   data: '数据链路：Schema 契约 + 流派引用 + 工作区漂移 + 数据脚本单元测试',
   deploy: '发布前：完整回归 + deploy.py 预检（不推送）',
+  perf: '性能基准：真实浏览器冷缓存测 S1–S8 中位数，只与 qa/perf-baseline.json 对比（不判失败）',
 };
 
 /** 文件列表 → 模块标签集合 */

@@ -14,6 +14,7 @@
 .\verify.ps1 full       # 完整回归：真实 Chrome 截图/交互/竞态/子路径
 .\verify.ps1 data       # 数据链路：Schema/引用/工作区漂移/数据脚本单测
 .\verify.ps1 deploy     # 发布前：full + deploy.py 预检（不推送）
+.\verify.ps1 perf       # 性能基准：真实浏览器冷缓存 S1–S8（参考指标，与 qa/perf-baseline.json 对比）
 .\verify.ps1 list full  # 看该模式会跑哪些检查
 ```
 
@@ -31,7 +32,7 @@ node qa/gate.mjs full --verbose
 
 ---
 
-## 2. 五种模式与判定
+## 2. 六种模式与判定
 
 | 模式 | 内容 | 何时用 |
 |---|---|---|
@@ -40,6 +41,7 @@ node qa/gate.mjs full --verbose
 | `full` | 全部检查（含真实 Chrome 截图/交互/lifecycle/lab-async/导航/子路径） | 提交前、发布前 |
 | `data` | data-schema、data-builds、data-sync、unit-py | 只改数据/生成链时 |
 | `deploy` | full + deploy-preflight（`deploy.py --dry-run`） | 发布前最后一道 |
+| `perf` | 性能基准 S1–S8（首屏四领域/JSON 解析/切换/搜索/内存/实验室帧率/4× 节流），与 `qa/perf-baseline.json` 对比；**参考指标不设阈值**，不进 full | 优化前后对比、性能回归排查（手动） |
 
 退出码：`0` 全部通过；`1` 有检查失败；`2` 用法/致命错误；`3` **关键检查因环境不具备被跳过**（不算通过）。
 SKIP 分两种：`required`（关键检查被环境阻断 → 退出码 3）与可选（如独立 clone 缺上游工作区 → 不阻断）。
@@ -66,6 +68,7 @@ SKIP 分两种：`required`（关键检查被环境阻断 → 退出码 3）与�
 | `lab-async` | 实验室分帧计算 T1–T7（版本控制/取消/最后条件生效/错误恢复） | medium | Chrome + 服务器 |
 | `components` | 共享组件行为契约（states/panel 的结构、文本、确定性） | medium | Chrome + 服务器 |
 | `nav` / `nav-subpath` | 路由快切/深链刷新/未知领域回退/卸载清理/子路径 | medium | Chrome + 服务器 |
+| `perf` | `qa/perf.mjs --all`：冷缓存 S1–S8 中位数（首屏/JSON 解析/切换/搜索/内存/实验室帧率/4× 节流） | manual | Chrome + 服务器（约 3–5 分钟） |
 | `deploy-preflight` | 发布预检：分支/工作树/远端（不推送） | fast | Python + git |
 
 `related` 的映射在 [`plan.mjs`](gate/plan.mjs)：文件前缀 → 模块标签 → 检查集合（如 `js/lab/**` → lab-async/lab 交互）。

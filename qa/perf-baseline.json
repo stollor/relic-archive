@@ -1,0 +1,242 @@
+{
+  "_说明": "遗迹2 · 遗物档案 性能基线（qa/perf.mjs --update-baseline 生成）。只保留各场景中位数与少量结构字段，供 --compare 对比；样本明细见同轮 qa/results/perf.json（gitignored）。环境/数据哈希见 env，换机器/数据后请重采基线。",
+  "schema": "r2-perf/1",
+  "generatedAt": "2026-10-28T12:54:39.977Z",
+  "env": {
+    "node": "v26.2.0",
+    "chrome": "Chrome/156.0.8078.48",
+    "os": "win32 10.0.26200 x64",
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700F",
+    "cpuCount": 20,
+    "totalMemGB": 31.8,
+    "base": "<auto>",
+    "server": "auto: python serve.py --host 127.0.0.1 --port 0（随机端口，不写入基线）",
+    "viewport": "1440x1000",
+    "theme": "dark(prefers-color-scheme emulated + localStorage r2.v2.ui.theme=dark)",
+    "cache": "每次采样 Network.clearBrowserCache + Network.setCacheDisabled(true)（冷缓存）",
+    "repeat": 3,
+    "dataSha256_16": {
+      "items": "f18563ecb30c1e06",
+      "itemEffects": "96c3fd1e32edee47",
+      "iconIndex": "25f235fcc863dfa0",
+      "siteData": "a58fa01812034e84",
+      "builds": "1647c15d12764ea2",
+      "codex": "59f93abbcf4d4736"
+    },
+    "git": {
+      "head": "14653ce"
+    }
+  },
+  "scenarios": {
+    "S1": {
+      "routes": {
+        "items": {
+          "firstViewMs": 211.9,
+          "domContentLoadedMs": 55.4,
+          "fcpMs": 60,
+          "wallMs": 631,
+          "totalRequests": 76,
+          "totalBytes": 11321401,
+          "jsBytes": 232313,
+          "cssBytes": 77147,
+          "imgBytes": 2994741,
+          "imageRequests": 46,
+          "jsonRequests": 3,
+          "jsonFetchMs": 34.7,
+          "jsonParseMs": 123.9,
+          "jsonParseCount": 3,
+          "parseDoneToFirstViewMs": 56.6,
+          "renderedCards": 60,
+          "visibleCards": 18,
+          "imgElements": 51
+        },
+        "lab": {
+          "firstViewMs": 228.9,
+          "domContentLoadedMs": 59.2,
+          "fcpMs": 60,
+          "wallMs": 646,
+          "totalRequests": 55,
+          "totalBytes": 9909657,
+          "jsBytes": 368829,
+          "cssBytes": 81217,
+          "imgBytes": 662867,
+          "imageRequests": 10,
+          "jsonRequests": 5,
+          "jsonFetchMs": 61,
+          "jsonParseMs": 153.8,
+          "jsonParseCount": 5,
+          "parseDoneToFirstViewMs": 69.8,
+          "renderedCards": 0,
+          "visibleCards": 0,
+          "imgElements": 40
+        },
+        "builds": {
+          "firstViewMs": 220.7,
+          "domContentLoadedMs": 58.5,
+          "fcpMs": 60,
+          "wallMs": 650,
+          "totalRequests": 33,
+          "totalBytes": 8647309,
+          "jsBytes": 214831,
+          "cssBytes": 85450,
+          "imgBytes": 0,
+          "imageRequests": 0,
+          "jsonRequests": 5,
+          "jsonFetchMs": 56.2,
+          "jsonParseMs": 120.8,
+          "jsonParseCount": 5,
+          "parseDoneToFirstViewMs": 49.8,
+          "renderedCards": 7,
+          "visibleCards": 7,
+          "imgElements": 0
+        },
+        "codex": {
+          "firstViewMs": 202.4,
+          "domContentLoadedMs": 62.3,
+          "fcpMs": 64,
+          "wallMs": 574,
+          "totalRequests": 25,
+          "totalBytes": 8306593,
+          "jsBytes": 132955,
+          "cssBytes": 77319,
+          "imgBytes": 0,
+          "imageRequests": 0,
+          "jsonRequests": 4,
+          "jsonFetchMs": 40.6,
+          "jsonParseMs": 127.9,
+          "jsonParseCount": 4,
+          "parseDoneToFirstViewMs": 43,
+          "renderedCards": 0,
+          "visibleCards": 0,
+          "imgElements": 0
+        }
+      }
+    },
+    "S2": {
+      "routes": {
+        "items": {
+          "jsonRequests": 3,
+          "jsonFetchMs": 34.7,
+          "jsonParseMs": 123.9,
+          "jsonParseCount": 3,
+          "allJsonParseMs": 0.1,
+          "allJsonParseCount": 1,
+          "parseDoneToFirstViewMs": 56.6,
+          "firstViewMs": 211.9
+        },
+        "lab": {
+          "jsonRequests": 5,
+          "jsonFetchMs": 61,
+          "jsonParseMs": 153.8,
+          "jsonParseCount": 5,
+          "allJsonParseMs": 0,
+          "allJsonParseCount": 1,
+          "parseDoneToFirstViewMs": 69.8,
+          "firstViewMs": 228.9
+        },
+        "builds": {
+          "jsonRequests": 5,
+          "jsonFetchMs": 56.2,
+          "jsonParseMs": 120.8,
+          "jsonParseCount": 5,
+          "allJsonParseMs": 0,
+          "allJsonParseCount": 1,
+          "parseDoneToFirstViewMs": 49.8,
+          "firstViewMs": 220.7
+        },
+        "codex": {
+          "jsonRequests": 4,
+          "jsonFetchMs": 40.6,
+          "jsonParseMs": 127.9,
+          "jsonParseCount": 4,
+          "allJsonParseMs": 0,
+          "allJsonParseCount": 1,
+          "parseDoneToFirstViewMs": 43,
+          "firstViewMs": 202.4
+        }
+      }
+    },
+    "S3": {
+      "median": {
+        "items": 34.2,
+        "lab": 54.9,
+        "builds": 76.3,
+        "codex": 26.5
+      }
+    },
+    "S4": {
+      "medianMs": 14.4,
+      "p95Ms": 40.4,
+      "switchesPerSample": 24
+    },
+    "S5": {
+      "median": {
+        "input2Ms": 57.5,
+        "input4Ms": 36.8,
+        "catChipMs": 64.7,
+        "sortMs": 96.7,
+        "comboMs": 112.1,
+        "cardsAfter": 60
+      }
+    },
+    "S6": {
+      "median": {
+        "firstHeapMB": 11.26,
+        "afterHeapMB": 13.65,
+        "heapGrowthMB": 2.4,
+        "nodesGrowth": 3,
+        "documentsGrowth": 0,
+        "imagesFirst": 51,
+        "imagesAfter": 51
+      }
+    },
+    "S7": {
+      "median": {
+        "wallMs": 104,
+        "reportedMs": 93,
+        "frames": 6,
+        "p95GapMs": 17.1,
+        "maxGapMs": 17.1,
+        "longFrames": 0,
+        "longTasks": 0,
+        "avgFps": 57.8
+      }
+    },
+    "S8": {
+      "S1": {
+        "items": {
+          "firstViewMs": 729.6,
+          "domContentLoadedMs": 196.1,
+          "fcpMs": 172,
+          "wallMs": 1739,
+          "totalRequests": 45,
+          "totalBytes": 9329588,
+          "jsBytes": 232313,
+          "cssBytes": 77147,
+          "imgBytes": 1002928,
+          "imageRequests": 15,
+          "jsonRequests": 3,
+          "jsonFetchMs": 163.4,
+          "jsonParseMs": 456.3,
+          "jsonParseCount": 3,
+          "parseDoneToFirstViewMs": 211.6,
+          "renderedCards": 60,
+          "visibleCards": 6,
+          "imgElements": 51
+        }
+      },
+      "S3": {
+        "median": {
+          "items": 291.5,
+          "lab": 353.8,
+          "builds": 199.4,
+          "codex": 95.2
+        }
+      },
+      "S4": {
+        "medianMs": 100.8,
+        "p95Ms": 294
+      }
+    }
+  }
+}

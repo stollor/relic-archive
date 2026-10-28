@@ -174,7 +174,8 @@ test('registry：CHECK_ORDER 与 CHECKS 完全一致（没有漏登记/漏排序
     for (const req of c.requires || []) {
       assert.ok(['python', 'chrome', 'workspace'].includes(req), `${id} 声明了未知环境依赖 ${req}`);
     }
-    assert.ok(['fast', 'medium', 'slow'].includes(c.cost), `${id} cost 非法`);
+    // manual = 只手动跑（性能基准这类参考指标），不参与常规门禁
+    assert.ok(['fast', 'medium', 'slow', 'manual'].includes(c.cost), `${id} cost 非法`);
   }
 });
 
