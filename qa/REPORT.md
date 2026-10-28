@@ -1,6 +1,6 @@
 # 遗迹 2 · 遗物档案 —— QA 验收报告（v3「流派 + 亮暗双主题」· 最新）
 
-> **最新一轮（2026-10-28，v3）：三套门禁 + 主题对比度全绿 —— 见文末 [§9](#9-v3-轮流派--亮暗双主题2026-10-28)。**
+> **最新一轮（2026-10-28，第一阶段可靠性治理）：四套门禁 + 回归测试全绿 —— 见文末 [§10](#10-第一阶段可靠性治理回归2026-10-28)。**
 > 本报告由 `qa/` 下门禁脚本自动产出数据、人工整理结论。
 > 契约：`docs/UX_SPEC.md` §0 / §2 / §3 / §7 / §8 / §10 + **§11 v2 修订（优先）** + 本轮「效果原文优先」口径。
 
@@ -21,9 +21,17 @@ echo "EXIT=$?"   # 0 = PASS；非 0 = 有 FAIL
 
 | 脚本 | 作用 | 退出码 |
 |---|---|---|
-| `node qa/shot.js --all` | 18 条路由 × 1440×1000 / 390×844 = 36 张截图；收集 console/异常/4xx | `0` 全 PASS；`1` 有错误；`2` 启动失败 |
-| `node qa/interactions.js` | **59 项真实交互**（CDP 真实鼠标+键盘），按 §2 + §11.7 + 效果原文优先口径 | `0` 全 PASS；`1` 有 FAIL；`2` 启动失败 |
+| `node qa/shot.js --all` | 27 条路由 × 1440×1000 / 390×844 = 54 项/单主题（双主题两跑共 108 张截图）；收集 console/异常/4xx | `0` 全 PASS；`1` 有错误；`2` 启动失败 |
+| `node qa/interactions.js` | **67 项真实交互**（CDP 真实鼠标+键盘） | `0` 全 PASS；`1` 有 FAIL；`2` 启动失败 |
 | `python qa/audit.py` | 静态审计：硬编码色值 / 裸英文 / 重复标题 / a11y / 禁用词 / 外链 | `0` 无 FAIL；`1` 有 FAIL；`2` 路径错误 |
+| `node qa/theme-contrast.mjs` | 130 组 WCAG AA 对比度（双主题） | `0` 全 PASS |
+| `node --test "qa/tests/*.test.mjs"` | 29 项 JS 单元（core/task + core/store） | `0` 全 PASS |
+| `node qa/tests/lifecycle.browser.mjs` | 25 项生命周期/竞态/损坏 localStorage（需 serve.py） | `0` 全 PASS |
+| `node qa/tests/lab-async.browser.mjs` | 8 项实验室分帧计算版本控制（需 serve.py） | `0` 全 PASS |
+| `python -m unittest discover -s qa/tests -p "test_*.py"` | 23 项 sync-data 语义 | `0` OK |
+
+> 注：本文件 §1–§9 保留 v2.1/v3 历史快照（其中「36/36」「59 项」是当时的数字）；
+> 当前基线以本节表格与文末 §10 为准。
 
 ---
 
@@ -221,3 +229,40 @@ node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
 1. 流派详情里 29 个「纯文本实体」（遗物碎片 / 棱镜传奇词条 / wiki-only 名称）无本地 id，显示为只读 chip（带中文效果 tip），不可点开详情 —— 数据本身如此，符合「不编造 id」。
 2. `builds.json` 的 `armor.weight_class` 源数据有重复词（如「轻 轻量」），视图侧已归一化显示，未改数据。
 3. 「装入实验室」按设计整套覆盖现有 15 槽（附带 toast），仅跳过改装/变异器/天赋/碎片等非工作台槽位；未加二次确认框。
+
+---
+
+## 10. 第一阶段可靠性治理回归（2026-10-28）
+
+> 本轮目标：确定性 Bug / 竞态 / 状态可靠性 / 数据更新隐患。**不新增功能、不改数据与 UI 语义**。
+> 详细经验见 [`docs/LESSONS.md`](../docs/LESSONS.md) §2.7 #24–#28；变更见 [`CHANGELOG.md`](../CHANGELOG.md) v3.2。
+
+| 门禁 | 结果 |
+|---|---|
+| `node qa/shot.js --theme dark` | **54/54 PASS**（27 路由 × 1440/390；0 console error / 0 异常 / 0 4xx） |
+| `node qa/shot.js --theme light` | **54/54 PASS** |
+| `node qa/interactions.js` | **67/67 PASS**（0 console error） |
+| `python qa/audit.py` | **0 FAIL / 0 WARN / 65 INFO**（exit 0） |
+| `node qa/theme-contrast.mjs` | **130/130 PASS** |
+| `python pipeline/mk_builds_json.py --check` | exit 0（引用完整性；历史 23 条 id 落空为既有 INFO） |
+| `python pipeline/sync-data.py --check` | **exit 0**，录得「仅换行差异 5 个（按内容相同处理，不写盘）」，零写盘 |
+| `node --test "qa/tests/*.test.mjs"` | **29/29 PASS**（core/task 6 + core/store 23） |
+| `node qa/tests/lifecycle.browser.mjs` | **25/25 PASS**（快速 A→B→C / 延迟模块与数据 / 前进后退 / 深链 / 损坏 localStorage / storage-error toast） |
+| `node qa/tests/lab-async.browser.mjs` | **8/8 PASS**（运行中连续改条件取最后条件 / 离开页面零过期写入 / 耗时无退化） |
+| `python -m unittest discover -s qa/tests -p "test_*.py"` | **23 tests OK**（图标崩溃回归 / 幂等 / 只读 check / 换行归一 / 回滚 / 退出码） |
+
+### 10.1 本轮确认并修复的问题（证据 → 修复）
+
+| 编号 | 现象 / 根因 | 修复 |
+|---|---|---|
+| P0-1a | `pipeline/sync-data.py` 图标分支 `rows.append()` 传 3 参 → 新增/更新图标必抛 TypeError，且此前已复制部分文件（未说明的部分更新）；`--check` 同崩 | rows 改 tuple；两阶段计划/校验 → 原子落盘 + 失败回滚；退出码 0/1/2/3 |
+| P0-1b | `--check` 长期假红：5 文件字节差异实为 CRLF/LF（工作区 CRLF × 仓库 `eol=lf`） | 文本 JSON 换行归一后比较、统一 LF 落盘；实测 `--check` 归零 |
+| P0-2 | 推荐穷举运行中改条件被 `state.running` 丢弃 → 结果对应旧条件；完成回调无版本检查可覆盖新条件；离开页面 rAF 继续写已卸载 DOM | `core/task.js` 的 `createTaskRunner` + `createEpoch`：条件一变重启、过期回调不落地、destroy 取消分帧 |
+| P0-3 | async `dispatch` 无代际 → 快速 A→B→C 旧页面后挂载/双实例；视图 `load().then` 卸载后仍写 DOM；codex 重复订阅 router；错误重试把已卸载视图当活的 | `main.js` 派发代际 + await/mount 双校验 + 干净错误态；四视图实例代号/幂等 unmount；删除 codex 冗余订阅 |
+| P0-4 | 损坏 localStorage 使 `new Set(非数组)` 在模块初始化崩溃 → 整站白屏；build/saved/ui 脏数据不校验；迁移只判「键存在」；写失败静默 | 读取端白名单归一（合法数据保留）+ 迁移仅在「新键缺失/不可用」时 + `storage-error` 事件 → 顶栏 toast |
+
+### 10.2 历史基线勘误
+
+1. 本文件 §1–§9 是 v2.1/v3 历史快照，其中「36/36」「59 项交互」已过时；当前为 **54 项/单主题、67 项交互**。
+2. 本轮开始时 `sync-data.py --check` 为 exit 1（5 文件 CRLF/LF 字节差异，内容一致），属长期假红，已修（见 P0-1b）。
+3. `qa/results/*.json` 为门禁运行产物；本轮不提交其时间戳变化，保持仓库 diff 干净。

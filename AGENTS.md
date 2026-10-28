@@ -46,10 +46,18 @@ node qa/theme-contrast.mjs         # 130 组 WCAG AA 对比度
 
 # 数据侧自检
 python pipeline/mk_builds_json.py --check    # 流派数据引用完整性
-python pipeline/sync-data.py --check         # 仓库快照 vs .mimocode 工作区 是否有漂移
+python pipeline/sync-data.py --check         # 仓库快照 vs .mimocode 工作区 是否有漂移（只读）
+
+# 回归测试（零依赖；浏览器用例需先 python serve.py）
+node --test "qa/tests/*.test.mjs"            # JS 单元：core/task + core/store
+node qa/tests/lifecycle.browser.mjs          # 页面生命周期/竞态/损坏 localStorage 恢复
+node qa/tests/lab-async.browser.mjs          # 实验室分帧计算：版本控制/取消/最后条件生效
+python -m unittest discover -s qa/tests -p "test_*.py" -v   # sync-data.py 同步语义
 ```
 
-期望结果：`54/54 × 2`、`67/67`、`0 FAIL`、`130/130`。任何一项红的都 **不要提交**。
+期望结果：`54/54 × 2`、`67/67`、`0 FAIL`、`130/130`；回归测试 `node --test` 全绿、
+两个浏览器用例 `PASS=n FAIL=0`、Python `OK`。任何一项红的都 **不要提交**。
+注意 `node --test qa/tests/`（目录参数）在 Node 24+ 会报 MODULE_NOT_FOUND，用上面的 glob 写法。
 
 ---
 

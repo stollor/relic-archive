@@ -203,6 +203,46 @@
 - **做法**：`tar` 备份脚本与文档（`archive/pre-cleanup-scripts.tar.gz`）；每项删除前 `grep` 引用、`ls` 确认绝对路径。
 - **教训**：项目无 git 时误删不可回滚；本轮靠清单 + 引用核查安全释放 1.44 GB。
 
+### 2.7 可靠性 / 异步 / 持久化（2026-10-28 第一阶段治理）
+
+#### #24 同步脚本不能「先写一半再崩」
+- **现象**：`sync-data.py` 图标分支 `rows.append(a, b, c)` 传了 3 个参数（list.append 只收 1 个）；
+  只要有图标新增/更新就抛 TypeError，而此前 data 已复制 → 未说明的部分更新；`--check` 同样崩。
+- **根因**：易错分支没有回归测试；写盘与报告逻辑耦合、无计划阶段。
+- **修复/规则**：先完整**计划 + 校验**（源缺失、状态、换行归一）→ 再落盘；单文件临时文件 + `os.replace`；
+  中途失败**回滚**（新增删、更新恢复字节 + mtime）并返回独立退出码；`--check` 严格只读。
+  退出码约定：0 成功/已最新、1 `--check` 漂移、2 工作区缺失/不完整、3 写盘失败已回滚。
+
+#### #25 `--check` 的字节比对先把换行归一，否则会假红
+- **现象**：`sync-data.py --check` 长期报 5 个文件漂移；内容其实完全一致，差异 100% 是 CRLF/LF
+  （工作区 CRLF × 仓库 `.gitattributes eol=lf`）。
+- **根因**：用原始字节 sha256 比对文本；git 换行归一化让「字节不同 = 内容更新」的假设不成立。
+- **规则**：文本 JSON 先 `\r\n`/孤立 `\r` → `\n` 再比较，仅换行差异按「相同」并统计；同步文本一律 LF 落盘，
+  二进制原样复制。**不要**用 `git add` 掩盖换行差异。
+
+#### #26 分帧任务必须有「代际 / 取消」，`state.running` 不能当锁
+- **现象**：实验室推荐穷举运行中改条件，`start()` 被 `if (state.running) return` 静默丢弃 →
+  最终结果对应旧条件；完成回调无版本检查，旧结果可覆盖新条件；离开页面后 rAF 链继续跑、继续写已卸载 DOM。
+- **修复/规则**：用 `js/core/task.js` 的 `createTaskRunner`（run 自动让上一次任务失效、cancel 停帧）
+  + `createEpoch`（完成回调落地前校验代际）。条件一变就重启，不做「丢弃新请求」式防抖。
+  禁用长任务（>1s 的分帧循环 / 定时器 / Observer）时，先想「销毁路径怎么取消它」。
+
+#### #27 async 路由派发必须代际化，否则旧页面后挂载
+- **现象**：快速 A→B→C 切换时多个 `dispatch()` 并发 await 动态 import，晚返回的旧派发再次 mount：
+  `#view-root` 出现多个 `.view`、nav 与内容不一致、旧视图未 unmount。
+- **修复/规则**：`main.js` 用 `createEpoch` 给每次派发发 token，await 后与 mount 后各校验一次；
+  进入错误态前先 unmount + 丢弃 `mounted`（否则重试会把已卸载视图当活的）。
+  视图侧异步回调（`load().then/.catch`、`setTimeout`、`queueMicrotask`）都要用实例代号校验，
+  unmount 后不得再写 DOM / 绑监听；重复订阅（如 codex 自己再 `router.onChange`）直接删掉，路由只走 main 派发。
+
+#### #28 localStorage 读取必须白名单归一，坏数据不能炸启动
+- **现象**：`new Set(readJSON('r2.v2.owned', []))` 遇到合法 JSON 但不是数组（对象/数字）直接在模块初始化
+  `TypeError: not iterable` → 整站白屏；字符串会被拆成单字符 Set。build/mods/traits/meta 脏数据会让
+  配装静默不可写或抛错；迁移只判断「新 key 存在」导致损坏新数据挡住有效旧档。
+- **修复/规则**：读 localStorage 一律 assume corrupted：逐字段白名单 + 类型/范围校验，非法值回退默认、
+  合法项保留（**不得整份清空用户 owned/fav/saved**）；迁移只在「新键缺失或归一后为空」时发生；
+  写入失败必须可见（`store` emit `storage-error`，main 弹 toast），不能静默假装保存。
+
 ---
 
 ## 3. 有效工作法（推荐 AI 采用）
@@ -246,5 +286,14 @@
 | `interactions.js` | 67/67 PASS（资料库 17 / 实验室 18 / 流派 7 / 知识库 4 / 全站 11 / 移动 6） |
 | `audit.py` | 0 FAIL / 0 WARN / 65 INFO |
 | `theme-contrast.mjs` | 130/130 PASS（正文最低 4.91，强调最低 4.60） |
+| `node --test "qa/tests/*.test.mjs"` | 29/29 PASS（core/task 6 + core/store 23） |
+| `qa/tests/lifecycle.browser.mjs` | 25/25 PASS（快速切换 / 延迟数据 / 前进后退 / 深链 / 损坏 localStorage） |
+| `qa/tests/lab-async.browser.mjs` | 8/8 PASS（运行中改条件取最后条件 / 离开页面 / 耗时无退化） |
+| `qa/tests/test_sync_data.py` | 23 tests OK（同步语义 / 只读 check / 换行归一 / 回滚 / 幂等） |
 | 线上 | https://stollor.github.io/relic-archive/（Pages legacy + `.nojekyll`） |
 | 线上门禁 | dark 桌面 25/25、light 移动 15/15 全 PASS，0 console error |
+
+> 基线勘误（2026-10-28）：`qa/REPORT.md` 头部命令表仍是 v2.1 口径（「18 路由 = 36 张」「59 项交互」），
+> 与当前 `shot 54 项（27 路由 × 2 视口）/ 双主题 = 108 张`、`interactions 67/67` 不一致；
+> 该文件正文 §9 已是 v3 数字，以本表与门禁脚本输出为准。另：`sync-data.py --check` 曾长期为红，
+> 原因是文本换行归一缺失（见 #25），本轮已修。

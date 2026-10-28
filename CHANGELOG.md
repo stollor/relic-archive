@@ -3,6 +3,28 @@
 > 只记「形态/能力」级变更与关键数字；细枝末节的改动见 `git log`。
 > 早期里程碑来自 `.mimocode` 工作区历史（站点曾是工作区内的 `web/`）。
 
+## v3.2 — 2026-10-28 · 第一阶段可靠性治理（不新增功能）
+
+- **数据同步** `pipeline/sync-data.py`：修复图标同步 `rows.append()` 多参数导致的确定性崩溃（新增/更新图标必崩，
+  且此前已写入部分文件）；改为「先完整计划/校验 → 再原子落盘（临时文件 + `os.replace`）→ 失败回滚」，
+  退出码明确区分 `0 成功/已最新`、`1 --check 漂移`、`2 工作区缺失/不完整`、`3 写盘失败已回滚`；
+  `--check` 严格只读；文本 JSON 按换行归一比较并统一 LF 落盘（修掉长期假红的 5 文件 CRLF 漂移）；
+  上游已删除图标只报告「快照独有」不擅自删除。
+- **实验室异步计算** `js/lab/recommend.js`：分帧穷举加代际版本控制——运行中改条件立即失效重算，
+  完成回调只在「仍是当前代际」时落地（最终结果对应最后一次有效条件）；离开页面取消分帧，
+  不再对卸载 DOM 产生过期写入；计算异常显示可重试失败态。
+- **页面生命周期** `js/main.js` + 四个视图：异步 `dispatch` 代际化（快速 A→B→C 不再旧页面后挂载/双实例）；
+  错误态重试从干净状态重挂；视图 `load().then/.catch`、`setTimeout`、`requestAnimationFrame`、document 监听
+  在 unmount 后全部失效并成对释放；删除 codex 视图里与 main 重复的 `router.onChange` 订阅。
+- **持久化状态** `js/core/store.js` + `js/lab/state.js`：localStorage 读取全量白名单归一（坏 JSON /
+  错误类型不再导致启动白屏；owned/fav/build/saved/ui 非法字段降级、合法数据保留）；旧档迁移只在
+  「新键缺失或归一后为空」时发生且绝不覆盖有效新数据；写入失败 emit `storage-error` 并在顶栏 toast
+  提示（不再静默假装保存）。
+- **新增基础设施** `js/core/task.js`（createEpoch / createTaskRunner / createScope，零依赖）。
+- **回归测试**（零依赖，纳入 `AGENTS.md` 必跑命令）：`qa/tests/task.test.mjs` 6、`store.test.mjs` 23、
+  `lifecycle.browser.mjs` 25、`lab-async.browser.mjs` 8、`test_sync_data.py` 23。
+- 门禁结果：`shot 54/54 × 2`、`interactions 67/67`、`audit 0 FAIL`、`contrast 130/130`、`sync-data.py --check` 0。
+
 ## v3.1 — 2026-10-28 · 仓库化发布
 
 - 站点整理成**自包含仓库** `.mimocode/relic-archive/`（git 追踪约 1088 个文件，工作树约 70 MB）；
