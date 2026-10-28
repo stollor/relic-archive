@@ -6,8 +6,8 @@ qa/shots/
 # 回归测试临时产物（红/绿日志、结果 JSON、失败截图）
 qa/_tmp/
 
-# 统一门禁产物（每次运行生成；qa/results/audit.json 与 interactions.json 保持入库作历史证据）
-qa/results/gate.json
+# 统一门禁产物（每次运行生成、带时间戳；入库会造成「提交里的结果永远过期」）
+qa/results/*.json
 qa/results/logs/
 
 # ── Python ─────────────────────────────────────────────────

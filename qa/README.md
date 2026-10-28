@@ -91,7 +91,7 @@ qa/
 ├─ interactions.js       真实交互验收（被 gate 调度，也可单跑；支持子路径 --base）
 ├─ audit.py / theme-contrast.mjs   静态审计 / 对比度（被 gate 调度）
 ├─ tests/                纯函数单测（*.test.mjs）、浏览器回归（*.browser.mjs）、Python 用例（test_*.py）
-├─ results/              报告产物：gate.json（gitignored）、logs/（gitignored）、audit.json、interactions.json
+├─ results/              报告产物（全部 gitignored，含时间戳不入库）：gate.json、logs/、audit.json、interactions.json
 ├─ shots/                截图产物（gitignored，可随时重跑）
 └─ _tmp/                 回归测试临时结果/失败截图（gitignored）
 ```
