@@ -9,8 +9,7 @@ import { icon } from '../core/icons.js';
 import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import * as S from './state.js';
-import { panel, meterRow, classBadge, statGrid, TYPE_ICON, TYPE_COLOR, TYPE_ZH, CLASS_ZH } from './parts.js';
-import { effectText } from './text.js';
+import { panel, meterRow, statGrid, TYPE_ICON, TYPE_COLOR, TYPE_ZH, CLASS_ZH } from './parts.js';
 
 const NUM_KEYS = ['bleed', 'fire', 'shock', 'corrosive', 'blight'];
 const UI_KEY = 'lab.calc';
@@ -132,6 +131,14 @@ export function createCalc(model, { query = null } = {}) {
   }
 
   /* --------------------------- 输出 --------------------------- */
+  /** 计算器内的小面板：骨架来自 components/panel.js；原标记没有 .panel__tools，这里移除保持一致 */
+  function subPanel(title, iconName, body) {
+    const p = panel(title, { iconName, tag: 'div', body });
+    p.tools.remove();
+    p.el.classList.add('lab-calc__panel');
+    return p.el;
+  }
+
   const revState = { dr: 60 };
   function renderOut() {
     clear(outHost);
@@ -150,36 +157,27 @@ export function createCalc(model, { query = null } = {}) {
       { k: '最坏情况减伤', v: fmt.pct(st.worst, 1), iconName: 'warning' },
       { k: '场景分', v: fmt.pct(st.score, 1), iconName: 'chart' },
     ]);
-    const bars = h('div', { class: 'panel lab-calc__panel' },
-      h('div', { class: 'panel__head' }, h('h2', { class: 'panel__title' }, icon('resist', { size: 15 }), h('span', { text: '五类总减伤' }))),
-      h('div', { class: 'panel__body' },
-        meterRow(TYPE_ICON.physical, TYPE_ZH.physical, st.totals.physical, TYPE_COLOR.physical),
-        ...E.RES.map((t) => meterRow(TYPE_ICON[t], TYPE_ZH[t], st.totals[t], TYPE_COLOR[t])),
-      ),
+    const bars = subPanel('五类总减伤', 'resist', [
+      meterRow(TYPE_ICON.physical, TYPE_ZH.physical, st.totals.physical, TYPE_COLOR.physical),
+      ...E.RES.map((t) => meterRow(TYPE_ICON[t], TYPE_ZH[t], st.totals[t], TYPE_COLOR[t])),
+    ]);
+    const survival = subPanel('生存', 'health',
+      statGrid([
+        { k: '有效生命 EHP', v: fmt.num(st.ehp, 1), iconName: 'health', sub: '基础生命 100 假设' },
+        { k: '生命上限', v: fmt.num(st.hpTotal, 1), iconName: 'health' },
+        { k: '护盾', v: fmt.pct(st.shieldPct, 1), iconName: 'shield' },
+        { k: '生命回复', v: `${fmt.num(st.hpRegen, 1)}/s`, iconName: 'health' },
+      ]),
     );
-    const survival = h('div', { class: 'panel lab-calc__panel' },
-      h('div', { class: 'panel__head' }, h('h2', { class: 'panel__title' }, icon('health', { size: 15 }), h('span', { text: '生存' }))),
-      h('div', { class: 'panel__body' },
-        statGrid([
-          { k: '有效生命 EHP', v: fmt.num(st.ehp, 1), iconName: 'health', sub: '基础生命 100 假设' },
-          { k: '生命上限', v: fmt.num(st.hpTotal, 1), iconName: 'health' },
-          { k: '护盾', v: fmt.pct(st.shieldPct, 1), iconName: 'shield' },
-          { k: '生命回复', v: `${fmt.num(st.hpRegen, 1)}/s`, iconName: 'health' },
-        ]),
-      ),
-    );
-    const mobility = h('div', { class: 'panel lab-calc__panel' },
-      h('div', { class: 'panel__head' }, h('h2', { class: 'panel__title' }, icon('dodge', { size: 15 }), h('span', { text: '机动' }))),
-      h('div', { class: 'panel__body' },
-        statGrid([
-          { k: '负重档位', v: CLASS_ZH[st.cls], iconName: 'weight', sub: `负重 ${fmt.num(st.weight, 1)} · 阈值 ${st.T.map(Math.round).join(' / ')}` },
-          { k: '体力上限', v: fmt.num(st.stam, 0), iconName: 'stamina' },
-          { k: '单次闪避', v: fmt.num(st.evade, 1), iconName: 'dodge' },
-          { k: '可闪次数', v: `${st.dodges} 次`, iconName: 'stamina' },
-          { k: '体力回复', v: `${fmt.num(st.regen, 1)}/s`, iconName: 'stamina' },
-          { k: '闪避无敌 / 恢复', v: `${st.iframes} / ${st.recovery} 帧`, iconName: 'dodge' },
-        ]),
-      ),
+    const mobility = subPanel('机动', 'dodge',
+      statGrid([
+        { k: '负重档位', v: CLASS_ZH[st.cls], iconName: 'weight', sub: `负重 ${fmt.num(st.weight, 1)} · 阈值 ${st.T.map(Math.round).join(' / ')}` },
+        { k: '体力上限', v: fmt.num(st.stam, 0), iconName: 'stamina' },
+        { k: '单次闪避', v: fmt.num(st.evade, 1), iconName: 'dodge' },
+        { k: '可闪次数', v: `${st.dodges} 次`, iconName: 'stamina' },
+        { k: '体力回复', v: `${fmt.num(st.regen, 1)}/s`, iconName: 'stamina' },
+        { k: '闪避无敌 / 恢复', v: `${st.iframes} / ${st.recovery} 帧`, iconName: 'dodge' },
+      ]),
     );
 
     const revInput = h('input', { class: 'input input--num', type: 'number', value: String(revState.dr), step: '0.5', min: '1', max: '95', attrs: { 'aria-label': '目标护甲减伤' } });
@@ -190,21 +188,16 @@ export function createCalc(model, { query = null } = {}) {
       revState.dr = v;
       revOut.textContent = fmt.num(E.reverseDR(v / 100), 1);
     });
-    const rev = h('div', { class: 'panel lab-calc__panel' },
-      h('div', { class: 'panel__head' }, h('h2', { class: 'panel__title' }, icon('target', { size: 15 }), h('span', { text: '反算：目标护甲减伤需要多少护甲' }))),
-      h('div', { class: 'panel__body' },
-        h('div', { class: 'row row--wrap' },
-          h('span', { class: 'muted', text: '目标护甲减伤' }), revInput,
-          h('span', { class: 'muted', text: '% → 需要护甲值' }), revOut,
-        ),
-        h('pre', { class: 'formula', attrs: { style: 'margin-top:8px' }, text: '所需护甲值 = 200 × 目标护甲减伤 ÷ (1 − 目标护甲减伤)' }),
+    const rev = subPanel('反算：目标护甲减伤需要多少护甲', 'target', [
+      h('div', { class: 'row row--wrap' },
+        h('span', { class: 'muted', text: '目标护甲减伤' }), revInput,
+        h('span', { class: 'muted', text: '% → 需要护甲值' }), revOut,
       ),
-    );
+      h('pre', { class: 'formula', attrs: { style: 'margin-top:8px' }, text: '所需护甲值 = 200 × 目标护甲减伤 ÷ (1 − 目标护甲减伤)' }),
+    ]);
 
-    const formula = h('div', { class: 'panel lab-calc__panel' },
-      h('div', { class: 'panel__head' }, h('h2', { class: 'panel__title' }, icon('book', { size: 15 }), h('span', { text: '本例代数过程' }))),
-      h('div', { class: 'panel__body' },
-        h('pre', { class: 'formula', text: [
+    const formula = subPanel('本例代数过程', 'book',
+      h('pre', { class: 'formula', text: [
           `总护甲   = ${fmt.num(Number(calc.armor) || 0, 1)} × (1 + ${fmt.num((st.armor / (Number(calc.armor) || 1) - 1) * 100, 0)}%) = ${fmt.num(st.armor, 1)}`,
           `护甲减伤 = ${fmt.num(st.armor, 1)} / (${fmt.num(st.armor, 1)} + ${fmt.num(E.K, 0)}) = ${fmt.pct(st.adr, 2)}`,
           `固定减伤 = ${fmt.num(st.fdr * 100, 1)}%    抗性 = ${E.RES.map((t, i) => `${TYPE_ZH[t]} ${fmt.num(st.res[i], 1)}`).join(' · ')}`,
@@ -215,7 +208,6 @@ export function createCalc(model, { query = null } = {}) {
           `单次闪避 = ${fmt.num(E.C.EVADE_BASE, 0)} × (1 + 档位惩罚 ${fmt.num(E.C.PENALTY[st.cls] || 0, 2)} + 加成 0) = ${fmt.num(st.evade, 2)}`,
           `有效生命 EHP = (100 + ${fmt.num(st.hpMax - 100, 0)}) × (1+${fmt.pct(acc.hpPct, 1)}) / (1-${fmt.pct(st.totals.physical, 2)}) = ${fmt.num(st.ehp, 1)}`,
         ].join('\n') }),
-      ),
     );
 
     outHost.append(defense, bars, survival, mobility, rev, formula);
@@ -226,13 +218,13 @@ export function createCalc(model, { query = null } = {}) {
   syncInputs();
   renderOut();
 
-  const panelEl = panel('计算器', { iconName: 'calc', sub: '与工作台同一引擎' });
-  panelEl.querySelector('.panel__body').append(
+  const shell = panel('计算器', { iconName: 'calc', sub: '与工作台同一引擎' });
+  shell.body.append(
     h('div', { class: 'lab-calc__wrap' }, inputHost, h('div', { class: 'lab-calc__side' }, outHost)),
   );
 
   return {
-    el: panelEl,
+    el: shell.el,
     applyQuery,
     applyParams(p) { if (p && (p.armor || p.weight || p.flat || p.bleed || p.fire || p.shock || p.corrosive || p.blight || p.scenario)) applyQuery(new URLSearchParams(p)); },
     refresh() { syncInputs(); renderOut(); },

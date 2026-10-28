@@ -8,30 +8,18 @@ import { icon } from '../core/icons.js';
 import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import * as S from './state.js';
+import { createScope } from '../core/task.js';
 import { panel, emptyLine } from './parts.js';
-import { CLASS_ZH } from './engine.js';
+import { SLOT_LABEL } from './model.js';
 
 const SLOT_ORDER = [
   'longGun', 'handGun', 'melee', 'head', 'body', 'legs', 'gloves',
   'amulet', 'ring1', 'ring2', 'ring3', 'ring4', 'relic', 'archetype1', 'archetype2',
 ];
-const SLOT_LABEL = {
-  longGun: '长枪', handGun: '手枪', melee: '近战武器', head: '头盔', body: '胸甲', legs: '腿甲', gloves: '手甲',
-  amulet: '项链', ring1: '戒指 1', ring2: '戒指 2', ring3: '戒指 3', ring4: '戒指 4', relic: '圣物',
-  archetype1: '主职业', archetype2: '副职业',
-};
-
 export function createSaved(model) {
   const E = model.engine;
   const host = h('div');
-  const nameOf = (id) => {
-    const it = model.itemsById.get(id);
-    if (it) return it.zh;
-    const a = model.findArchetype(id);
-    if (a) return a.zh;
-    const p = model.pieceById.get(id);
-    return p ? p.zh : id;
-  };
+  const nameOf = (id) => model.nameOf(id);
   const fmtTime = (ts) => {
     try { return new Date(ts).toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }); }
     catch { return ''; }
@@ -72,17 +60,17 @@ export function createSaved(model) {
       slots: slotsRows().map((r) => ({ slot: r.slot, slotZh: r.label, id: r.id, zh: r.zh, armor: r.armor, weight: r.weight })),
       computed: {
         filledArmor: st.filled,
-        armor: round1(st.armor), armorBase: round1(st.sumA), armorDR: round4(st.adr),
-        flatDR: round4(st.fdr), enemyDR: round4(st.edr),
-        totals: Object.fromEntries(E.RES.map((t) => [t, round4(st.totals[t])])),
-        worstDR: round4(st.worst),
-        resistances: Object.fromEntries(E.RES.map((t, i) => [t, round1(st.res[i])])),
-        score: round4(st.score),
-        weight: round1(st.weight), weightClass: st.cls, thresholds: st.T.map(round1),
-        stamina: round1(st.stam), evadeCost: round1(st.evade), dodges: st.dodges,
-        staminaRegen: round1(st.regen), iframes: st.iframes, recovery: st.recovery, sprint: st.sprint,
-        ehp: round1(st.ehp), hpMax: round1(st.hpTotal), shieldPct: round4(st.shieldPct),
-        hpRegen: round1(st.hpRegen), lifesteal: st.lifesteal,
+        armor: fmt.round(st.armor, 1), armorBase: fmt.round(st.sumA, 1), armorDR: fmt.round(st.adr, 4),
+        flatDR: fmt.round(st.fdr, 4), enemyDR: fmt.round(st.edr, 4),
+        totals: Object.fromEntries(E.RES.map((t) => [t, fmt.round(st.totals[t], 4)])),
+        worstDR: fmt.round(st.worst, 4),
+        resistances: Object.fromEntries(E.RES.map((t, i) => [t, fmt.round(st.res[i], 1)])),
+        score: fmt.round(st.score, 4),
+        weight: fmt.round(st.weight, 1), weightClass: st.cls, thresholds: st.T.map((x) => fmt.round(x, 1)),
+        stamina: fmt.round(st.stam, 1), evadeCost: fmt.round(st.evade, 1), dodges: st.dodges,
+        staminaRegen: fmt.round(st.regen, 1), iframes: st.iframes, recovery: st.recovery, sprint: st.sprint,
+        ehp: fmt.round(st.ehp, 1), hpMax: fmt.round(st.hpTotal, 1), shieldPct: fmt.round(st.shieldPct, 4),
+        hpRegen: fmt.round(st.hpRegen, 1), lifesteal: st.lifesteal,
       },
       missing: S.missingIds().map((id) => ({ id, zh: nameOf(id) })),
       ownedCount: S.ownedCount(),
@@ -92,9 +80,7 @@ export function createSaved(model) {
       },
     };
   }
-  function round1(v) { return Math.round(v * 10) / 10; }
-  function round4(v) { return Math.round(v * 10000) / 10000; }
-
+  
   function openSaveModal() {
     const input = h('input', { class: 'input', type: 'text', value: store.state.build.name || '', placeholder: '例如：护卫者重装 · 洛斯曼', attrs: { maxlength: '40' } });
     const { close } = ui.openModal({
@@ -243,14 +229,14 @@ export function createSaved(model) {
     );
   }
 
-  const panelEl = panel('存档导出', { iconName: 'save', sub: '15 槽 + 设置一起保存' });
-  panelEl.querySelector('.panel__body').append(host);
-  const offs = [];
-  offs.push(store.on('saved', render));
-  offs.push(store.on('owned', render));
-  offs.push(S.on((reason) => { if (reason === 'missing') render(); }));
+  const shell = panel('存档导出', { iconName: 'save', sub: '15 槽 + 设置一起保存' });
+  shell.body.append(host);
+  const scope = createScope();
+  scope.add(store.on('saved', render));
+  scope.add(store.on('owned', render));
+  scope.add(S.on((reason) => { if (reason === 'missing') render(); }));
   render();
-  return { el: panelEl, refresh: render, applyParams() {}, destroy() { for (const off of offs) { try { off(); } catch { /* ignore */ } } } };
+  return { el: shell.el, refresh: render, applyParams() {}, destroy() { scope.dispose(); } };
 }
 
 export default createSaved;

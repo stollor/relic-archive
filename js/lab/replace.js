@@ -9,27 +9,19 @@ import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import { openItemDetail } from '../components/item-detail.js';
 import * as S from './state.js';
+import { createScope } from '../core/task.js';
 import { panel, emptyState, miniPiece, itemMedia } from './parts.js';
+import { SLOT_LABEL } from './model.js';
 
-const SLOT_LABEL = { head: '头盔', body: '胸甲', legs: '腿甲', gloves: '手甲' };
 const SLOT_KEYS = ['head', 'body', 'legs', 'gloves'];
-const round1 = (v) => Math.round(v * 10) / 10;
 
 export function createReplace(model, { onOpenPanel = null } = {}) {
   const E = model.engine;
   const root = h('div', { class: 'lab-replace' });
   const host = h('div', { class: 'lab-replace__body' });
   const tools = h('div', { class: 'row', attrs: { style: 'gap:6px' } });
-  const nameOf = (id) => {
-    const it = model.itemsById.get(id);
-    if (it) return it.zh;
-    const p = model.pieceById.get(id);
-    return p ? p.zh : id;
-  };
-  const iconOf = (id) => {
-    const p = model.pieceById.get(id);
-    return p && p.iconUrl ? p.iconUrl : model.itemIcon(model.itemsById.get(id));
-  };
+  const nameOf = (id) => model.nameOf(id);
+  const iconOf = (id) => model.iconOf(id);
 
   function armorIds() { return SLOT_KEYS.map((s) => store.build.get(s)); }
 
@@ -80,7 +72,7 @@ export function createReplace(model, { onOpenPanel = null } = {}) {
       const curId = g.cur || ids[SLOT_KEYS.indexOf(g.slot)];
       const curRow = h('div', { class: 'lab-sub__cur' },
         h('span', { class: 'lab-sub__slot', text: SLOT_LABEL[g.slot] }),
-        miniPiece(model, curId, { clickable: true, onClick: (p) => openItemDetail(p.id, { route: false, from: 'lab' }) }),
+        miniPiece(model, curId, { clickable: true, onClick: (p) => openItemDetail(p.id, { from: 'lab' }) }),
         h('span', { class: 'grow' }),
         h('button', {
           class: `iconbtn iconbtn--sm ${S.isMissing(curId) ? 'is-on' : ''}`, type: 'button',
@@ -102,8 +94,8 @@ export function createReplace(model, { onOpenPanel = null } = {}) {
           itemMedia(iconOf(r.id), { size: 24 }),
           h('span', { class: 'lab-sub__name', text: r.zh }),
           h('span', { class: 'lab-sub__delta', title: '场景分变化（百分点）', text: `场景分 ${r.dScore > 0 ? '+' : ''}${(r.dScore * 100).toFixed(1)} 个百分点` }),
-          h('span', { class: 'lab-sub__delta muted', text: `${r.dArmor >= 0 ? '+' : ''}${round1(r.dArmor)} 护甲` }),
-          h('span', { class: 'lab-sub__delta muted', text: `${r.dWeight >= 0 ? '+' : ''}${round1(r.dWeight)} 负重` }),
+          h('span', { class: 'lab-sub__delta muted', text: `${r.dArmor >= 0 ? '+' : ''}${fmt.round(r.dArmor, 1)} 护甲` }),
+          h('span', { class: 'lab-sub__delta muted', text: `${r.dWeight >= 0 ? '+' : ''}${fmt.round(r.dWeight, 1)} 负重` }),
           S.isMissing(r.id) ? h('span', { class: 'badge badge--low', text: '缺件' }) : '',
         ));
       }
@@ -115,18 +107,18 @@ export function createReplace(model, { onOpenPanel = null } = {}) {
     );
   }
 
-  const panelEl = panel('逐槽替换', { iconName: 'swap', sub: '保持其余三件不变', flush: true });
-  panelEl.querySelector('.panel__tools').append(tools);
-  panelEl.querySelector('.panel__body').append(host);
+  const shell = panel('逐槽替换', { iconName: 'swap', sub: '保持其余三件不变', flush: true });
+  shell.tools.append(tools);
+  shell.body.append(host);
 
-  const offs = [];
+  const scope = createScope();
   const refresh = () => render();
-  offs.push(S.on((reason) => { if (['missing', 'scenario', 'class-target', 'seed'].includes(reason)) render(); }));
-  offs.push(store.on('build', render));
-  offs.push(store.on('owned', render));
+  scope.add(S.on((reason) => { if (['missing', 'scenario', 'class-target', 'seed'].includes(reason)) render(); }));
+  scope.add(store.on('build', render));
+  scope.add(store.on('owned', render));
   render();
 
-  return { el: panelEl, refresh, applyParams() { render(); }, destroy() { for (const off of offs) { try { off(); } catch { /* ignore */ } } } };
+  return { el: shell.el, refresh, applyParams() { render(); }, destroy() { scope.dispose(); } };
 }
 
 export default createReplace;

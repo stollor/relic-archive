@@ -316,7 +316,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
       ),
       h('div', { class: 'lab-rec__pieces' }, entry.ids.map((id) => miniPiece(model, id, {
         clickable: true,
-        onClick: (pc) => openItemDetail(pc.id, { route: false, from: 'lab' }),
+        onClick: (pc) => openItemDetail(pc.id, { from: 'lab' }),
       }))),
       writeArmorBtn(() => {
         S.writeArmor(entry.ids);
@@ -398,7 +398,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     }
   }
 
-  const panelEl = panel('推荐方案', {
+  const shell = panel('推荐方案', {
     iconName: 'listchecks',
     sub: '按当前工作台设置实时穷举',
     flush: true,
@@ -409,7 +409,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
       ),
     ),
   });
-  root.append(panelEl);
+  root.append(shell.el);
 
   cleanup.add(S.on((reason) => {
     if (!['missing', 'scenario', 'class-target', 'seed'].includes(reason)) return;

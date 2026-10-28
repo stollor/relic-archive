@@ -109,6 +109,26 @@ export async function loadLabModel() {
     return a.perkIds.filter((pid) => engine.modById.has(pid));
   };
 
+  /* ------------------------- 身份解析（唯一实现） ------------------------- */
+  // 解析顺序：items.json → archetypes.json → site_data.pieces（护甲件兜底）。
+  // saved / replace / workbench 一律调用这两个方法，不再各自拼。
+  const nameOf = (id) => {
+    if (!id) return '';
+    const it = itemsById.get(id);
+    if (it) return it.zh;
+    const a = findArchetype(id);
+    if (a) return a.zh;
+    const p = pieceById.get(id);
+    return p ? (p.zh || id) : id;
+  };
+  const iconOf = (id) => {
+    const it = itemsById.get(id);
+    const iconUrl = it ? itemIcon(it) : null;
+    if (iconUrl) return iconUrl;
+    const p = pieceById.get(id);
+    return p && p.iconUrl ? p.iconUrl : null;
+  };
+
   /* 各槽位可选池 */
   const byFamily = (fam) => itemList.filter((it) => it.family === fam);
   const slotPools = {
@@ -141,6 +161,10 @@ export async function loadLabModel() {
     archetypesEmpty: archetypes.length === 0,
     findArchetype,
     perksOf,
+    /** 统一身份解析：id → 中文名（空 id 返回空串；未知 id 原样返回） */
+    nameOf,
+    /** 统一图标解析：id → 图标 URL（无图标返回 null） */
+    iconOf,
     /** 槽位里的职业 */
     archetypeOfSlot(slot, slots) {
       const id = slots ? slots[slot] : null;

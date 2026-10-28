@@ -1,9 +1,13 @@
 /* =============================================================================
-   遗迹2 · 遗物档案 — lab/parts.js（v2）
+   遗迹2 · 遗物档案 — lab/parts.js（v3）
    实验室共用渲染小件（只用 UX_SPEC §3 组件类名；图标只来自 core/icons.js）。
+   面板骨架统一来自 components/panel.js，空态统一来自 components/states.js；
+   这里只保留 lab 专用的薄封装与渲染小件。
    ========================================================================== */
 import { h, fmt } from '../core/dom.js';
 import { icon } from '../core/icons.js';
+import { panel as basePanel } from '../components/panel.js';
+import { emptyState as baseEmptyState } from '../components/states.js';
 import { TYPE_ZH, CLASS_ZH } from './engine.js';
 
 /** 槽位 → 图标名 */
@@ -39,21 +43,6 @@ export function miniPiece(model, id, { clickable = false, onClick = null } = {})
     el.addEventListener('click', () => onClick?.(p));
   }
   return el;
-}
-
-/** 四件护甲一排小图案 */
-export function miniParts(model, ids, opts) {
-  return h('span', { class: 'lab-minis' }, ids.map((id) => miniPiece(model, id, opts)));
-}
-
-/** .stat 数值行 */
-export function statLine(iconName, label, value, { unit = '', cls = '' } = {}) {
-  return h('span', { class: `stat ${cls}`.trim() },
-    icon(iconName, { size: 12 }),
-    h('span', { class: 'stat__val', text: value }),
-    unit ? h('span', { class: 'stat__unit', text: unit }) : '',
-    h('span', { class: 'muted', attrs: { style: 'font-size:10.5px' }, text: label }),
-  );
 }
 
 /** `.statbox`：k 标题（可带图标）/ v 主数值 / s 说明 */
@@ -96,33 +85,18 @@ export function classBadge(cls) {
   return h('span', { class: `badge ${map[cls] || 'badge--neutral'}` }, icon('weight', { size: 11 }), h('span', { text: CLASS_ZH[cls] || cls }));
 }
 
-/** 获取难度徽章 */
-export function acqBadge(acq) {
-  const ZH = { 商店: '商店', 固定拾取: '固定拾取', 制作: '制作', 头目掉落: '头目掉落', Boss: '头目掉落', 解谜: '解谜', 随机: '随机' };
-  const KIND = { 商店: 'easy', 固定拾取: 'easy', 制作: 'craft', 头目掉落: 'boss', Boss: 'boss', 解谜: 'boss', 随机: 'rng' };
-  const kind = KIND[acq] || 'neutral';
-  const ic = kind === 'easy' ? 'shop' : kind === 'craft' ? 'craft' : kind === 'boss' ? 'boss' : kind === 'rng' ? 'rng' : 'question';
-  return h('span', { class: `badge badge--${kind}` }, icon(ic, { size: 11 }), h('span', { text: ZH[acq] || '未知' }));
+/**
+ * 面板骨架（薄封装）：保留 lab 既有调用签名 panel(title, opts)，
+ * 标记骨架全部由 components/panel.js 生成。
+ * @returns {{el:HTMLElement, head:HTMLElement, title:HTMLElement, tools:HTMLElement, body:HTMLElement}}
+ */
+export function panel(title, { iconName = '', sub = '', tools = [], body = null, flush = false, tag = 'section' } = {}) {
+  return basePanel({ title, icon: iconName, sub, tools, body, flush, tag });
 }
 
-/** 面板骨架 */
-export function panel(title, { iconName = '', sub = '', tools = [], body = null, flush = false } = {}) {
-  const head = h('div', { class: 'panel__head' },
-    h('h2', { class: 'panel__title' }, iconName ? icon(iconName, { size: 15 }) : '', h('span', { text: title })),
-    sub ? h('span', { class: 'panel__sub', text: sub }) : '',
-    h('div', { class: 'panel__tools' }, ...tools),
-  );
-  return h('section', { class: 'panel' }, head, h('div', { class: `panel__body${flush ? ' panel__body--flush' : ''}` }, body));
-}
-
-/** 空状态 */
+/** 空状态（薄封装）：保留 lab 既有位置参数；标记由 components/states.js 生成（h3 标题与原标记一致） */
 export function emptyState(iconName, title, hint, action = null) {
-  return h('div', { class: 'empty' },
-    h('div', { class: 'empty__ico' }, icon(iconName, { size: 40 })),
-    h('h3', { class: 'empty__title', text: title }),
-    h('p', { class: 'empty__hint', text: hint }),
-    action || '',
-  );
+  return baseEmptyState({ icon: iconName, title, hint, actions: action ? [action] : [], titleTag: 'h3' });
 }
 
 /** 紧凑单行空态（≤72px） */

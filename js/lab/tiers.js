@@ -9,6 +9,7 @@ import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import { openItemDetail } from '../components/item-detail.js';
 import * as S from './state.js';
+import { createRefresh, createScope } from '../core/task.js';
 import { panel, miniPiece, classBadge, emptyLine, TYPE_ZH } from './parts.js';
 import { CLASS_ZH } from './engine.js';
 
@@ -18,8 +19,28 @@ export function createTiers(model) {
   const host = h('div');
   const tableBHost = h('div');
   let tableBStarted = false;
+  /** 矩阵 B 的分帧计算（812,224 组合）：合并调度，卸载时可取消 */
+  const tableBRefresh = createRefresh(() => {
+    if (!tableBStarted) return;
+    const rows = E.tableB();
+    clear(tableBHost);
+    tableBHost.append(h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' },
+      h('thead', {}, h('tr', {},
+        h('th', { text: '抗性特化' }), h('th', { text: '四件' }), h('th', { text: '护甲（含坚韧）' }),
+        h('th', { text: '该类型总减伤' }), h('th', { text: '负重 · 档位' }), h('th', { text: '说明' }),
+      )),
+      h('tbody', {}, rows.map((r) => h('tr', {},
+        h('td', {}, h('b', { text: TYPE_ZH[r.type] })),
+        h('td', {}, h('div', { class: 'lab-cell__pieces' }, r.ids.map((id) => miniPiece(model, id, { clickable: true, onClick: clickDetail })))),
+        h('td', { class: 'tbl__num' }, `${fmt.num(r.armor, 1)} `, h('span', { class: 'muted', text: `(${fmt.pct(r.adr, 1)})` })),
+        h('td', { class: 'tbl__num' }, h('b', { class: 'lab-gold', text: fmt.pct(r.total, 1) }), h('span', { class: 'muted', text: ` 抗性 ${fmt.num(r.res, 1)}` })),
+        h('td', { class: 'tbl__num', text: `${fmt.num(r.weight, 1)} · ${CLASS_ZH[r.cls] || r.cls}` }),
+        h('td', { class: 'muted', text: `只在「${TYPE_ZH[r.type]}」伤害命中时有效` }),
+      ))),
+    )));
+  });
 
-  const clickDetail = (p) => openItemDetail(p.id, { route: false, from: 'lab' });
+  const clickDetail = (p) => openItemDetail(p.id, { from: 'lab' });
 
   function loadRow(ids) {
     S.writeArmor(ids);
@@ -74,29 +95,11 @@ export function createTiers(model) {
   }
 
   function renderTableB() {
+    if (tableBStarted) return;
+    tableBStarted = true;
     clear(tableBHost);
-    if (!tableBStarted) {
-      tableBStarted = true;
-      tableBHost.append(emptyLine('正在穷举抗性特化（812,224 组合）…', 'refresh'));
-      requestAnimationFrame(() => {
-        const rows = E.tableB();
-        clear(tableBHost);
-        tableBHost.append(h('div', { class: 'tbl-scroll' }, h('table', { class: 'tbl' },
-          h('thead', {}, h('tr', {},
-            h('th', { text: '抗性特化' }), h('th', { text: '四件' }), h('th', { text: '护甲（含坚韧）' }),
-            h('th', { text: '该类型总减伤' }), h('th', { text: '负重 · 档位' }), h('th', { text: '说明' }),
-          )),
-          h('tbody', {}, rows.map((r) => h('tr', {},
-            h('td', {}, h('b', { text: TYPE_ZH[r.type] })),
-            h('td', {}, h('div', { class: 'lab-cell__pieces' }, r.ids.map((id) => miniPiece(model, id, { clickable: true, onClick: clickDetail })))),
-            h('td', { class: 'tbl__num' }, `${fmt.num(r.armor, 1)} `, h('span', { class: 'muted', text: `(${fmt.pct(r.adr, 1)})` })),
-            h('td', { class: 'tbl__num' }, h('b', { class: 'lab-gold', text: fmt.pct(r.total, 1) }), h('span', { class: 'muted', text: ` 抗性 ${fmt.num(r.res, 1)}` })),
-            h('td', { class: 'tbl__num', text: `${fmt.num(r.weight, 1)} · ${CLASS_ZH[r.cls] || r.cls}` }),
-            h('td', { class: 'muted', text: `只在「${TYPE_ZH[r.type]}」伤害命中时有效` }),
-          ))),
-        )));
-      });
-    }
+    tableBHost.append(emptyLine('正在穷举抗性特化（812,224 组合）…', 'refresh'));
+    tableBRefresh.schedule();
   }
 
   function render() {
@@ -112,15 +115,15 @@ export function createTiers(model) {
     if (det) det.addEventListener('toggle', () => { if (det.open) renderTableB(); }, { once: false });
   }
 
-  const panelEl = panel('档位对照', { iconName: 'matrix', sub: '四档极限护甲 + 抗性特化矩阵' });
-  panelEl.querySelector('.panel__body').append(host);
-  root.append(panelEl);
+  const shell = panel('档位对照', { iconName: 'matrix', sub: '四档极限护甲 + 抗性特化矩阵' });
+  shell.body.append(host);
+  root.append(shell.el);
 
-  const offs = [];
-  offs.push(S.on((reason) => { if (['missing', 'scenario', 'class-target', 'seed'].includes(reason)) render(); }));
-  offs.push(store.on('build', render));
+  const scope = createScope();
+  scope.add(S.on((reason) => { if (['missing', 'scenario', 'class-target', 'seed'].includes(reason)) render(); }));
+  scope.add(store.on('build', render));
   render();
-  return { el: root, refresh: render, applyParams() { render(); }, destroy() { for (const off of offs) { try { off(); } catch { /* ignore */ } } } };
+  return { el: root, refresh: render, applyParams() { render(); }, destroy() { scope.dispose(); tableBRefresh.cancel(); } };
 }
 
 export default createTiers;

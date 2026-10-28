@@ -24,7 +24,7 @@ export const CLASS_ZH = { LIGHT: '轻装', MEDIUM: '中装', HEAVY: '重装', UL
 export const RES_KEYS = ['bleed', 'fire', 'shock', 'corrosive', 'blight'];
 export const ALL_KEYS = ['physical', ...RES_KEYS];
 export const SLOT_KEYS = ['head', 'body', 'legs', 'gloves'];
-export const SLOT_ZH = { head: '头盔', body: '胸甲', legs: '腿甲', gloves: '手甲' };
+// 护甲槽中文名只在 lab/model.js 的 SLOT_LABEL 一处维护（这里不重复定义，避免两套翻译漂移）
 export const TYPE_ZH = {
   physical: '物理', bleed: '流血', fire: '火焰', shock: '电击', corrosive: '腐蚀', blight: '枯萎',
 };

@@ -8,7 +8,6 @@ import { TYPE_ZH, CLASS_ZH } from './engine.js';
 const RES_ZH = { bleed: '流血', fire: '火焰', shock: '电击', corrosive: '腐蚀', blight: '枯萎', all: '全' };
 const f0 = (v) => String(Math.round(v * 100));
 const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
-const sign = (v, d = 1) => `${v > 0 ? '+' : ''}${typeof d === 'number' ? v.toFixed(d) : ''}`;
 
 /** 归一化 effect → 中文短语数组 */
 export function effectList(eff) {
@@ -79,31 +78,6 @@ export function condText(m) {
 export function condShort(m) {
   if (!m || !m.condition) return '';
   return COND_ZH[m.condition] || '条件触发';
-}
-
-/** 获取难度 → 徽章种类（UX_SPEC §3 只允许 easy/craft/boss/rng） */
-export function acqKind(acq) {
-  switch (acq) {
-    case '商店': case '固定拾取': return 'easy';
-    case '制作': return 'craft';
-    case '头目掉落': case 'Boss': case '解谜': return 'boss';
-    case '随机': return 'rng';
-    default: return 'neutral';
-  }
-}
-export function acqZh(acq) {
-  if (!acq) return '未知';
-  if (acq === 'Boss') return '头目掉落';
-  if (acq === '解谜') return '解谜';
-  return acq;
-}
-
-/** 档位 → 徽章种类 */
-export function classBadge(cls) {
-  if (cls === 'ULTRA') return 'badge--low';
-  if (cls === 'HEAVY') return 'badge--mid';
-  if (cls === 'MEDIUM') return 'badge--neutral';
-  return 'badge--high';
 }
 
 export { TYPE_ZH, CLASS_ZH, RES_ZH };
