@@ -16,26 +16,16 @@ import { api } from '../core/api.js';
 import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import {
-  FAMILY, SLOT_ACCEPT, SLOT_ZH, GAME_TAGS_BY_GROUP, GAME_TAG_BY_ID,
+  FAMILY, SLOT_ACCEPT, SLOT_ZH, GAME_TAGS_BY_GROUP, GAME_TAG_BY_ID, FAMILY_GROUPS, modeOfFamilies,
 } from '../core/labels.js';
 import { itemIconEl, effectPreview } from './item-card.js';
 import { openItemDetail } from './item-detail.js';
+import { emptyState } from './states.js';
 
 const PAGE = 80;
 
-/* 槽位族分组：决定排序项与「只看有数值」的判定口径 */
-const ARMOR_FAMILIES = ['head', 'body', 'legs', 'gloves'];
-const WEAPON_FAMILIES = ['longGun', 'handGun', 'melee'];
-const ACCESSORY_FAMILIES = ['ring', 'amulet', 'relic'];
-
-function modeOf(families) {
-  const list = families.filter(Boolean);
-  if (!list.length) return 'other';
-  if (list.every((f) => ARMOR_FAMILIES.includes(f))) return 'armor';
-  if (list.every((f) => WEAPON_FAMILIES.includes(f))) return 'weapon';
-  if (list.every((f) => ACCESSORY_FAMILIES.includes(f))) return 'accessory';
-  return 'other';
-}
+/** 槽位族分组口径来自 core/labels.js（与资料库/详情同一权威实现） */
+const modeOf = (families) => modeOfFamilies(families);
 
 /** 可排序项：只给当前槽位族真的有的数值，避免出现空排序 */
 const SORT_BY_MODE = {
@@ -77,11 +67,11 @@ function statChip(iconName, value, unit = '', hint = '') {
 function rowFacts(it) {
   const stats = [];
   const fam = it.family;
-  if (ARMOR_FAMILIES.includes(fam)) {
+  if (FAMILY_GROUPS.armor.includes(fam)) {
     if (it.armor != null) stats.push(statChip('armorstat', fmt.num(it.armor, 1), '', '护甲值'));
     if (it.weight != null) stats.push(statChip('weight', fmt.num(it.weight, 1), '', '负重'));
     if (it.resistSum) stats.push(statChip('resist', `+${fmt.num(it.resistSum, 0)}`, '', '抗性合计'));
-  } else if (WEAPON_FAMILIES.includes(fam)) {
+  } else if (FAMILY_GROUPS.weapon.includes(fam)) {
     const isMelee = fam === 'melee';
     if (it.damage != null) stats.push(statChip('damage', fmt.num(it.damage, it.damage < 10 ? 2 : 0), '', '伤害'));
     if (!isMelee && it.rate != null) stats.push(statChip('firerate', fmt.num(it.rate, 2), '', '射速'));
@@ -380,7 +370,7 @@ export function openPicker(o = {}) {
           on: {
             click: (e) => {
               e.stopPropagation();
-              openItemDetail(it.id, { route: false });
+              openItemDetail(it.id, { from: 'picker' });
             },
           },
         }, icon('info', { size: 14 })),
@@ -399,11 +389,12 @@ export function openPicker(o = {}) {
     countEl.textContent = `共 ${rows.length} 件${rows.length > shown ? `（已显示 ${shown}）` : ''}${anyFilter() ? ' · 已筛选' : ''}`;
 
     if (!rows.length) {
-      list.append(h('div', { class: 'empty' },
-        h('div', { class: 'empty__ico' }, icon('search', { size: 34 })),
-        h('div', { class: 'empty__title', text: '没有匹配的装备' }),
-        h('div', { class: 'empty__hint', text: anyFilter() ? '试着减少标签筛选、换个关键词，或点「清空筛选」。' : '换个关键词试试。' }),
-      ));
+      list.append(emptyState({
+        icon: 'search',
+        iconSize: 34,
+        title: '没有匹配的装备',
+        hint: anyFilter() ? '试着减少标签筛选、换个关键词，或点「清空筛选」。' : '换个关键词试试。',
+      }));
       return;
     }
 
@@ -434,7 +425,7 @@ export function openPicker(o = {}) {
     foot,
     onClose: o.onClose,
   });
-  setTimeout(() => searchInput.focus({ preventScroll: true }), 120);
+  setTimeout(() => { if (searchInput.isConnected) searchInput.focus({ preventScroll: true }); }, 120);
 }
 
 export default openPicker;

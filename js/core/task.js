@@ -137,4 +137,4 @@ export function createScope() {
   };
 }
 
-export default { createEpoch, createTaskRunner, createScope };
+export default { createEpoch, createTaskRunner, createRefresh, createScope };

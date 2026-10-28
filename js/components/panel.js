@@ -7,6 +7,27 @@ import { h } from '../core/dom.js';
 import { icon } from '../core/icons.js';
 
 /**
+ * 面板头（唯一实现）：标题 + 说明 + 工具区。
+ * 需要自定义主体的区块（如知识库分类卡）用它拼自己的容器，避免再手写 panel__head。
+ * @returns {{head:HTMLElement, title:HTMLElement, tools:HTMLElement}}
+ */
+export function panelHead(o = {}) {
+  const { title = '', icon: iconName = '', sub = '', tools = [], titleId = '' } = o;
+  const titleEl = h('h2', {
+    class: 'panel__title',
+    attrs: titleId ? { id: titleId } : undefined,
+  },
+  iconName ? icon(iconName, { size: 15 }) : null,
+  h('span', { text: title }));
+  const toolsEl = h('div', { class: 'panel__tools' }, ...(tools || []));
+  const head = h('div', { class: 'panel__head' },
+    titleEl,
+    sub ? h('span', { class: 'panel__sub', text: sub }) : null,
+    toolsEl);
+  return { head, title: titleEl, tools: toolsEl };
+}
+
+/**
  * @param {object} o
  * @param {string} o.title          面板标题
  * @param {string} o.icon           标题图标名（可空）
@@ -21,15 +42,8 @@ export function panel(o = {}) {
   const {
     title = '', icon: iconName = '', sub = '', tools = [], body = null, flush = false, tag = 'section',
   } = o;
-  const titleEl = h('h2', { class: 'panel__title' },
-    iconName ? icon(iconName, { size: 15 }) : null,
-    h('span', { text: title }));
-  const toolsEl = h('div', { class: 'panel__tools' }, ...(tools || []));
+  const { head, title: titleEl, tools: toolsEl } = panelHead({ title, icon: iconName, sub, tools });
   const bodyEl = h('div', { class: `panel__body${flush ? ' panel__body--flush' : ''}` }, body);
-  const head = h('div', { class: 'panel__head' },
-    titleEl,
-    sub ? h('span', { class: 'panel__sub', text: sub }) : null,
-    toolsEl);
   const el = h(tag, { class: 'panel' }, head, bodyEl);
   return { el, head, title: titleEl, tools: toolsEl, body: bodyEl };
 }

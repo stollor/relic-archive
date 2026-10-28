@@ -10,6 +10,8 @@ import { icon } from '../core/icons.js';
 import { api } from '../core/api.js';
 import { router } from '../core/router.js';
 import { ui } from '../core/ui.js';
+import { emptyState } from '../components/states.js';
+import { panelHead } from '../components/panel.js';
 
 const DOMAIN = '知识库';
 
@@ -222,10 +224,12 @@ function markToc(id) {
 /* --------------------------------- 正文渲染 -------------------------------- */
 function catCard(cat) {
   const arts = ORDER.filter((x) => x.cat === cat.id);
-  const head = h('div', { class: 'panel__head' },
-    h('h2', { class: 'panel__title', attrs: { id: `cat-${cat.id}` } },
-      icon(cat.icon || 'info', { size: 15 }), cat.zh),
-    h('span', { class: 'panel__sub', text: `${arts.length} 条` }));
+  const { head } = panelHead({
+    title: cat.zh,
+    icon: cat.icon || 'info',
+    sub: `${arts.length} 条`,
+    titleId: `cat-${cat.id}`,
+  });
   const rows = arts.map((art) => {
     const main = h('span', { class: 'codex-idxrow__main' },
       h('span', { class: 'codex-idxrow__title', text: art.title }),
@@ -255,11 +259,13 @@ function renderIndex() {
 function renderNotFound(id) {
   const { body } = EL;
   clear(body);
-  body.append(h('div', { class: 'empty codex-empty' },
-    h('div', { class: 'empty__ico' }, icon('search', { size: 40 })),
-    h('p', { class: 'empty__title', text: '没有这个条目' }),
-    h('p', { class: 'empty__hint', text: `「${id}」不在知识库中，可能是旧链接或拼写错误。` }),
-    h('a', { class: 'btn btn--ghost', href: '#/codex' }, icon('chevron-left', { size: 15 }), '返回目录')));
+  body.append(emptyState({
+    cls: 'codex-empty',
+    icon: 'search',
+    title: '没有这个条目',
+    hint: `「${id}」不在知识库中，可能是旧链接或拼写错误。`,
+    actions: [h('a', { class: 'btn btn--ghost', href: '#/codex' }, icon('chevron-left', { size: 15 }), '返回目录')],
+  }));
 }
 
 function renderArticle(art) {
@@ -460,14 +466,16 @@ export function mount(rootEl, ctx) {
       if (mine !== INSTANCE || !EL) return;
       console.error('[codex] 数据加载失败', err);
       clear(body);
-      body.append(h('div', { class: 'empty codex-empty' },
-        h('div', { class: 'empty__ico' }, icon('warning', { size: 40 })),
-        h('p', { class: 'empty__title', text: '知识库数据没加载出来' }),
-        h('p', { class: 'empty__hint', text: '数据文件 /data/codex/index.json 可能缺失或格式有误。' }),
-        h('button', {
+      body.append(emptyState({
+        cls: 'codex-empty',
+        icon: 'warning',
+        title: '知识库数据没加载出来',
+        hint: '数据文件 /data/codex/index.json 可能缺失或格式有误。',
+        actions: [h('button', {
           class: 'btn btn--ghost', type: 'button',
           on: { click: () => { PENDING = null; location.reload(); } },
-        }, icon('refresh', { size: 15 }), '重新加载')));
+        }, icon('refresh', { size: 15 }), '重新加载')],
+      }));
       deferTitle('知识库 · 加载失败');
     });
 

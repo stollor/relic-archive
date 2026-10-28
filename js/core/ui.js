@@ -55,13 +55,16 @@ export function toast(msg, kind = 'info', opts = {}) {
 }
 
 /* ============================ 抽屉 ============================ */
-const drawerState = { open: false, onClose: null, key: null };
+const drawerState = { open: false, onClose: null };
+/* 关闭过渡（200ms）期间若抽屉被重新打开，旧的清理回调必须作废，否则会把新抽屉状态清掉 */
+let drawerToken = 0;
 
 export function openDrawer({
   title = '', subtitle = '', iconName = '', tools = [], body = null, foot = null,
-  width = '', onClose = null, route = '', closeOnScrim = true,
+  width = '', onClose = null,
 } = {}) {
   const { drawer, scrim } = getHost();
+  drawerToken += 1;
   saveFocus();
   clear(drawer.querySelector('.drawer__head'));
   clear(drawer.querySelector('.drawer__body'));
@@ -99,8 +102,6 @@ export function openDrawer({
   drawerState.onClose = onClose;
   document.body.style.overflow = 'hidden';
 
-  if (route) history.replaceState(history.state, '', `#${route}`);
-
   const firstFocusable = drawer.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
   firstFocusable?.focus({ preventScroll: true });
   return { close: closeDrawer };
@@ -111,7 +112,10 @@ export function closeDrawer({ silent = false } = {}) {
   if (!drawer || drawer.hidden) return;
   drawer.classList.remove('is-open');
   scrim.classList.remove('is-open');
+  const token = drawerToken + 1;
+  drawerToken = token;
   const done = () => {
+    if (token !== drawerToken) return;   // 过渡期间又被打开：这次清理作废
     drawer.hidden = true;
     if (!modalState.open) { scrim.hidden = true; document.body.style.overflow = ''; }
     drawerState.open = false;
@@ -253,7 +257,6 @@ export function hideTip() {
 
 /** 全局 data-tip 绑定（一次）：鼠标悬浮/键盘聚焦显示 */
 function bindGlobalTip() {
-  const LOOKUP = () => document.querySelector('[data-tip]:hover');
   document.addEventListener('mouseover', (e) => {
     const el = e.target.closest('[data-tip]');
     if (!el || el === tipTarget) return;
