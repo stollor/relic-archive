@@ -20,6 +20,8 @@
 
 写入语义：
     - 先完整规划、校验全部源文件，再落盘；单文件用「同目录临时文件 + os.replace」原子替换。
+    - 落盘前对所有 .json 源做**语法层完整性校验**（解析失败报 路径:行:列 + 退出码 2，
+      一个字节都不写）；字段/引用契约不在这里做（由 qa/lib/data-schema.mjs 负责）。
     - 中途失败会回滚本次已写入的文件（新增的删除、更新的恢复原内容与原 mtime），退出码 3。
     - `--check` 严格只读：只做 stat/读字节/比对，不写文件、不建目录、不改 mtime。
     - 上游已删除、但仓库快照里仍存在的图标：默认不删除，只统计并提示（快照独有）。
@@ -28,7 +30,8 @@
 退出码：
     0 成功（含已是最新；`--check` 无漂移）
     1 `--check` 发现漂移（按换行归一后的内容判断；快照独有不计为漂移）
-    2 环境缺失/不完整（单独 clone 没有 .mimocode 工作区、必需源文件缺失、图标源缺失）
+    2 环境缺失/不完整（单独 clone 没有 .mimocode 工作区、必需源文件缺失、图标源缺失、
+      源 JSON 语法损坏）
     3 同步写盘失败（已尽力回滚；若回滚未完全成功会在信息中列出）
 
 注意：`data/builds.json` 不在同步范围内，它只由 `pipeline/mk_builds_json.py`
@@ -38,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import shutil
 import sys
@@ -243,6 +247,31 @@ def apply_changes(changes: list[Change]) -> None:
         raise SyncError(f"{detail}；已回滚本次已写入的 {len(applied)} 个文件") from exc
 
 
+def validate_json_sources(pairs) -> bool:
+    """落盘前对所有 .json 源做语法层校验（失败可定位到 路径:行:列），任何失败都不写盘。
+
+    只校验 JSON 语法与 UTF-8 解码；字段/引用契约属于 qa/lib/data-schema.mjs，不在这里做。
+    """
+    for rel_src, _ in pairs:
+        if not rel_src.endswith(".json"):
+            continue
+        path = WORKSPACE / rel_src
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            print(f"[x] 源 JSON 不是合法 UTF-8：{path}（字节偏移 {exc.start}）", file=sys.stderr)
+            return False
+        except OSError as exc:
+            print(f"[x] 读取源 JSON 失败：{path}：{exc}", file=sys.stderr)
+            return False
+        try:
+            json.loads(text)
+        except json.JSONDecodeError as exc:
+            print(f"[x] 源 JSON 损坏：{path}:{exc.lineno}:{exc.colno}：{exc.msg}", file=sys.stderr)
+            return False
+    return True
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="把 .mimocode 工作区的运行时数据/图标快照同步进站点仓库",
@@ -289,6 +318,11 @@ def main(argv=None) -> int:
             err(f"[x] 工作区图标源缺失：{missing_icon_source}"
                 f"（快照保留，未删除；确需跳过图标请用 --no-icons）")
         err("[x] 退出码 2：工作区数据不完整，未写入任何文件。")
+        return EXIT_ENV
+
+    # 语法层完整性：先全量校验源 JSON，再开始任何复制（保证损坏源不会搬进仓库）
+    if not validate_json_sources(pairs):
+        err("[x] 退出码 2：源 JSON 损坏/不可读，未写入任何文件。")
         return EXIT_ENV
 
     try:

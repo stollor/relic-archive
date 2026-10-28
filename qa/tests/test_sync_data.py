@@ -432,5 +432,92 @@ class TestFailureRollback(SyncDataTestBase):
         self.assertIn("回滚", out + err)
 
 
+class TestP13SyncRobustness(SyncDataTestBase):
+    """P1-3 追加：源 JSON 完整性、--check 连续一致、同步后无漂移、重复同步幂等。
+
+    只追加用例，不改上方已有 23 个用例。
+    """
+
+    def test_missing_source_file_returns_env_error_with_path(self):
+        (self.workspace / "build/ui_data.json").unlink()
+        before = self.tree_state(self.site)
+        rc, out, err = self.run_main()
+        self.assertEqual(rc, EXIT_ENV)
+        self.assert_site_unchanged(before)
+        self.assertIn("源文件缺失", err)
+        self.assertIn("ui_data.json", err)
+        self.assertIn("未写入任何文件", err)
+
+    def test_corrupted_source_json_returns_env_error_with_path_and_line(self):
+        self.write(self.workspace / "data/items.json", '{"broken": [1, 2,\n')
+        before = self.tree_state(self.site)
+        for args in ((), ("--check",)):
+            with self.subTest(args=args):
+                rc, out, err = self.run_main(*args)
+                self.assertEqual(rc, EXIT_ENV, err)
+                self.assert_site_unchanged(before)  # 一个字节都不写、无半成品
+                self.assertIn("items.json", err)
+                self.assertRegex(err, r"items\.json:\d+:\d+")  # 路径:行:列
+
+    def test_corrupted_non_sentinel_source_json_detected_in_check_mode(self):
+        # 非 items.json 哨兵文件的损坏同样必须在 --check 下被发现（不能靠漂移检查蒙混）
+        self.write(
+            self.workspace / "data/site_data.json",
+            '{\n  "meta": {},\n  "pieces": [\n}\n',
+        )
+        before = self.tree_state(self.site)
+        rc, out, err = self.run_main("--check")
+        self.assertEqual(rc, EXIT_ENV, err)
+        self.assert_site_unchanged(before)
+        self.assertIn("site_data.json", err)
+        self.assertRegex(err, r"site_data\.json:\d+:\d+")
+
+    def test_missing_workspace_suggests_mimocode_workspace(self):
+        self.mod.WORKSPACE = self.root / "absent-workspace"
+        rc, out, err = self.run_main("--check")
+        self.assertEqual(rc, EXIT_ENV)
+        self.assertIn(".mimocode", err)
+        self.assertIn("单独 clone", err)
+        self.assertIn("退出码 2", err)
+
+    def test_repeated_check_is_consistent(self):
+        before = self.tree_state(self.site)
+        rc1, out1, err1 = self.run_main("--check")
+        rc2, out2, err2 = self.run_main("--check")
+        self.assertEqual((rc1, rc2), (EXIT_OK, EXIT_OK), err1 + err2)
+        self.assertEqual(out1, out2)  # 两次输出完全一致
+        self.assertEqual(err2, "")
+        self.assert_site_unchanged(before)  # --check 只读
+
+    def test_sync_then_check_has_no_drift(self):
+        self.write(self.workspace / "data/items.json", b'{"fixture": "items-v2"}\n')
+        self.write(self.workspace / "assets/icons/new_icon.png", b"PNG:new")
+        rc1, out1, _ = self.run_main("--check")
+        self.assertEqual(rc1, EXIT_DRIFT)
+        self.assertIn("存在差异", out1)
+
+        rc2, out2, err2 = self.run_main()
+        self.assertEqual(rc2, EXIT_OK, err2)
+        after_sync = self.tree_state(self.site)
+
+        rc3, out3, err3 = self.run_main("--check")
+        self.assertEqual(rc3, EXIT_OK, err3)
+        self.assertIn("快照已是最新", out3)
+        self.assert_site_unchanged(after_sync)  # 同步后再 check 不得再写盘
+
+    def test_repeated_sync_produces_no_extra_changes(self):
+        self.write(self.workspace / "data/items.json", b'{"fixture": "items-v2"}\n')
+        self.write(self.workspace / "assets/icons/new_icon.png", b"PNG:new")
+        rc1, out1, err1 = self.run_main()
+        self.assertEqual(rc1, EXIT_OK, err1)
+        after_first = self.tree_state(self.site)
+
+        rc2, out2, err2 = self.run_main()
+        self.assertEqual(rc2, EXIT_OK, err2)
+        self.assertEqual(self.tree_state(self.site), after_first)  # 内容 + mtime 都不变
+        self.assertIn("新增 0", out2)
+        self.assertIn("更新 0", out2)
+
+
 if __name__ == "__main__":  # pragma: no cover
     unittest.main(verbosity=2)
