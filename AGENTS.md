@@ -13,10 +13,10 @@
 ```
 relic-archive/
 ├─ index.html lab.html      两个静态页（SPA 外壳 + 旧链接跳转页）
-├─ css/ js/                 站点源码：tokens/base/components + 4 个 view；core/ + components/ + views/
+├─ css/ js/                 站点源码：tokens/base/components + 4 个 view；domains.js + core/ + components/ + views/ + 领域模块（library/builds/lab）
 ├─ data/                    运行时数据（8 个 JSON + codex/）——页面 fetch ./data/*.json
 ├─ assets/icons/            1004 张 PNG（页面经 api.iconUrl 用 ./assets/icons/*.png）
-├─ docs/                    UX_SPEC（契约）/ DATA（数据）/ DEPLOY（部署）/ LESSONS（经验）/ screenshots
+├─ docs/                    UX_SPEC（交互）/ ARCHITECTURE（分层与配方）/ DATA / DEPLOY / LESSONS / screenshots
 ├─ pipeline/                builds.json 生成器 + 工作区数据同步（开发用）
 ├─ qa/                      零依赖验收（截图/交互/审计/对比度）+ REPORT.md
 ├─ serve.py start.cmd       本地静态服务器（Python 标准库）/ Windows 启动脚本
@@ -49,7 +49,7 @@ python pipeline/mk_builds_json.py --check    # 流派数据引用完整性
 python pipeline/sync-data.py --check         # 仓库快照 vs .mimocode 工作区 是否有漂移（只读）
 
 # 回归测试（零依赖；浏览器用例需先 python serve.py）
-node --test "qa/tests/*.test.mjs"            # JS 单元：core/task + core/store
+node --test "qa/tests/*.test.mjs"            # JS 单元 + 架构守卫（依赖方向/循环/单一实现）
 node qa/tests/lifecycle.browser.mjs          # 页面生命周期/竞态/损坏 localStorage 恢复
 node qa/tests/lab-async.browser.mjs          # 实验室分帧计算：版本控制/取消/最后条件生效
 python -m unittest discover -s qa/tests -p "test_*.py" -v   # sync-data.py 同步语义
@@ -66,6 +66,7 @@ python -m unittest discover -s qa/tests -p "test_*.py" -v   # sync-data.py 同�
 | 你要改什么 | 先读 | 关键约束 |
 |---|---|---|
 | 页面布局 / 交互 / 组件 | [`docs/UX_SPEC.md`](docs/UX_SPEC.md) | 一个动作一种意图；详情/抽屉/弹窗/Toast/选择器全站唯一组件 |
+| **代码怎么分层 / 加功能改哪里** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 依赖方向、路由归属、共享能力、六类高频任务的扩展配方 |
 | 数据字段 / 数据来源 | [`docs/DATA.md`](docs/DATA.md) | 不编造数据；无来源标「待验证」；纯文本实体不许伪造 id |
 | 部署 / 发布 / 域名路径 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | GitHub Pages 子路径；相对路径规则；推送用系统 Git |
 | 踩过的坑 / 为什么这样设计 | [`docs/LESSONS.md`](docs/LESSONS.md) | 先看再动，能省掉重复踩坑 |
@@ -103,10 +104,16 @@ node qa/shot.js --theme dark --only builds  # 看 7 套详情是否还正常
 ### 3.5 加一个图标
 `js/core/icons.js` 的 `ICONS` 登记一条 24×24 内联 SVG（`path` 片段），全站可用；`icon('名字', {size})`。
 
-### 3.6 新页面/新领域
-1) `js/core/router.js` 的 `DOMAINS` 加域名；2) `js/main.js` 的 `VIEW_FILES`/`DOMAIN_ZH`/`DOMAIN_ORDER`/帮助面板；
-3) `index.html` 顶栏加导航项 + `<link>` 新 CSS；4) 新建 `js/views/x.js`（导出 `mount(rootEl, ctx)`，可返回 `{onRoute, unmount}`）
-+ `css/view-x.css`（只引用 token）。参考 `js/views/codex.js` 最简。
+### 3.6 新页面 / 新领域 / 加筛选排序 / 改详情区块 / 加实验室面板
+**先读 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §5「六类高频任务配方」**，那里有逐步的「改哪里 → 复用什么 → 跑哪些测试」。
+
+最短版：
+- **新领域**：`js/domains.js` 加一项 → 新建 `js/views/<id>.js`（导出 `mount(rootEl, ctx)`）+ `css/view-<id>.css`。
+  **不用改** `index.html` / `js/core/router.js` / `js/main.js`（导航、标题、快捷键、样式注入自动生效）。
+- **加筛选 / 加排序**：`js/library/query.js`（状态 + 序列化 + 匹配 / `SORT_DEFS`+`NUM_SORT`）→ `js/views/library.js` 接线 → `qa/tests/library-query.test.mjs`。
+- **改详情区块**：`js/components/item-detail-sections.js` 的对应 `xxxSection()`（词表在 `js/core/labels.js`）。
+- **加实验室面板**：`js/views/lab.js` 的 `PANELS` 加一项 + 新建 `js/lab/<panel>.js`（实例契约见 ARCHITECTURE §5.5）。
+- **加用户偏好**：只走 `js/core/store.js`（不新增 localStorage key），并补 `qa/tests/store.test.mjs` 用例。
 
 ### 3.7 发布
 ```bash
@@ -128,6 +135,12 @@ GitHub Pages 会自动重建（约 20–60 秒）。验证：`https://stollor.gi
 7. **不编造数据**：无来源写「待验证」；纯文本实体（碎片/传奇词条）保持无 id。
 8. **不提交二进制噪音**：`qa/shots/`、`__pycache__/`、日志已在 `.gitignore`；发布图放 `docs/screenshots/`。
 9. **不提交凭据**：token/密钥永不入库；推送用凭据管理器或 SSH。
+10. **路由只分发一次**：只有 `js/main.js` 订阅 `router.onChange`；视图只实现 `onRoute(ctx)`，不得自行再订阅。
+11. **地址栏只有 `js/core/router.js` 能写**：导航用 `router.go`，装饰性同步（如详情深链）用 `router.replaceSilently`；
+    详情组件不拥有 URL，浮层打开/关闭的地址栏同步归调用方视图。
+12. **共享能力只有一个实现**：空态用 `js/components/states.js`、面板骨架用 `js/components/panel.js`、
+    道具文本规则用 `js/core/labels.js`、异步/清理用 `js/core/task.js`；领域清单只在 `js/domains.js`。
+    这四条由 `qa/tests/architecture.test.mjs` 自动守卫，红了不要绕过。
 
 ---
 
@@ -135,16 +148,23 @@ GitHub Pages 会自动重建（约 20–60 秒）。验证：`https://stollor.gi
 
 | 路径 | 作用 |
 |---|---|
-| `js/main.js` | 启动、路由派发、视图生命周期、错误边界 |
-| `js/core/router.js` | hash 路由（`#/items`、`#/builds/<key>`…） |
+| `js/main.js` | 启动、导航渲染、路由派发、视图生命周期、错误边界 |
+| `js/domains.js` | **领域注册表（唯一来源）**：导航/标题/快捷键/视图与样式加载 |
+| `js/core/router.js` | hash 路由（不认识具体领域；`go` / `setQuery` / `replaceSilently`） |
 | `js/core/api.js` | 唯一数据入口：`items/builds/codex/site_data/…` + 派生（套装/图标/实体解析） |
 | `js/core/store.js` | 唯一 localStorage 入口（owned/fav/build/saved/ui） |
 | `js/core/theme.js` + `js/theme-boot.js` | 三态主题、Alt+T、meta theme-color；首屏防闪 |
 | `js/core/ui.js` | Toast / 确认框 / 抽屉 / 弹窗 / 悬浮说明 |
 | `js/core/icons.js` | 内联 SVG 图标库（唯一来源） |
-| `js/components/item-detail.js` | 全站唯一道具详情（桌面弹窗 / 移动抽屉） |
+| `js/core/labels.js` | 中文词表 + 道具展示文本规则（`zhDisplay`/`EFFECT_CATS`/`FAMILY_GROUPS`） |
+| `js/core/task.js` | 代际 / 分帧任务 / 合并刷新 / 清理域 |
+| `js/components/states.js` `panel.js` | 空态/错误/载入、面板骨架（唯一实现） |
+| `js/components/item-detail.js` + `item-detail-sections.js` | 全站唯一道具详情（外壳 / 各内容区块） |
 | `js/components/picker.js` | 全站唯一装备选择器 |
-| `js/views/{library,lab,builds,codex}.js` | 四个领域视图（lab 另有 `js/lab/*` 引擎） |
+| `js/views/{library,lab,builds,codex}.js` | 四个领域视图的**装配**（逻辑在领域目录） |
+| `js/library/{query,present,export}.js` | 资料库纯函数：状态+过滤排序 / 展示模型 / CLI 导出 |
+| `js/builds/{ui,list,detail}.js` | 流派：共用小件 / 列表页 / 详情页 |
+| `js/lab/*` | 实验室引擎（engine/model/state）+ 工作台（workbench/wb-*）+ 各面板 |
 | `css/tokens.css` | 设计变量（双主题唯一色值来源） |
 | `data/` | 运行时数据（见 `docs/DATA.md` §2） |
 | `pipeline/` | 数据生成/同步（开发用，不参与运行时） |

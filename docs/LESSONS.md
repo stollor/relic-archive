@@ -243,6 +243,62 @@
   合法项保留（**不得整份清空用户 owned/fav/saved**）；迁移只在「新键缺失或归一后为空」时发生；
   写入失败必须可见（`store` emit `storage-error`，main 弹 toast），不能静默假装保存。
 
+### 2.8 工程分层与扩展成本（2026-10-28 第二阶段架构收口）
+
+#### #29 领域清单散落在 4 个文件，新增领域必漏改
+- **现象**：新增一个领域要同时改 `router.js` 的 `DOMAINS`、`main.js` 的 `VIEW_FILES/DOMAIN_ZH/DOMAIN_ORDER`、
+  `main.js` 的 Alt 键数组、`index.html` 的导航与 CSS link；任一处漏改就「路由进不去 / 导航没高亮 / Alt 越界变 `/undefined`」。
+- **规则**：领域是**一张表**（`js/domains.js`：id/中文名/标题/图标/路径/快捷键/角标/样式/懒加载器）。
+  导航、文档标题、Alt+数字、视图与样式的懒加载、未知领域兜底全部由表驱动；`router.js` 不认识任何具体领域。
+  由 `qa/tests/architecture.test.mjs` 守卫（应用壳不得出现 `VIEW_FILES/DOMAIN_ZH/DOMAIN_ORDER`、router 不得出现 `DOMAINS`、
+  index.html 不得硬编码 `data-domain` 与 `view-*.css`）。
+
+#### #30 视图 CSS 从全量 link 改成按领域懒注入，必须「样式先于挂载」
+- **现象/风险**：把 4 个 `view-*.css` 从 `index.html` 移到 `domains.js` 后，若先 mount 再等样式，首屏会无样式闪烁。
+- **规则**：`loadView()` 必须 `Promise.all([mod.load(), 注入该领域 styles])` 后才允许 `mount`；
+  每个 href 只注入一次；载入失败 resolve 不阻塞（内容优先）。验证方法：用 CDP Fetch 人为延迟 CSS 1.4s，
+  断言视图挂载瞬间 `document.styleSheets` 已含该文件且 computed style 生效（不要只看截图）。
+- **副作用**：领域模块不能再随便「借」别的领域 view CSS 的专属类（以前靠全量加载侥幸生效）。
+
+#### #31 同构标记（空态 / 面板）不能各写一份
+- **现象**：`.empty` 空态手写 8 处、标题标签在 `div / h3 / p` 之间不一致；面板骨架 3 份（components/panel、lab/parts、builds 内联）。
+- **规则**：`components/states.js`（`emptyBody/emptyState/errorState/loadingState`）与
+  `components/panel.js`（`panel()/panelHead()`）是唯一实现；视图只描述语义（为什么空、怎么恢复、标题与工具）。
+  架构守卫禁止其它文件出现 `class: 'empty__ico'` / `class: 'panel__head'` 字面量。
+- **附带修复**：知识库分类卡用 `panelHead()` 拼自定义主体，避免为了复用而改 DOM 结构。
+
+#### #32 详情/浮层不得拥有 URL；装饰性地址栏同步不触发路由派发
+- **现象**：`openItemDetail` 内部按 `hash.startsWith('#/items')` 写 `history.replaceState` 并在关闭时 `router.go`，
+  导致「组件拥有 URL」；同一动作在不同领域行为不一致（流派打开详情不改 URL、资料库改）；调用方无法预期。
+- **规则**：组件只负责开/关浮层 + `onClose` 回调；**URL 归调用方视图**。资料库统一入口：
+  打开 `router.replaceSilently('/items/<id>')`（只改地址栏、不派发，避免把筛选态重置），关闭 `router.go(detailReturnPath)`。
+  守卫：`item-detail.js` 不得出现 `router.*` / `location.hash` / `history.*` / `route` 选项。
+
+#### #33 拆分判据是「能否独立测试 / 改动范围」，不是行数
+- **做法**：先拆**纯函数**（状态+序列化+过滤排序 → `library/query.js`；展示模型 → `present.js`；导出 → `export.js`），
+  它们能被 `node --test` 直接跑；DOM 装配留在视图。流派拆成 `ui/list/detail` 三块，改详情区块不必读整个文件。
+  实验室拆成 `workbench`（装配）+ `wb-slots/wb-settings/wb-result`（区块）。
+- **结果**：`views/library.js` 1436→1077、`views/builds.js` 908→172、`item-detail.js` 605→219、`lab/workbench.js` 651→101，
+  同时新增可单测模块（`library-query.test.mjs` 21 例）。
+
+#### #34 面板类页面用「注册表 + 实例契约」，新增面板从 5 处降为 2 文件
+- **现象**：新增实验室面板要改 PANELS、`ensurePanel` 的 if/else、两处重复的 URL 参数白名单、`applyPanelQuery` 分支。
+- **规则**：`PANELS = [{ id, zh, icon, title, paramKeys, create(model, deps) }]` 是唯一事实源；
+  `paramKeys` 推导「切走清理、切来下发」；面板实例统一 `{ el, mount?, refresh?, applyParams?, activate?, destroy? }`。
+  现在新增面板 = 新建 `js/lab/<panel>.js`（约 10 行）+ `views/lab.js` 注册 6 行。
+
+#### #35 把架构约定写进测试，否则文档必然腐化
+- **做法**：`qa/tests/architecture.test.mjs` 解析真实 import 图，断言 16 条：分层方向（core 只能依赖 core、
+  components 不得反向、领域模块不得依赖 views）、无循环依赖、相对 import 均存在、只有 main 订阅路由、
+  只有 router 写地址栏、详情组件无 URL、领域清单唯一、空态/面板/文本规则唯一、纯计算模块不触 DOM。
+- **价值**：重构期间它先红（8/16）后绿（16/16），是「共享能力只有一个权威实现」的验收证据，而不是口头承诺。
+
+#### #36 重构等价性用「冻结快照 + 逐叶子 DOM diff」证明
+- **做法**：把 HEAD 用 `git archive` 冻结成一份静态站点，与工作区同时用同一个 CDP 探针跑相同场景，
+  归一化后逐叶子对比 `innerHTML` / hidden / 表单值 / `location.hash`。资料库 8 路由、流派 14 场景、实验室 33 场景均 diff=0
+  （仅记录的预期差异：空态 hint 标签 `div→p`、面板标题包 `span`、空 `.panel__tools`）。
+- **比截图强在哪**：截图只能看出大改，逐叶子 diff 能证明「文案/类名/顺序/状态一个没变」。
+
 ---
 
 ## 3. 有效工作法（推荐 AI 采用）
@@ -281,12 +337,15 @@
 | 仓库文件 / 体积 | ≈1088 files（git 追踪）/ 工作树约 70 MB（图标 58 MB + 数据 9 MB） |
 | 页面数据 | 1126 件真道具（1894 条记录）/ 16 职业 / 43 护甲套装 / 13 篇知识库 / 7 套流派 |
 | 图标 | 1004 张 PNG（`assets/icons/`） |
+| JS 模块 | 42 个文件 / 11,099 行；最大视图 `views/library.js` 1,077 行；纯函数模块 `library/{query,present,export}` 可被 `node --test` 直接引用 |
 | `shot.js --theme dark` | 54/54 PASS（27 路由 × 1440/390） |
 | `shot.js --theme light` | 54/54 PASS |
 | `interactions.js` | 67/67 PASS（资料库 17 / 实验室 18 / 流派 7 / 知识库 4 / 全站 11 / 移动 6） |
-| `audit.py` | 0 FAIL / 0 WARN / 65 INFO |
+| `audit.py` | 0 FAIL / 0 WARN / 60 INFO |
 | `theme-contrast.mjs` | 130/130 PASS（正文最低 4.91，强调最低 4.60） |
-| `node --test "qa/tests/*.test.mjs"` | 29/29 PASS（core/task 6 + core/store 23） |
+| `node --test "qa/tests/*.test.mjs"` | 69/69 PASS（架构守卫 16 + 资料库纯函数 21 + core/task 9 + core/store 23） |
+| `qa/tests/architecture.test.mjs` | 16/16（分层方向 / 循环依赖 / 领域单表 / 路由归属 / 单一权威实现 / 纯模块） |
+| `qa/tests/library-query.test.mjs` | 21/21（状态往返 / 排序可用性 / 过滤组合 / 计数口径 / 导出） |
 | `qa/tests/lifecycle.browser.mjs` | 25/25 PASS（快速切换 / 延迟数据 / 前进后退 / 深链 / 损坏 localStorage） |
 | `qa/tests/lab-async.browser.mjs` | 8/8 PASS（运行中改条件取最后条件 / 离开页面 / 耗时无退化） |
 | `qa/tests/test_sync_data.py` | 23 tests OK（同步语义 / 只读 check / 换行归一 / 回滚 / 幂等） |

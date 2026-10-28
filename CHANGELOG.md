@@ -3,6 +3,43 @@
 > 只记「形态/能力」级变更与关键数字；细枝末节的改动见 `git log`。
 > 早期里程碑来自 `.mimocode` 工作区历史（站点曾是工作区内的 `web/`）。
 
+## v3.3 — 2026-10-28 · 第二阶段：工程架构收口与开发工具化（不新增功能、不改视觉）
+
+- **领域注册表**（新增 `js/domains.js`）：领域的 id / 中文名 / 标题 / 图标 / 路径 / 快捷键 / 顶栏角标 / 视图样式 /
+  视图懒加载器收敛为一张表。导航、文档标题、Alt+数字、视图与样式加载、未知领域兜底全部数据驱动；
+  `js/core/router.js` 不再认识具体领域，`index.html` 去掉硬编码导航与 4 个 view CSS link（改为进入领域时注入，
+  且**样式先于挂载**，无样式首屏风险已用延迟 CSS 的 CDP 实验证伪）。新增领域从「改 4 个文件」降为
+  「`domains.js` 加一项 + 新建视图与样式」。
+- **大型视图拆分**（行为/视觉不变，均用旧代码冻结快照做逐叶子 DOM diff 验证）：
+  - 资料库 `views/library.js` 1436→1077，新增纯函数 `library/query.js`（状态/序列化/过滤/排序，依赖注入）、
+    `library/present.js`（展示模型）、`library/export.js`（CLI 查询导出）。
+  - 流派 `views/builds.js` 908→172，新增 `builds/{ui,list,detail}.js`。
+  - 道具详情 `components/item-detail.js` 605→219，九个内容区块移到 `item-detail-sections.js`（改某个区块只读一个函数）。
+  - 实验室 `lab/workbench.js` 651→101，拆出 `wb-slots.js` / `wb-settings.js` / `wb-result.js`；
+    `views/lab.js` 面板改为**单表注册**（`PANELS = {id,zh,icon,title,paramKeys,create}`），
+    「新增一个实验室面板」从 5 处改动降为「新建面板模块（约 10 行）+ 注册 6 行」。
+- **共享能力收口为唯一实现**：`components/states.js`（空/错误/载入，替换 8 处手写与 3 种标题标签）、
+  `components/panel.js` + `panelHead()`（替换 3 份面板骨架）、`core/labels.js` 的道具文本规则
+  （`zhDisplay`/`effectZhSentence`/`EFFECT_CATS`/`FAMILY_GROUPS`，替换 3 处重复）、`core/task.js` 新增
+  `createRefresh()`（合并刷新 + 可取消）、`core/router.js` 新增 `replaceSilently()`（装饰性地址栏同步不派发）、
+  `lab/model.js` 的身份解析（`nameOf`/`iconOf`，替换 3 处）、`fmt.round`、`createScope` 替换 6 处手写清理。
+- **路由与交互归属统一**：详情组件不再写 URL（删除 `route` 开关与 `history.replaceState`/`router.go`），
+  URL 归调用方视图（资料库：打开 `replaceSilently`、关闭 `router.go(detailReturnPath)`）；
+  路由变化仍只由 `js/main.js` 单点分发；抽屉/弹窗/Toast 生命周期仍只在 `core/ui.js`。
+- **顺手修掉的既有小问题**：资料库「套装部件行」打开详情时漏记 `detailOpenId`（关闭浮层时状态脱节）；
+  菜单「复制 PowerShell」里的 CLI 路径因 JS 字符串 `\b`/`\r` 变成控制字符（改为 `String.raw`）；
+  `ui.openDrawer` 的死参数（`route`/`closeOnScrim`）与「200ms 关闭过渡期间重开会被旧回调清掉」的竞态；
+  `picker` 聚焦定时器无守卫；`codex` 手拼面板头。
+- **架构守卫测试**（新增 `qa/tests/architecture.test.mjs`，16 条）：解析真实 import 图，断言分层方向、
+  无循环依赖、只有 main 订阅路由、只有 router 写地址栏、详情组件无 URL、领域清单唯一、
+  空态/面板/文本规则单一权威、纯计算模块不触 DOM。重构前 8/16 红 → 重构后 16/16 绿。
+- **新回归测试**：`qa/tests/library-query.test.mjs`（21 例：状态往返/排序可用性/过滤组合/计数口径/导出）；
+  同步更新 `AGENTS.md` 必跑命令与任务配方、新增 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)（分层规则 + 模块地图 +
+  六类高频任务配方）、`docs/LESSONS.md` §2.8（#29–#36）。
+- 门禁结果：`shot 54/54 × 2`、`interactions 67/67`、`audit 0 FAIL`、`contrast 130/130`、
+  `node --test 69/69`、`lifecycle 25/25`、`lab-async 8/8`、`test_sync_data.py 23 OK`、
+  `mk_builds_json.py --check` 与 `sync-data.py --check` 均 0；全新 clone 集成复验通过。
+
 ## v3.2 — 2026-10-28 · 第一阶段可靠性治理（不新增功能）
 
 - **数据同步** `pipeline/sync-data.py`：修复图标同步 `rows.append()` 多参数导致的确定性崩溃（新增/更新图标必崩，

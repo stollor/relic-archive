@@ -266,3 +266,82 @@ node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
 1. 本文件 §1–§9 是 v2.1/v3 历史快照，其中「36/36」「59 项交互」已过时；当前为 **54 项/单主题、67 项交互**。
 2. 本轮开始时 `sync-data.py --check` 为 exit 1（5 文件 CRLF/LF 字节差异，内容一致），属长期假红，已修（见 P0-1b）。
 3. `qa/results/*.json` 为门禁运行产物；本轮不提交其时间戳变化，保持仓库 diff 干净。
+
+---
+
+## 11. 第二阶段架构收口回归（2026-10-28）
+
+本轮不改功能、不改视觉，只收敛职责与扩展入口。验收口径：**同一份源码在重构前后跑同一门禁，数字不退化**；
+模块边界另由新增的架构守卫测试自动校验（不再只靠文档约定）。
+
+### 11.1 门禁结果
+
+| 命令 | 结果 |
+|---|---|
+| `node qa/shot.js --theme dark` | **54/54 PASS**（27 路由 × 1440/390） |
+| `node qa/shot.js --theme light` | **54/54 PASS** |
+| `node qa/interactions.js` | **67/67 PASS**（0 console error） |
+| `python qa/audit.py` | **0 FAIL / 0 WARN / 60 INFO**（INFO 由 65 降到 60：手写空态/面板标记收口后少了提示项） |
+| `node qa/theme-contrast.mjs` | **130/130 PASS** |
+| `node --test "qa/tests/*.test.mjs"` | **69/69 PASS**（架构守卫 16 + 资料库纯函数 21 + core/task 9 + core/store 23） |
+| `python -m unittest discover -s qa/tests -p "test_*.py"` | **23 tests OK** |
+| `node qa/tests/lifecycle.browser.mjs` | **25/25 PASS** |
+| `node qa/tests/lab-async.browser.mjs` | **8/8 PASS** |
+| `python pipeline/mk_builds_json.py --check` | exit 0（引用完整性；历史 23 条落空 id 为既有 INFO） |
+| `python pipeline/sync-data.py --check` | exit 0（仅换行差异 5，零写盘） |
+
+### 11.2 架构守卫（新增，可执行的分层约定）
+
+`qa/tests/architecture.test.mjs` 解析真实 import 图后断言 16 条。**重构前 8/16 红**，红了的部分正是本轮的整改点：
+
+| 守卫 | 重构前 | 重构后 |
+|---|---|---|
+| core 不得依赖上层（components/views/lab/builds/library/应用层） | ✅ | ✅ |
+| components 不得依赖 views/lab/builds/library | ✅ | ✅ |
+| lab 不得依赖 views | ✅ | ✅ |
+| 领域模块不得依赖 views、library 与 builds 不互相依赖 | ✅ | ✅ |
+| 每个文件都在已知层内 | ✅ | ✅ |
+| 无循环依赖 | ✅ | ✅ |
+| 相对 import 均指向真实文件 | ✅ | ✅ |
+| 只有 `js/main.js` 订阅 `router.onChange` | ✅ | ✅ |
+| 只有 `js/core/router.js` 写 `location.hash`/`history` | ❌（item-detail、ui.js） | ✅ |
+| 详情组件不拥有 URL（无 `router.*`/`location.hash`/`route`） | ❌ | ✅ |
+| 领域清单只在 `js/domains.js`（应用壳无 VIEW_FILES/DOMAIN_ZH/DOMAIN_ORDER，router 无 DOMAINS） | ❌ | ✅ |
+| `index.html` 不硬编码导航项与视图样式 | ❌ | ✅ |
+| 空/错/载入状态只有 `components/states.js` | ❌（8 处手写） | ✅ |
+| 面板骨架只有 `components/panel.js` | ❌（3 份） | ✅ |
+| 道具展示文本规则只有 `core/labels.js` | ❌（`EFFECT_CATS`×3、`zhDisplay`×2、`plainText`） | ✅ |
+| 纯计算模块不触 DOM/storage/网络 | ❌ | ✅ |
+
+### 11.3 重构前后规模与改动成本
+
+| 指标 | 重构前 | 重构后 |
+|---|---|---|
+| JS 文件数 / 行数 | 31 / 10,675 | 42 / 11,099（拆分出可单测模块，视图普遍变薄） |
+| `views/library.js` | 1,436 | 1,077（+ `library/query.js` 321 / `present.js` 147 / `export.js` 76） |
+| `views/builds.js` | 908 | 172（+ `builds/ui.js` 186 / `list.js` 172 / `detail.js` 429） |
+| `components/item-detail.js` | 605 | 219（+ `item-detail-sections.js` 391） |
+| `lab/workbench.js` | 651 | 101（+ `wb-slots.js` 237 / `wb-settings.js` 145 / `wb-result.js` 238） |
+| 新增一个领域 | 改 4 个文件（router/main×3/index.html）+ 新视图与 CSS | `js/domains.js` 加一项 + 新视图与 CSS（其余自动） |
+| 新增一个实验室面板 | 改 5 处（PANELS/ensurePanel/两处参数白名单/applyPanelQuery） | 新建面板模块（约 10 行）+ 注册 6 行 |
+| 新增一种筛选/排序 | 视图内私有逻辑，无法单测 | `library/query.js` 加字段/排序项 + 纯函数用例 |
+| 改详情某个区块 | 在 605 行文件里定位 | `item-detail-sections.js` 里对应 `xxxSection()` |
+
+### 11.4 等价性证据（重构不改行为）
+
+- 资料库：旧/新代码冻结快照 + 同一 CDP 探针，8 条路由 × 390/1440 逐叶子 DOM diff——12/16 完全一致，
+  4 组差异仅为 `empty__hint` 由 `<div>` 改 `<p>`（统一到 `states.js` 的预期变化，class/文案/像素不变）。
+- 流派：14/14 场景（列表 / 7 套详情 / 404 / modal×4 / drawer）结构完全一致；除面板标题包 `span` 与空 `.panel__tools` 外 diff=0。
+- 实验室：33 个场景（5 面板深链 / 依次点击 / 8 组 URL 参数 / 3 个旧路由重定向 / 15 槽 / 3 结果分组 / 设置变更 / 面板切换）
+  逐叶子 diff=0（含 `location.hash`、panel 顺序与 hidden、seg 选中态、表单值）。
+- 详情 URL 归属：`#/items?cat=ring&view=list` 打开详情 → `#/items/<id>` → Esc → 原筛选 URL 原样恢复；
+  `#/builds/<key>` 打开详情前后 hash 全程不变（两个领域互不污染）。
+
+### 11.5 已知残留（下阶段可选）
+
+1. 领域样例仍出现在 QA 夹具（`qa/shot.js` 路由表、`qa/interactions.js` G1/G2、`lifecycle.browser.mjs` 的 DOM 选择器）；
+   新增领域时需手动补夹具（属测试数据，不进产品代码）。
+2. 视图 CSS 改为按领域懒注入后，领域模块若误借他域 `view-*.css` 专属类会掉样式（本轮扫描无跨域依赖；
+   如需强约束可在架构守卫里加类名白名单）。
+3. `core/api.js` 里 `terms()/stats()/buildData()` 零调用；`core/theme.js` 的 `store.on('ui')` 常驻不退订（壳级，可接受）。
+4. 实验室 `engine.js` 内部的 `round1/round4` 未并入 `fmt.round`（数据层口径冻结，避免动对拍基线）。
