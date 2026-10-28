@@ -59,6 +59,8 @@ let detailReturnPath = '/items';
 let EL = null;             // DOM 引用与控件映射
 let INSTANCE = 0;          // 视图实例代号：异步回调落地前校验「我还是当前实例」
 let urlTimer = 0;
+let lastSig = '';          // P2：上一次实际渲染的「模式|状态」签名（同签名重复触发时跳过重建）
+let lastMode = '';
 
 function listPath() { return MODE === MODE_SETS ? '/items/sets' : '/items'; }
 
@@ -675,6 +677,7 @@ function appendBatch() {
 function renderEmpty(kind) {
   const R = EL;
   if (!R) return;
+  lastSig = ''; lastMode = '';   // 空态/错误态不是「列表已渲染」，下次必须真正重建
   clear(R.empty);
   R.empty.hidden = false;
   R.grid.hidden = true;
@@ -829,9 +832,15 @@ function installSet(s) {
 }
 
 /* ------------------------------- 渲染总入口 ------------------------------- */
-function renderAll() {
+function renderAll({ force = false } = {}) {
   if (!EL || !ITEMS) return;
   const R = EL;
+  const sig = `${MODE}|${stateKey(state)}`;
+  // P2：同模式 + 同筛选/排序再次触发（重复点同一 chip、同值排序等）时，产出与上次完全相同，
+  // 直接复用已有 DOM。保守边界（Lead 认可）：仅卡片视图、且 owned/fav 筛选关闭时跳过；
+  // owned/fav 筛选激活时 store 变化必须重建，由监听处传 force: true 覆盖。
+  if (!force && EL.ready && state.view === 'grid' && !state.owned && !state.fav
+      && MODE === lastMode && sig === lastSig) { syncControls(); return; }
   const isSets = MODE === MODE_SETS;
   R.cats.hidden = isSets;
   R.filters.hidden = isSets;
@@ -855,6 +864,7 @@ function renderAll() {
     R.grid.hidden = false;
     if (!list.length) renderEmpty('empty');
     deferTitle('套装 · 资料库');
+    lastSig = sig; lastMode = MODE;
     return;
   }
 
@@ -869,6 +879,7 @@ function renderAll() {
   R.grid.classList.remove('lib-grid--sets');
   renderResults();
   deferTitle(state.q ? `搜索「${state.q}」· 资料库` : '资料库');
+  lastSig = sig; lastMode = MODE;
 }
 
 /* ------------------------------- 路由 ------------------------------- */
@@ -1035,10 +1046,11 @@ export function mount(rootEl, ctx) {
   buildShell(rootEl);
   const offStore = [
     store.on('owned', () => {
-      if (mine === INSTANCE && ITEMS && MODE === MODE_ITEMS && state.owned) renderAll();
+      // 仅「已拥有」筛选激活时列表内容依赖 store：强制重建，绕开 P2 的同签名跳过
+      if (mine === INSTANCE && ITEMS && MODE === MODE_ITEMS && state.owned) renderAll({ force: true });
     }),
     store.on('fav', () => {
-      if (mine === INSTANCE && ITEMS && MODE === MODE_ITEMS && state.fav) renderAll();
+      if (mine === INSTANCE && ITEMS && MODE === MODE_ITEMS && state.fav) renderAll({ force: true });
     }),
   ];
   load()
@@ -1068,6 +1080,7 @@ export function mount(rootEl, ctx) {
       if (detailOpenId) { detailOpenId = null; closeDetailLayers(); }
       ITEMS = null; SETS = null; LOAD_PROMISE = null;
       list = []; rendered = 0; detailOpenId = null;
+      lastSig = ''; lastMode = '';
       EL = null;
       clear(rootEl);
     },

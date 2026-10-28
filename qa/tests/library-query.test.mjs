@@ -8,6 +8,7 @@
      · 计数：computeAll 的 skipCat 口径；套装关键词检索
      · 展示模型：rowDesc 降级链、rowStatsSpec、cardDescSpec、套装合计/资料片
      · 导出：CLI 查询映射、payload 结构、PowerShell/JSON 文本
+     · 排序池缓存：冷/热一致、Collator 与 cmpText 口径逐项等价、数据快照隔离、不可用排序回落
    运行：node --test qa/tests/library-query.test.mjs
    ========================================================================== */
 import test from 'node:test';
@@ -27,6 +28,7 @@ import {
 import {
   SORT_MAP, buildCliQuery, exportPayload, cliJsonText, powershellText,
 } from '../../js/library/export.js';
+import { cmpText } from '../../js/core/dom.js';
 
 /* ------------------------------- 假数据 ------------------------------- */
 
@@ -491,4 +493,108 @@ test('cliJsonText / powershellText：可直接复制的文本形态', () => {
   // 回归：JS 字符串里的 \b / \r 曾把复制出去的 CLI 路径变成控制字符（Windows 路径必须原样）
   assert.ok(ps.includes(String.raw`.\mimocode\bin\rmn2.ps1`), 'CLI 路径必须是可用的 Windows 相对路径');
   assert.doesNotMatch(ps, /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/, '复制出的脚本不得含控制字符');
+});
+
+/* ------------------------- 排序池缓存（性能优化 P1） ------------------------- */
+
+/** 参考实现：用 core/dom 的 cmpText（每次 localeCompare）复现排序口径，作为「顺序快照」基准 */
+function referenceSort(pool, sort) {
+  const arr = [...pool];
+  const numRef = (a, b, getter) => {
+    const av = getter(a); const bv = getter(b);
+    const an = typeof av === 'number'; const bn = typeof bv === 'number';
+    if (an && bn) return bv - av;
+    if (an) return -1;
+    if (bn) return 1;
+    return 0;
+  };
+  if (sort === 'name') arr.sort((a, b) => cmpText(a.zh, b.zh));
+  else if (sort === 'dlc') arr.sort((a, b) => (a.dlc - b.dlc) || cmpText(a.zh, b.zh));
+  else if (sort === 'order') arr.sort((a, b) => (b.order - a.order) || cmpText(a.zh, b.zh));
+  else {
+    const get = NUM_SORT[sort];
+    if (get) arr.sort((a, b) => numRef(a, b, get) || cmpText(a.zh, b.zh));
+    else arr.sort((a, b) => a.order - b.order);
+  }
+  return arr;
+}
+const ids = (arr) => arr.map((it) => it.id);
+const poolOf = (cat, assets, items) => items.filter((it) => (assets || it.isItem) && (cat === 'all' || it.cat === cat));
+
+test('computeAll：排序池缓存冷/热结果 deepEqual，重复触发结果稳定', () => {
+  const s = stateOf({ q: '测试', sort: 'name' });
+  const cold = computeAll({ items: ITEMS, state: s, deps: DEPS });
+  const hot = computeAll({ items: ITEMS, state: s, deps: DEPS });
+  assert.deepEqual(ids(hot.list), ids(cold.list), '缓存命中与首次构建必须逐项一致');
+  const third = computeAll({ items: ITEMS, state: s, deps: DEPS });
+  assert.deepEqual(ids(third.list), ids(cold.list), '多次调用不得漂移');
+
+  // 顺序快照：与「cmpText 参考排序 → 过滤」的完整 id 序列逐项相等
+  const expected = ids(referenceSort(poolOf('all', false, ITEMS), 'name')
+    .filter((it) => matches(it, s, DEPS)));
+  assert.deepEqual(ids(cold.list), expected, '排序池缓存结果必须与 cmpText 参考口径完全一致');
+});
+
+test('排序池缓存：Collator 复用与 cmpText 全量顺序逐项一致（混合池 × 各排序口径）', () => {
+  // 覆盖 ASCII/中文/数字后缀/大小写/平局/缺数值：任何顺序差异都会被逐项比较抓到
+  const zhPool = ['Alpha 2', 'alpha 10', '甲', '乙甲', '丙', 'Ring 3号', '戒 10', '戒 2',
+    '测试', 'Zeta', 'zeta', 'Ammo 1', 'Ammo 10', 'B 2', 'b 10', ''];
+  const mixed = [];
+  for (let i = 0; i < 96; i += 1) {
+    mixed.push(item({
+      id: `mix-${i}`,
+      zh: zhPool[i % zhPool.length],
+      en: `EN ${i}`,
+      order: (i * 7) % 11,
+      dlc: i % 4,
+      armor: i % 5 === 0 ? undefined : i * 3.5,
+      weight: i % 3 === 0 ? undefined : i * 1.25,
+      value: i % 2 === 0 ? i : undefined,
+      damage: i % 4 === 0 ? undefined : i * 2,
+      haystack: '',
+    }));
+  }
+  const avail = new Set(['default', 'name', 'dlc', 'order', 'armor', 'weight', 'value', 'damage']);
+  for (const sort of [...avail]) {
+    const got = sortList([...mixed], stateOf({ sort }), avail);
+    const want = referenceSort(mixed, sort);
+    assert.deepEqual(ids(got), ids(want), `排序口径「${sort}」与 cmpText 参考实现不一致`);
+  }
+  // 缓存池路径（computeAll）对同一混合池也必须遵循同一顺序（「全部」分类合法的排序项）
+  for (const sort of ['default', 'name', 'dlc', 'order']) {
+    const viaAll = computeAll({ items: mixed, state: stateOf({ sort, assets: true }), deps: {} });
+    const want = ids(referenceSort(mixed, sort));
+    assert.deepEqual(ids(viaAll.list), want, `computeAll 排序池缓存对「${sort}」顺序漂移`);
+  }
+  // 分类专属排序项（armor）走同一条缓存路径时同样逐项一致
+  const armorPool = Array.from({ length: 24 }, (_, i) => item({
+    id: `arm-${i}`,
+    zh: zhPool[i % zhPool.length],
+    cat: 'armor', family: 'head',
+    order: i % 7,
+    armor: i % 4 === 0 ? undefined : (24 - i) * 2.5,
+  }));
+  const gotArmor = computeAll({ items: armorPool, state: stateOf({ cat: 'armor', sort: 'armor' }), deps: {} });
+  assert.deepEqual(ids(gotArmor.list), ids(referenceSort(armorPool, 'armor')),
+    'computeAll 对分类专属排序项（armor）顺序漂移');
+});
+
+test('computeAll：items 数据快照隔离（新数组 → 新缓存，互不污染）', () => {
+  const A = [item({ id: 'a1', zh: '乙', order: 2 }), item({ id: 'a2', zh: '甲', order: 1 })];
+  const B = [item({ id: 'b1', zh: '甲', order: 2 }), item({ id: 'b2', zh: '乙', order: 1 })];
+  const s = stateOf({ sort: 'name' });
+  assert.deepEqual(ids(computeAll({ items: A, state: s, deps: {} }).list), ['a2', 'a1']);
+  assert.deepEqual(ids(computeAll({ items: B, state: s, deps: {} }).list), ['b1', 'b2']);
+  // 回到 A（缓存命中）：仍是 A 自己的顺序，不能串成 B 的
+  assert.deepEqual(ids(computeAll({ items: A, state: s, deps: {} }).list), ['a2', 'a1']);
+});
+
+test('computeAll：URL 带入不可用排序项时回落 default（与 sortList 回落口径一致）', () => {
+  const bad = stateOf({ cat: 'weapon', sort: 'weakspot' });
+  assert.equal(availableSortIds('weapon', false, ITEMS).has('weakspot'), false, '前置：weapon 池无 weakspot 数据');
+  const got = computeAll({ items: ITEMS, state: bad, deps: DEPS });
+  const def = computeAll({ items: ITEMS, state: stateOf({ cat: 'weapon', sort: 'default' }), deps: DEPS });
+  assert.deepEqual(ids(got.list), ids(def.list), '不可用排序必须回落 default');
+  const ref = sortList([...poolOf('weapon', false, ITEMS)], bad, new Set(['default']));
+  assert.deepEqual(ids(got.list), ids(ref), '与 sortList 的回落口径一致');
 });

@@ -4,10 +4,16 @@
    与 store / api 的耦合通过 deps 注入：{ isOwned(id), isFav(id), hasIcon(item) }，
    视图传入真实实现，qa 用例传假实现即可独立验证筛选口径。
    ========================================================================== */
-import { cmpText } from '../core/dom.js';
 import {
   CAT_BY_ID, CONF, GAME_TAG_BY_ID, GAME_TAGS,
 } from '../core/labels.js';
+
+/* 排序用的中文比较器：复用同一个 Intl.Collator 实例。
+   口径与 js/core/dom.js 的 cmpText 完全一致（同 locale + numeric + sensitivity:'base'），
+   但 localeCompare 每次调用都会重建 collator，全量排序（~1894 项 × n log n）实测差 ~30 倍；
+   本层只做排序比较，不复制任何展示文本规则。顺序等价性由 qa/tests/library-query.test.mjs 守卫。 */
+const sortCollator = new Intl.Collator('zh-Hans-CN', { numeric: true, sensitivity: 'base' });
+function cmpTextSort(a, b) { return sortCollator.compare(String(a || ''), String(b || '')); }
 
 /* ------------------------------- 状态 schema ------------------------------- */
 
@@ -182,17 +188,38 @@ function compareNum(a, b, getter) {
 export function sortList(arr, state, availIds) {
   const sort = availIds.has(state.sort) ? state.sort : 'default';
   if (sort === 'name') {
-    arr.sort((a, b) => cmpText(a.zh, b.zh));
+    arr.sort((a, b) => cmpTextSort(a.zh, b.zh));
   } else if (sort === 'dlc') {
-    arr.sort((a, b) => (a.dlc - b.dlc) || cmpText(a.zh, b.zh));
+    arr.sort((a, b) => (a.dlc - b.dlc) || cmpTextSort(a.zh, b.zh));
   } else if (sort === 'order') {
-    arr.sort((a, b) => (b.order - a.order) || cmpText(a.zh, b.zh));
+    arr.sort((a, b) => (b.order - a.order) || cmpTextSort(a.zh, b.zh));
   } else {
     const get = NUM_SORT[sort];
-    if (get) arr.sort((a, b) => compareNum(a, b, get) || cmpText(a.zh, b.zh));
+    if (get) arr.sort((a, b) => compareNum(a, b, get) || cmpTextSort(a.zh, b.zh));
     else arr.sort((a, b) => a.order - b.order);
   }
   return arr;
+}
+
+/**
+ * 排序池缓存：同一数据快照下，按「分类 | 是否含非道具资产 | 排序项」只完整排序一次。
+ * 过滤不改变相对顺序 ⇒ computeAll 可先取缓存顺序、再线性过滤，结果与原「先过滤再排序」逐项一致
+ * （所有比较器只依赖 item 自身字段；顺序等价性由 qa/tests/library-query.test.mjs 守卫）。
+ * 缓存以 items 数组身份隔离：换上新的数据快照（新数组）自动使用新缓存，不同快照互不污染。
+ */
+const sortedPoolCache = new WeakMap();
+const SORTED_POOL_LIMIT = 24;   // 分类×资产×排序项的组合上限保护（约 24×1126 引用，可忽略）
+
+function sortedPool(cat, assets, sort, items) {
+  let byKey = sortedPoolCache.get(items);
+  if (!byKey) { byKey = new Map(); sortedPoolCache.set(items, byKey); }
+  const key = `${cat}|${assets ? 1 : 0}|${sort}`;
+  if (byKey.has(key)) return byKey.get(key);
+  const pool = poolForSort(cat, assets, items).slice();
+  sortList(pool, { sort }, availableSortIds(cat, assets, items));
+  if (byKey.size >= SORTED_POOL_LIMIT) byKey.delete(byKey.keys().next().value);  // 简单 FIFO 上限
+  byKey.set(key, pool);
+  return pool;
 }
 
 /* ------------------------------- 过滤 ------------------------------- */
@@ -288,13 +315,16 @@ export function computeAll({ items, state, deps = {} }) {
   const pool = state.assets ? items : items.filter((it) => it.isItem);
   const kws = keywords(state.q);
   const cnt = counts({ items: pool, state, deps });
+  // 先取「已按当前排序项排好的分类池」（同快照只排一次），再线性过滤：
+  // filter 保序且比较器只读 item 字段 ⇒ 与「先过滤再排序」逐项一致，但排序成本被摊薄。
+  const avail = availableSortIds(state.cat, state.assets, items);
+  const effectiveSort = avail.has(state.sort) ? state.sort : 'default';
+  const ordered = sortedPool(state.cat, state.assets, effectiveSort, items);
   const out = [];
-  for (const it of pool) {
-    if (state.cat !== 'all' && it.cat !== state.cat) continue;
+  for (const it of ordered) {
     if (!matches(it, state, deps, { kws })) continue;
     out.push(it);
   }
-  sortList(out, state, availableSortIds(state.cat, state.assets, items));
   return { counts: cnt, list: out };
 }
 
