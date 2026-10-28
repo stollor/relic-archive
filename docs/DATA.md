@@ -120,7 +120,9 @@ python pipeline/mk_builds_json.py         # 写 data/builds.json
 # 3) 跑门禁再提交（见 README「验收」）
 ```
 
-`pipeline/sync-data.py` 只复制有变化的文件（sha256 比对），可反复运行；单独 clone 本仓库时不需要它。
+`pipeline/sync-data.py` 可反复运行（幂等）：文本 JSON 按换行归一后比较、统一 LF 落盘，二进制原样复制；
+只有真正的内容差异才会复制。退出码：0 成功/已最新、1 `--check` 有漂移、2 工作区缺失/不完整、3 写盘失败（已回滚）；
+`--check` 严格只读。单独 clone 本仓库时不需要它（详见 [`../pipeline/README.md`](../pipeline/README.md)）。
 
 ---
 
