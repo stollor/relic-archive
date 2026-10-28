@@ -47,6 +47,18 @@ export function go(path, { replace = false } = {}) {
   }
 }
 
+/**
+ * 只改地址栏、不触发派发：用于「详情打开」这类装饰性 URL 同步
+ * （不能让地址栏变化重置视图状态，也不该消费一次路由事件）。
+ * 真正的导航一律用 go()。
+ */
+export function replaceSilently(path) {
+  const target = `#${path.startsWith('/') ? path : `/${path}`}`;
+  if (location.hash === target) return false;
+  history.replaceState(history.state, '', target);
+  return true;
+}
+
 export function setQuery(obj, { replace = true } = {}) {
   const ctx = currentCtx;
   const q = new URLSearchParams(ctx ? ctx.query : undefined);
@@ -84,5 +96,7 @@ export function setTitle(title) {
   document.title = title ? `${title} · 遗物档案` : '遗物档案 · 遗迹2 数据库';
 }
 
-export const router = { start, go, getRoute, onChange, setQuery, setTitle, parse };
+export const router = {
+  start, go, getRoute, onChange, setQuery, setTitle, parse, replaceSilently,
+};
 export default router;

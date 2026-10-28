@@ -85,6 +85,8 @@ export const fmt = {
   sign(v, d = 0) { return isNum(v) ? `${v > 0 ? '+' : ''}${fmt.num(v, d)}` : '—'; },
   /** 毫秒 → 可读 */
   ms(v) { return isNum(v) ? (v >= 1000 ? `${(v / 1000).toFixed(1)}s` : `${Math.round(v)}ms`) : '—'; },
+  /** 定点小数（四舍五入）；非数字给 '—' */
+  round(v, d = 1) { return isNum(v) ? Number(v.toFixed(d)) : '—'; },
 };
 
 /* ----------------------------- 杂项 ----------------------------- */

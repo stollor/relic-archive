@@ -4,7 +4,7 @@
    ========================================================================== */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createEpoch, createTaskRunner, createScope } from '../../js/core/task.js';
+import { createEpoch, createTaskRunner, createScope, createRefresh } from '../../js/core/task.js';
 
 /** 可控 rAF 调度器：手动 tick 驱动帧回调，便于断言「旧任务是否还会执行」 */
 function fakeFrames() {
@@ -96,6 +96,50 @@ test('createTaskRunner：onStep 抛错走 onError，不继续分帧', () => {
   assert.equal(done, 0);
   assert.equal(runner.running, false);
   assert.equal(frames.pending, 0);
+});
+
+test('createRefresh：同帧多次 schedule 只刷一次', () => {
+  const frames = fakeFrames();
+  let runs = 0;
+  const refresh = createRefresh(() => { runs += 1; }, frames);
+  refresh.schedule();
+  refresh.schedule();
+  refresh.schedule();
+  assert.equal(runs, 0, 'schedule 不应同步执行');
+  assert.equal(refresh.pending, true);
+  frames.tick(1);
+  assert.equal(runs, 1);
+  assert.equal(refresh.pending, false);
+  refresh.schedule();
+  frames.tick(1);
+  assert.equal(runs, 2);
+});
+
+test('createRefresh：cancel 后不再刷新（销毁路径）', () => {
+  const frames = fakeFrames();
+  let runs = 0;
+  const refresh = createRefresh(() => { runs += 1; }, frames);
+  refresh.schedule();
+  refresh.cancel();
+  refresh.cancel();
+  assert.equal(frames.pending, 0);
+  frames.tick(2);
+  assert.equal(runs, 0);
+  assert.equal(refresh.pending, false);
+});
+
+test('createRefresh：flush 立即执行挂起的刷新', () => {
+  const frames = fakeFrames();
+  let runs = 0;
+  const refresh = createRefresh(() => { runs += 1; }, frames);
+  refresh.schedule();
+  refresh.flush();
+  assert.equal(runs, 1);
+  assert.equal(refresh.pending, false);
+  frames.tick(1);
+  assert.equal(runs, 1, 'flush 之后挂起的帧不应再触发一次');
+  refresh.flush();
+  assert.equal(runs, 1, '没有挂起时 flush 是空操作');
 });
 
 test('createScope：逆序释放、幂等、单个清理失败不影响其余', () => {

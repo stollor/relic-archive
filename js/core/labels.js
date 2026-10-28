@@ -311,3 +311,53 @@ export const EFFECT_CAT_ZH = {
   resource: '资源', status: '状态效果', other: '其它',
 };
 
+/* ---------------------------------------------------------------------------
+   道具展示文本（资料库列表 / 详情共用，唯一实现）
+   ---- 以下三件事以前在 views/library.js 与 components/item-detail.js 各写一份：
+   「什么算干净的官方中文」「效果类目是哪些」「按部位族怎么分组」。
+   --------------------------------------------------------------------------- */
+
+/** 效果类目（items.json 的 cat 字段）：这类条目必须靠官方效果句或数值摘要说话，不拿风味段落充数 */
+export const EFFECT_CATS = ['ring', 'amulet', 'relic', 'consumable', 'mod', 'metagem', 'gem', 'material'];
+
+/**
+ * 只接受「干净的中文展示文本」：无未替换占位符、无连续英文。
+ * 不干净的文本一律返回 ''，由调用方决定降级文案。
+ */
+export function zhDisplay(text) {
+  const t = String(text == null ? '' : text).trim();
+  if (!t) return '';
+  if (/\{[^}]*\}/.test(t)) return '';        // 未替换的 {占位符}
+  if (/[A-Za-z]{2,}/.test(t)) return '';     // 残留英文片段
+  return t;
+}
+
+/** 道具的官方效果句（已通过 zhDisplay 校验）；没有或不可用时返回 '' */
+export function effectZhSentence(item) {
+  return item ? zhDisplay(item.effectZh) : '';
+}
+
+/** 部位族分组：决定「关键数值」「可用排序项」「筛选口径」按哪一族算 */
+export const FAMILY_GROUPS = {
+  armor: ['head', 'body', 'legs', 'gloves'],
+  weapon: ['longGun', 'handGun', 'melee'],
+  accessory: ['ring', 'amulet', 'relic'],
+};
+
+/** family → 'armor' | 'weapon' | 'accessory' | 'other' */
+export function familyGroupOf(family) {
+  if (FAMILY_GROUPS.armor.includes(family)) return 'armor';
+  if (FAMILY_GROUPS.weapon.includes(family)) return 'weapon';
+  if (FAMILY_GROUPS.accessory.includes(family)) return 'accessory';
+  return 'other';
+}
+
+/** 多族混合时的分组：全部同类才算该类，否则 other（选择器按槽位族挑排序项用） */
+export function modeOfFamilies(families) {
+  const list = (families || []).filter(Boolean);
+  if (!list.length) return 'other';
+  const first = familyGroupOf(list[0]);
+  if (first === 'other') return 'other';
+  return list.every((f) => familyGroupOf(f) === first) ? first : 'other';
+}
+

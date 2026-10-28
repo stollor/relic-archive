@@ -86,6 +86,39 @@ export function createTaskRunner({
   };
 }
 
+/**
+ * 合并刷新：同一帧内多次 schedule() 只执行一次 fn()，cancel() 取消挂起的帧。
+ * 适合「状态变了就重渲染」的廉价同步渲染；销毁时务必 cancel()。
+ * @param {Function} fn 实际刷新函数
+ * @returns {{schedule:Function, cancel:Function, pending:boolean, flush:Function}}
+ */
+export function createRefresh(fn, { requestFrame = defaultFrame, cancelFrame = defaultCancel } = {}) {
+  let frameId = 0;
+  const run = () => {
+    frameId = 0;
+    fn();
+  };
+  return {
+    schedule() {
+      if (frameId) return;
+      frameId = requestFrame(run);
+    },
+    cancel() {
+      if (!frameId) return;
+      try { cancelFrame(frameId); } catch { /* 已结束的帧号忽略 */ }
+      frameId = 0;
+    },
+    /** 立即执行挂起的刷新（无挂起则什么都不做） */
+    flush() {
+      if (!frameId) return;
+      try { cancelFrame(frameId); } catch { /* 已结束的帧号忽略 */ }
+      frameId = 0;
+      fn();
+    },
+    get pending() { return !!frameId; },
+  };
+}
+
 /** 清理函数收集器：dispose() 幂等，逆序执行，单个失败不阻断其余清理 */
 export function createScope() {
   const fns = [];
