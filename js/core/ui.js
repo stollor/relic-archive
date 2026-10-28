@@ -213,13 +213,21 @@ export function closeModal({ silent = false } = {}) {
 export function closeOverlays({ silent = true } = {}) {
   const modalWasOpen = !!modalState.open;
   const drawerWasOpen = !!drawerState.open;
-  if (modalWasOpen) closeModal({ silent });
+  if (modalWasOpen && pendingConfirmFinish) {
+    // 未决的确认框按「取消」结算（finish 内部会正常 closeModal），调用方不会永久挂起
+    pendingConfirmFinish(false);
+  } else if (modalWasOpen) {
+    closeModal({ silent });
+  }
   if (drawerWasOpen) closeDrawer({ silent });
   hideTip();
   return { modal: modalWasOpen, drawer: drawerWasOpen };
 }
 
 /* ============================ 确认框 ============================ */
+/** 当前未决的确认框 finish(false)；closeOverlays 静默关闭时也要 resolve，避免调用方 Promise 永久挂起 */
+let pendingConfirmFinish = null;
+
 export function confirm({
   title = '确认操作', body = '', ok = '确定', cancel = '取消', danger = false,
 } = {}) {
@@ -228,9 +236,11 @@ export function confirm({
     const finish = (val) => {
       if (settled) return;
       settled = true;
+      if (pendingConfirmFinish === finish) pendingConfirmFinish = null;
       closeModal();
       resolve(val);
     };
+    pendingConfirmFinish = finish;
     const bodyEl = h('div', { class: 'stack-3' });
     // string body 一律按纯文本：调用方可能把用户输入（如存档名）插进文案，不能当 HTML
     if (body) bodyEl.append(typeof body === 'string' ? h('p', { class: 'dim', text: body }) : body);

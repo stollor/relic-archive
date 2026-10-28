@@ -319,6 +319,7 @@ export function mount(rootEl, ctx) {
 
   scope.add(store.on('build', syncSubTools));
   scope.add(store.on('owned', syncSubTools));
+  scope.add(S.watchMissingBridge());
   scope.add(S.on((reason) => { if (reason === 'missing' || reason === 'seed') syncSubTools(); }));
 
   init();

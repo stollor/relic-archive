@@ -237,6 +237,17 @@ export function clearMissing() {
   saveMissing();
   emit('missing', { cleared: true });
 }
+
+/**
+ * 事件桥：外部（resetAll / 其它模块）直接写 store.ui['lab.missing'] 时，
+ * 本模块与视图/工作台/面板据此刷新（读取端已按引用自动同步，这里只负责通知重绘）。
+ * 返回退订函数；实验室视图 mount 时挂到 scope，unmount 自动释放。
+ */
+export function watchMissingBridge() {
+  return store.on('ui', (payload) => {
+    if (payload && payload.key === UI.missing) emit('missing', { external: true });
+  });
+}
 export function missingSet() { return new Set(missingNow()); }
 
 /* ----------------------------- 拥有池 ----------------------------- */

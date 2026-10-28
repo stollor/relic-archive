@@ -4,6 +4,7 @@
    视图只从这里拿数据，不直接 fetch。
    ========================================================================== */
 import { api } from '../core/api.js';
+import { SLOT_ZH } from '../core/labels.js';
 import { createEngine } from './engine.js';
 
 /**
@@ -37,13 +38,8 @@ export const SLOT_FAMILIES = {
   amulet: 'amulet', ring1: 'ring', ring2: 'ring', ring3: 'ring', ring4: 'ring', relic: 'relic',
 };
 
-/** 槽位中文名（与 UX_SPEC §5 一致） */
-export const SLOT_LABEL = {
-  longGun: '长枪', handGun: '手枪', melee: '近战武器',
-  head: '头盔', body: '胸甲', legs: '腿甲', gloves: '手甲',
-  amulet: '项链', ring1: '戒指 1', ring2: '戒指 2', ring3: '戒指 3', ring4: '戒指 4',
-  relic: '圣物', archetype1: '主职业', archetype2: '副职业',
-};
+/** 槽位中文名：唯一来源是 core/labels.js 的 SLOT_ZH（与 UX_SPEC §5 一致） */
+export const SLOT_LABEL = SLOT_ZH;
 
 /** 15 槽分组（工作台视觉） */
 export const SLOT_GROUPS = [

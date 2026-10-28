@@ -625,6 +625,24 @@ async function main() {
       assert.deepEqual(r.panel, ['function', 'function'], `panel.js 导出契约不符：${j(r.panel)}`);
       return 'states: emptyBody/emptyState/loadingState/errorState；panel: panel/panelHead';
     });
+    await check('C21', 'ui：confirm 被 closeOverlays({silent}) 关闭时按取消 resolve（不挂起）', async () => {
+      const r = await ev(`(async () => {
+        const { confirm, closeOverlays } = await window.__qaC.load('js/core/ui.js');
+        let settled = null;
+        confirm({ title: 'QA 确认框', body: '关闭后应 resolve false' }).then((v) => { settled = v; });
+        await new Promise((res) => setTimeout(res, 30));
+        const modalBefore = !document.querySelector('#modal').hidden;
+        const closed = closeOverlays({ silent: true });
+        await new Promise((res) => setTimeout(res, 60));
+        return { modalBefore, modalAfter: !document.querySelector('#modal').hidden, closed, settled };
+      })()`, { awaitPromise: true });
+      assert.equal(r.modalBefore, true, 'confirm 应打开弹窗');
+      assert.equal(r.modalAfter, false, 'closeOverlays 后弹窗应关闭');
+      assert.equal(r.closed.modal, true, 'closeOverlays 应报告关闭了 modal');
+      assert.equal(r.settled, false, 'confirm Promise 应以 false 结算（不能永久挂起）');
+      return 'modal 关闭 + Promise resolve(false)';
+    });
+
   } catch (err) {
     fatal = err;
     console.error('[components] 致命错误:', err && err.stack ? err.stack : err);
