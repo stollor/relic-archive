@@ -575,6 +575,10 @@ statsFor memo/枚举剪枝（有改变排序风险）、图标 IO 控 src、事�
    `${SYMBOL}` 引用扫描 + 删除后强制浏览器冒烟。
 5. **`qa/perf.mjs` 不进 full**：性能是参考指标，机器噪声大；如需回归守门，应先固定环境再定阈值。
 6. 线上 Pages 未在本阶段重新发布/复验（本轮不改变发布结构与数据；发布仍走 `deploy.py` 内容指纹）。
+7. **缺件状态残留**：外部写 `store.ui['lab.missing']` 后读取端已归零，但顶栏 badge/面板要等 lab 下一次自身事件才重绘
+   （当前无产品路径外部写；若未来接 `resetAll` 需补 `ui→missing` 事件桥）。
+8. `ui.closeOverlays({silent})` 关闭 confirm 时 Promise 不 resolve（极端路径：弹窗打开时按 back 触发；
+   如需可改非 silent + 卸载后回调守卫）。
 
 ### 13.7 最终回归
 
