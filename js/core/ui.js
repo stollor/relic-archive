@@ -3,7 +3,7 @@
    全站唯一浮层基础设施：Toast / 确认框 / 抽屉 / 弹窗 / 悬浮说明。
    视图禁止自建这五类组件。DOM 宿主：#scrim #drawer #modal #toasts #tip（index.html 内）
    ========================================================================== */
-import { h, $, clear, esc } from './dom.js';
+import { h, $, clear, esc, richText } from './dom.js';
 import { icon } from './icons.js';
 
 /* ----------------------------- 宿主 ----------------------------- */
@@ -203,7 +203,8 @@ export function confirm({
       resolve(val);
     };
     const bodyEl = h('div', { class: 'stack-3' });
-    if (body) bodyEl.append(typeof body === 'string' ? h('p', { class: 'dim', html: body }) : body);
+    // string body 一律按纯文本：调用方可能把用户输入（如存档名）插进文案，不能当 HTML
+    if (body) bodyEl.append(typeof body === 'string' ? h('p', { class: 'dim', text: body }) : body);
     openModal({
       title,
       body: bodyEl,
@@ -237,10 +238,16 @@ function placeTip(el, x, y) {
   tip.style.top = `${Math.round(top)}px`;
 }
 
-export function showTip(anchor, html, { x, y } = {}) {
+/**
+ * 悬浮说明：content 为 string 时走 richText 白名单（仅 b/strong/i/em/br/code，其余按文本），
+ * 也可直接传 Node。禁止把 data-tip 当原始 HTML 写入。
+ */
+export function showTip(anchor, content, { x, y } = {}) {
   const { tip } = getHost();
   if (!tip) return;
-  tip.innerHTML = html;
+  clear(tip);
+  if (typeof content === 'string') tip.append(richText(content));
+  else if (content) tip.append(content);
   tip.hidden = false;
   const r = anchor?.getBoundingClientRect?.();
   placeTip(tip, x ?? (r ? r.left + r.width / 2 : 0), y ?? (r ? r.top : 0));

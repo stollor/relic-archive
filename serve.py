@@ -2,10 +2,17 @@
 # -*- coding: utf-8 -*-
 """REMNANT II · 遗物档案 —— 本地离线静态服务器（仅标准库）。
 
-同源提供三个根目录（全部在站点目录内，仓库自包含）：
-  /              -> <站点根>/                （index.html / css / js / lab.html）
-  /data/...      -> <站点根>/data/           （items.json、builds.json、icon_index.json 等）
-  /assets/...    -> <站点根>/assets/         （icons/*.png，1004 张）
+同源提供站点运行时资源（白名单，见 SITE_ROOT_FILES / SITE_ROUTES）：
+  /              -> <站点根>/index.html（以及 lab.html / favicon.svg）
+  /css/*.css     -> <站点根>/css/
+  /js/*.js       -> <站点根>/js/（ES module）
+  /data/*.json   -> <站点根>/data/（items.json、builds.json、icon_index.json、codex/index.json 等）
+  /assets/*      -> <站点根>/assets/（icons/*.png 等图片/字体）
+  /api/health    -> 服务状态 JSON（只含状态字段，不含本机绝对路径）
+
+仓库内部文件（AGENTS.md / README.md / docs/ / qa/ / pipeline/ / .git/ / .github/ /
+dotfiles / __pycache__ 等）不属于站点运行时，一律 404 —— 避免本地开发服务器把
+仓库内部内容暴露给浏览器/扩展/误访问。GitHub Pages 线上暴露面由发布结构决定，不在此列。
 
 用法：
   python serve.py                 # 默认 http://127.0.0.1:8777/
@@ -84,6 +91,20 @@ MIME_TYPES = {
     ".wasm": "application/wasm",
 }
 
+# 站点白名单：只有运行时资源可被 HTTP 访问；其余路径 404。
+# key = 首段目录，value = (磁盘根, 允许的扩展名集合)；根文件单独用 SITE_ROOT_FILES。
+SITE_ROOT_FILES = {
+    "/index.html": "index.html",
+    "/lab.html": "lab.html",
+    "/favicon.svg": "favicon.svg",
+}
+SITE_ROUTES = {
+    "css": (lambda: SITE_DIR / "css", {".css"}),
+    "js": (lambda: SITE_DIR / "js", {".js"}),
+    "data": (lambda: DATA_DIR, {".json", ".jsonl"}),
+    "assets": (lambda: ASSETS_DIR, {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico", ".woff", ".woff2"}),
+}
+
 
 def _mime(path: Path) -> str:
     ext = path.suffix.lower()
@@ -94,22 +115,22 @@ def _mime(path: Path) -> str:
 
 
 def _file_info(path: Path) -> dict:
+    """文件/目录状态（只含状态字段；不返回本机绝对路径——/api/health 会直接下发）。"""
     try:
         st = path.stat()
         return {
             "exists": True,
-            "path": str(path),
             "size": st.st_size,
             "mtime": datetime.fromtimestamp(st.st_mtime).isoformat(timespec="seconds"),
         }
     except OSError:
-        return {"exists": False, "path": str(path)}
+        return {"exists": False}
 
 
 def _png_inventory() -> dict:
     """统计 assets/icons 下的 PNG（每次调用实时统计，图标可能在服务启动后才生成）。"""
-    result = {"exists": ASSETS_DIR.is_dir(), "png_count": 0, "icons_dir": str(ASSETS_DIR / "icons")}
     icons_dir = ASSETS_DIR / "icons"
+    result = {"exists": ASSETS_DIR.is_dir(), "png_count": 0}
     if icons_dir.is_dir():
         try:
             result["png_count"] = sum(1 for p in icons_dir.glob("*.png") if p.is_file())
@@ -134,9 +155,10 @@ def build_health(prefix: str = "") -> dict:
         "extra_data": {k: _file_info(v) for k, v in EXTRA_DATA.items()},
         "png_count": icons["png_count"],
         "tools": {
-            "cli_script": _file_info(CLI_SCRIPT),
-            "cli_db": _file_info(CLI_DB),
+            # 只暴露就绪状态，不下发本机绝对路径
             "cli_ready": CLI_SCRIPT.is_file() and CLI_DB.is_file(),
+            "cli_script_exists": CLI_SCRIPT.is_file(),
+            "cli_db_exists": CLI_DB.is_file(),
         },
         "endpoints": {
             "/": "前端页面",
@@ -219,8 +241,8 @@ class ArchiveHandler(BaseHTTPRequestHandler):
             return
 
         if target is None:
-            self._send_error(HTTPStatus.NOT_FOUND, f"未知路由：{raw_path}", send_body,
-                             extra={"hint": "可用路由：/、/data/*、/assets/*、/api/health"})
+            self._send_error(HTTPStatus.NOT_FOUND, f"未知路由：{raw_path[:200]}", send_body,
+                             extra={"hint": "可用路由：/、/index.html、/lab.html、/css/*、/js/*、/data/*.json、/assets/*、/api/health"})
             self._log_request(started, HTTPStatus.NOT_FOUND, 0)
             return
 
@@ -240,8 +262,8 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                 return
 
         if not target.is_file():
-            self._send_error(HTTPStatus.NOT_FOUND, f"文件不存在：{raw_path}", send_body,
-                             extra={"file": str(target)})
+            self._send_error(HTTPStatus.NOT_FOUND, f"文件不存在：{raw_path[:200]}", send_body,
+                             extra={"hint": "仅站点运行时资源可访问（白名单）"})
             self._log_request(started, HTTPStatus.NOT_FOUND, 0)
             return
 
@@ -258,28 +280,40 @@ class ArchiveHandler(BaseHTTPRequestHandler):
         self._log_request(started, HTTPStatus.OK, len(payload))
 
     def _resolve(self, raw_path: str) -> tuple[Path | None, str]:
-        """把 URL 路径映射到磁盘路径；带目录穿越防护。"""
+        """URL 路径 → 磁盘文件（站点白名单 + 目录穿越防护）。
+
+        返回 (None, 首段) 表示不在白名单 → 404；越界/畸形路径抛 PermissionError → 403。
+        只允许：/（index.html）、/index.html、/lab.html、/favicon.svg、
+                /css/*.css、/js/*.js、/data/*.json|*.jsonl、/assets/*（图片/字体）。
+        """
         if raw_path in ("", "/"):
             return WEB_DIR / "index.html", "web"
-        if raw_path == "/data" or raw_path == "/data/":
-            return None, "data"
-        if raw_path.startswith("/data/"):
-            rel = raw_path[len("/data/"):]
-            base, root_name = DATA_DIR, "data"
-        elif raw_path.startswith("/assets/"):
-            rel = raw_path[len("/assets/"):]
-            base, root_name = ASSETS_DIR, "assets"
-        elif raw_path.startswith("/api/"):
-            return None, "api"
-        else:
-            rel = raw_path.lstrip("/")
-            base, root_name = WEB_DIR, "web"
+        # 先做路径形态拒绝（Windows 下反斜杠也是分隔符；NUL 截断；dot 段/隐藏文件）
+        if "\x00" in raw_path or "\\" in raw_path:
+            raise PermissionError(raw_path)
+        parts = [seg for seg in raw_path.split("/") if seg not in ("", ".")]
+        if not parts or any(seg == ".." for seg in parts):
+            raise PermissionError(raw_path)
+        if any(seg.startswith(".") for seg in parts):
+            return None, parts[0]  # dotfile / 隐藏目录：404
 
-        base_resolved = base.resolve()
-        target = (base_resolved / rel).resolve()
+        if len(parts) == 1 and raw_path in SITE_ROOT_FILES:
+            return WEB_DIR / SITE_ROOT_FILES[raw_path], "web"
+
+        head, rest = parts[0], parts[1:]
+        route = SITE_ROUTES.get(head)
+        if route is None or not rest:
+            return None, head
+        base, allowed_exts = route
+        base_dir = base()
+        filename = rest[-1]
+        if Path(filename).suffix.lower() not in allowed_exts:
+            return None, head
+        base_resolved = base_dir.resolve()
+        target = (base_resolved / Path(*rest)).resolve()
         if target != base_resolved and base_resolved not in target.parents:
             raise PermissionError(raw_path)
-        return target, root_name
+        return target, head
 
     def _send_bytes(self, status: HTTPStatus, payload: bytes, content_type: str,
                     cache: str = "no-cache", send_body: bool = True) -> None:

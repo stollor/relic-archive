@@ -190,7 +190,8 @@ export function createSaved(model) {
         class: 'btn btn--danger btn--sm', type: 'button',
         on: {
           click: async () => {
-            const ok = await ui.confirm({ title: '清空当前配装', body: '将移除 15 个槽位里的全部装备，并清空特性/碎片/消耗品设置。<b>不影响</b>「已拥有」「收藏」与具名存档。', ok: '清空', danger: true });
+            // confirm(string) 按纯文本渲染；需要强调时显式传 Node（勿拼 HTML 字符串）
+            const ok = await ui.confirm({ title: '清空当前配装', body: h('p', { class: 'dim' }, '将移除 15 个槽位里的全部装备，并清空特性/碎片/消耗品设置。', h('b', { text: '不影响' }), '「已拥有」「收藏」与具名存档。'), ok: '清空', danger: true });
             if (!ok) return;
             store.build.clear();
             store.build.setMeta({ traitLevels: {}, fragments: [], consumables: [], seedPerks: [], seedProfile: null });

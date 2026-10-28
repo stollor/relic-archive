@@ -199,12 +199,15 @@ function isUIUsable(raw) {
 
 /* ----------------------------- 具名存档 ----------------------------- */
 const SAVED_KNOWN_KEYS = new Set(['id', 'name', 'ts', 'savedAt', 'build', 'slots', 'traits', 'meta']);
+/** 存档名上限：UI input maxlength=40；更长的只可能是异常/同源写入，读取时截断（合法名字语义不变） */
+const MAX_SAVED_NAME = 80;
 
 function normalizeSavedRecord(raw) {
   if (!isPlainObject(raw)) return null;
   const id = normalizeId(raw.id);
   if (!id) return null; // 无 id 无法引用/删除，只能丢弃
-  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name : '未命名配装';
+  const rawName = typeof raw.name === 'string' && raw.name.trim() ? raw.name : '未命名配装';
+  const name = rawName.length > MAX_SAVED_NAME ? rawName.slice(0, MAX_SAVED_NAME) : rawName;
   const ts = Number.isFinite(raw.ts) ? raw.ts : (Number.isFinite(raw.savedAt) ? raw.savedAt : 0);
   const buildSource = isPlainObject(raw.build) ? raw.build : legacyToBuildSource(raw);
   const record = { id, name, ts, build: normalizeBuild(buildSource) };
@@ -507,7 +510,8 @@ const store = {
     },
     /** 把当前配装存为具名存档；重名则覆盖 */
     save(name) {
-      const clean = String(name || '').trim() || `配装 ${new Date().toLocaleString('zh-CN', { hour12: false })}`;
+      const clean = (String(name || '').trim() || `配装 ${new Date().toLocaleString('zh-CN', { hour12: false })}`)
+        .slice(0, MAX_SAVED_NAME);
       const list = store.saved.list();
       const rec = {
         id: `b${Date.now().toString(36)}`,
@@ -540,7 +544,7 @@ const store = {
       const list = store.saved.list();
       const rec = list.find((x) => x.id === id);
       if (!rec) return false;
-      rec.name = String(name || '').trim() || rec.name;
+      rec.name = (String(name || '').trim() || rec.name).slice(0, MAX_SAVED_NAME);
       writeJSON(KEY.saved, list);
       emit('saved', { action: 'rename', id });
       return true;
