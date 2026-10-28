@@ -2,7 +2,10 @@
    遗迹2 · 遗物档案 — views/library.js
    资料库领域：道具（默认）/ 套装。路由 #/items、#/items/sets、#/items/<itemId>
    视图契约：mount(rootEl, ctx) -> { onRoute(ctx), unmount() }
-   只用 core API 与 §3 组件类；不直接 fetch / localStorage / 自建浮层。
+   本文件只做装配：外壳 / 动态控件 / 渲染 / 路由 / 生命周期。
+   数据查询在 library/query.js，展示模型在 library/present.js，导出在 library/export.js。
+   详情浮层不再自己写 URL（components/item-detail.js 已不拥有路由）：
+   本视图负责打开时 replaceSilently、关闭时回到打开前的列表地址。
    ========================================================================== */
 import {
   h, clear, fmt, cmpText, copyText, downloadText,
@@ -14,93 +17,35 @@ import { ui } from '../core/ui.js';
 import { router } from '../core/router.js';
 import {
   CATS, CAT_BY_ID, FAMILY, CONF, DLC_ZH,
-  GAME_TAGS, GAME_TAG_BY_ID, GAME_TAGS_BY_GROUP, TAG_GROUP_ZH,
+  GAME_TAGS_BY_GROUP, GAME_TAG_BY_ID, TAG_GROUP_ZH,
 } from '../core/labels.js';
 import { itemCard, itemIconEl, effectPreview } from '../components/item-card.js';
 import { openItemDetail } from '../components/item-detail.js';
+import { emptyBody } from '../components/states.js';
+import {
+  defaultState, parseState, serialize, stateKey, isActive,
+  METRICS, METRIC_BY_ID, sortOptionsForCat, isValidSort,
+  availableSortIds, normalizeSort, keywords, computeAll, computeSets,
+} from '../library/query.js';
+import {
+  effectSentence, effectPreviewText, rowDesc, cardDescSpec,
+  rowStatsSpec, setTotals, setDlc, setSummary,
+} from '../library/present.js';
+import { exportPayload, cliJsonText, powershellText } from '../library/export.js';
 
 /* ------------------------------- 常量 ------------------------------- */
 const BATCH = 60;
 const MODE_ITEMS = 'items';
 const MODE_SETS = 'sets';
 
-/* 游戏内效果标签（FilterTags）：中文/分组/图标/说明统一来自 core/labels.js */
-const TAG_IDS = new Set(GAME_TAGS.map((t) => t.id));
-const CONF_IDS = new Set(Object.keys(CONF));
-const DLC_IDS = new Set(['0', '1', '2', '3']);
-
-/* 排序项按分类动态生成（task-13）；id 即 URL 的 sort 短值 */
-const TRINKET_CATS = new Set(['ring', 'amulet', 'relic']);
-const SORT_DEFS = {
-  default: [['default', '默认'], ['name', '名称'], ['dlc', '资料片'], ['order', '新增']],
-  weapon: [
-    ['default', '默认'], ['damage', '伤害 ↓'], ['rate', '射速 ↓'], ['mag', '弹匣容量 ↓'],
-    ['maxammo', '弹药上限 ↓'], ['crit', '暴击率 ↓'], ['weakspot', '弱点伤害 ↓'], ['name', '名称'],
-  ],
-  armor: [['default', '默认'], ['armor', '护甲值 ↓'], ['weight', '负重 ↓'], ['resist', '抗性合计 ↓'], ['name', '名称']],
-  trinket: [['default', '默认'], ['value', '价值 ↓'], ['name', '名称'], ['dlc', '资料片']],
+/* store / api 只通过 deps 进入查询层（library/query.js 不直接依赖它们） */
+const DEPS = {
+  isOwned: (id) => store.isOwned(id),
+  isFav: (id) => store.isFav(id),
+  hasIcon: (it) => !!api.iconUrl(it),
 };
-const NUM_SORT = {
-  damage: (x) => x.damage,
-  rate: (x) => x.rate,
-  mag: (x) => x.ammoPerClip,
-  maxammo: (x) => x.maxAmmo,
-  crit: (x) => x.crit,
-  weakspot: (x) => x.weakspot,
-  armor: (x) => x.armor,
-  weight: (x) => x.weight,
-  resist: (x) => x.resistSum,
-  value: (x) => x.value,
-};
-function sortGroupForCat(cat) {
-  if (cat === 'weapon') return 'weapon';
-  if (cat === 'armor') return 'armor';
-  if (TRINKET_CATS.has(cat)) return 'trinket';
-  return 'default';
-}
-function sortOptionsForCat(cat) { return SORT_DEFS[sortGroupForCat(cat)]; }
-function isValidSort(cat, sort) { return sortOptionsForCat(cat).some(([id]) => id === sort); }
-
-/* 当前分类池里某项数值是否真的存在：没有数据的排序项不显示（避免「价值↓」这种测不出效果的选项） */
-function poolForSort(cat, assets) {
-  return ITEMS.filter((it) => (assets || it.isItem) && (cat === 'all' || it.cat === cat));
-}
-const availSortCache = new Map();
-function availableSortIds(cat, assets) {
-  const key = `${cat}|${assets ? 1 : 0}`;
-  if (availSortCache.has(key)) return availSortCache.get(key);
-  const ids = new Set();
-  const pool = poolForSort(cat, assets);
-  for (const [id] of SORT_DEFS[sortGroupForCat(cat)]) {
-    const get = NUM_SORT[id];
-    if (!get) { ids.add(id); continue; }
-    if (pool.some((it) => typeof get(it) === 'number')) ids.add(id);
-  }
-  availSortCache.set(key, ids);
-  return ids;
-}
-function normalizeSortFor(target) {
-  if (!availableSortIds(target.cat, target.assets).has(target.sort)) target.sort = 'default';
-}
-function normalizeSort() { normalizeSortFor(state); }
-
-const METRICS = [
-  ['armor', '护甲值', 'Armor'], ['weight', '负重', 'Encumbrance'],
-  ['damage', '伤害', 'Damage'], ['rate', '射速', 'RateOfFire'],
-];
-const METRIC_BY_ID = new Map(METRICS.map(([id, zh, key]) => [id, { id, zh, key }]));
 
 /* ------------------------------- 状态 ------------------------------- */
-function defaultState() {
-  return {
-    q: '', cat: 'all', sort: 'default', view: 'grid',
-    owned: false, fav: false,
-    tags: [], confs: [], dlcs: [],
-    set: '', icon: false, stats: false,
-    metric: 'armor', min: '', max: '', assets: false,
-  };
-}
-
 let ITEMS = null;          // 全部规范化条目（含非道具资产）
 let SETS = null;           // api.sets()
 let LOAD_PROMISE = null;
@@ -113,64 +58,8 @@ let detailOpenId = null;
 let detailReturnPath = '/items';
 let EL = null;             // DOM 引用与控件映射
 let INSTANCE = 0;          // 视图实例代号：异步回调落地前校验「我还是当前实例」
+let urlTimer = 0;
 
-/* 把 URLSearchParams 解析成状态（只接受已知值，防止脏参数） */
-function parseState(qp) {
-  const s = defaultState();
-  if (!qp) return s;
-  const listOf = (key, valid) => (qp.get(key) || '').split(',')
-    .map((x) => x.trim()).filter((x) => x && (!valid || valid.has(x)));
-  const q = (qp.get('q') || '').trim();
-  if (q) s.q = q.slice(0, 120);
-  const cat = qp.get('cat');
-  if (cat && CAT_BY_ID.has(cat)) s.cat = cat;
-  const sort = qp.get('sort');
-  if (sort && isValidSort(s.cat, sort)) s.sort = sort;
-  const view = qp.get('view');
-  if (view === 'list' || view === 'grid') s.view = view;
-  s.owned = qp.get('owned') === '1';
-  s.fav = qp.get('fav') === '1';
-  // 旧链接的 family=… 参数忽略（类型已由顶部 chip 覆盖）
-  s.tags = listOf('tag', TAG_IDS);
-  s.confs = listOf('conf', CONF_IDS);
-  s.dlcs = listOf('dlc', DLC_IDS);
-  const set = qp.get('set');
-  if (set) s.set = set;
-  s.icon = qp.get('icon') === '1';
-  s.stats = qp.get('stats') === '1';
-  s.assets = qp.get('assets') === '1';
-  const metric = qp.get('metric');
-  if (metric && METRIC_BY_ID.has(metric)) s.metric = metric;
-  const min = qp.get('min'); const max = qp.get('max');
-  if (min != null && min !== '' && Number.isFinite(Number(min))) s.min = String(Number(min));
-  if (max != null && max !== '' && Number.isFinite(Number(max))) s.max = String(Number(max));
-  return s;
-}
-
-/* 状态 → URL 查询串 */
-function serialize(s) {
-  const q = new URLSearchParams();
-  if (s.q) q.set('q', s.q);
-  if (s.cat !== 'all') q.set('cat', s.cat);
-  if (s.sort !== 'default') q.set('sort', s.sort);
-  if (s.view !== 'grid') q.set('view', s.view);
-  if (s.owned) q.set('owned', '1');
-  if (s.fav) q.set('fav', '1');
-  if (s.tags.length) q.set('tag', s.tags.join(','));
-  if (s.confs.length) q.set('conf', s.confs.join(','));
-  if (s.dlcs.length) q.set('dlc', s.dlcs.join(','));
-  if (s.set) q.set('set', s.set);
-  if (s.icon) q.set('icon', '1');
-  if (s.stats) q.set('stats', '1');
-  if (s.assets) q.set('assets', '1');
-  if (s.min !== '' || s.max !== '') {
-    q.set('metric', s.metric);
-    if (s.min !== '') q.set('min', s.min);
-    if (s.max !== '') q.set('max', s.max);
-  }
-  return q.toString();
-}
-function stateKey(s) { return serialize(s); }
 function listPath() { return MODE === MODE_SETS ? '/items/sets' : '/items'; }
 
 /* ------------------------------- 数据加载 ------------------------------- */
@@ -184,125 +73,11 @@ function load() {
   return LOAD_PROMISE;
 }
 
-/* ------------------------------- 过滤 ------------------------------- */
-function hasStatValue(it) {
-  return [it.armor, it.weight, it.damage, it.rate, it.crit, it.weakspot, it.maxLevel]
-    .some((v) => typeof v === 'number') || (it.resistSum || 0) !== 0;
-}
-function metricValue(it, metric) {
-  switch (metric) {
-    case 'armor': return it.armor;
-    case 'weight': return it.weight;
-    case 'damage': return it.damage;
-    case 'rate': return it.rate;
-    default: return null;
-  }
-}
-function keywords() {
-  return state.q ? state.q.toLowerCase().split(/\s+/).filter(Boolean) : [];
-}
-function kwMatchItem(it, kws) {
-  for (const kw of kws) {
-    if (it.haystack.includes(kw)) continue;
-    let hit = false;
-    for (const tag of it.filterTags || []) {
-      const meta = GAME_TAG_BY_ID.get(tag);
-      if (meta && meta.zh.includes(kw)) { hit = true; break; }
-    }
-    if (!hit) return false;
-  }
-  return true;
-}
-function matches(it, kws, skipCat) {
-  if (!state.assets && !it.isItem) return false;
-  if (!skipCat && state.cat !== 'all' && it.cat !== state.cat) return false;
-  if (state.owned && !store.isOwned(it.id)) return false;
-  if (state.fav && !store.isFav(it.id)) return false;
-  if (state.tags.length) {
-    const own = it.filterTags || [];
-    if (!state.tags.some((t) => own.includes(t) || (it.tags || []).includes(t))) return false;
-  }
-  if (state.confs.length && !state.confs.includes(it.confidence)) return false;
-  if (state.dlcs.length && !state.dlcs.includes(String(it.dlc))) return false;
-  if (state.set && it.setKey !== state.set) return false;
-  if (state.icon && !api.iconUrl(it)) return false;
-  if (state.stats && !hasStatValue(it)) return false;
-  if (state.min !== '' || state.max !== '') {
-    const v = metricValue(it, state.metric);
-    if (typeof v !== 'number') return false;
-    if (state.min !== '' && v < Number(state.min)) return false;
-    if (state.max !== '' && v > Number(state.max)) return false;
-  }
-  if (kws.length && !kwMatchItem(it, kws)) return false;
-  return true;
-}
-
-function compareNum(a, b, getter) {
-  const av = getter(a); const bv = getter(b);
-  const an = typeof av === 'number'; const bn = typeof bv === 'number';
-  if (an && bn) return bv - av;
-  if (an) return -1;
-  if (bn) return 1;
-  return 0;
-}
-function sortList(arr) {
-  const sort = availableSortIds(state.cat, state.assets).has(state.sort) ? state.sort : 'default';
-  if (sort === 'name') {
-    arr.sort((a, b) => cmpText(a.zh, b.zh));
-  } else if (sort === 'dlc') {
-    arr.sort((a, b) => (a.dlc - b.dlc) || cmpText(a.zh, b.zh));
-  } else if (sort === 'order') {
-    arr.sort((a, b) => (b.order - a.order) || cmpText(a.zh, b.zh));
-  } else {
-    const get = NUM_SORT[sort];
-    if (get) arr.sort((a, b) => compareNum(a, b, get) || cmpText(a.zh, b.zh));
-    else arr.sort((a, b) => a.order - b.order);
-  }
-  return arr;
-}
-
-function computeAll() {
-  const pool = state.assets ? ITEMS : ITEMS.filter((it) => it.isItem);
-  const kws = keywords();
-  const counts = new Map();
-  let base = 0;
-  for (const it of pool) {
-    if (!matches(it, kws, true)) continue;
-    base += 1;
-    if (it.cat) counts.set(it.cat, (counts.get(it.cat) || 0) + 1);
-  }
-  counts.set('all', base);
-  const out = [];
-  for (const it of pool) {
-    if (state.cat !== 'all' && it.cat !== state.cat) continue;
-    if (!matches(it, kws, false)) continue;
-    out.push(it);
-  }
-  sortList(out);
-  return { counts, list: out };
-}
-
-/* 套装搜索/排序 */
-function setKeys(s) { return `${s.name} ${s.nameEn} ${s.parts.map((p) => `${p.zh} ${p.en}`).join(' ')}`.toLowerCase(); }
-function computeSets() {
-  const kws = keywords();
-  const out = [];
-  for (const s of SETS || []) {
-    if (kws.length) {
-      const hay = setKeys(s);
-      if (!kws.every((kw) => hay.includes(kw))) continue;
-    }
-    out.push(s);
-  }
-  return out;
-}
-
 /* ------------------------------- 小工具 ------------------------------- */
 function deferTitle(t) {
   const mine = INSTANCE;
   queueMicrotask(() => { if (mine === INSTANCE && EL) router.setTitle(t); });
 }
-function dash(v) { return typeof v === 'number' && Number.isFinite(v) ? v : null; }
 function statNum(v, d, icoName, unit) {
   if (typeof v !== 'number' || !Number.isFinite(v)) return '';
   return h('span', { class: 'stat' },
@@ -310,29 +85,7 @@ function statNum(v, d, icoName, unit) {
     h('b', { class: 'stat__val', text: fmt.num(v, d) }),
     unit ? h('i', { class: 'stat__unit', text: unit }) : '');
 }
-function setDlc(s) {
-  const list2 = [...new Set(s.parts.map((p) => p.dlc).filter((d) => typeof d === 'number'))];
-  const nonBase = list2.filter((d) => d > 0).sort((a, b) => a - b);
-  if (!nonBase.length) return DLC_ZH[0] || '本体';
-  return nonBase.map((d) => DLC_ZH[d] || `DLC${d}`).join(' / ');
-}
-function setTotals(s) {
-  const t = s.totals || {};
-  let armor = dash(t.armor); let weight = dash(t.encumbrance); let res = dash(t.resistance_sum);
-  const sum = (key) => {
-    const vals = s.parts.map((p) => p[key]).filter((v) => typeof v === 'number');
-    return vals.length ? vals.reduce((a, b) => a + b, 0) : null;
-  };
-  if (armor == null || armor === 0) armor = sum('armor');
-  if (weight == null || weight === 0) weight = sum('weight');
-  if (res == null) res = sum('resistSum');
-  return { armor, weight, res };
-}
-function isActive() {
-  return !!(state.q || state.cat !== 'all' || state.owned || state.fav
-    || state.tags.length || state.confs.length || state.dlcs.length || state.set
-    || state.icon || state.stats || state.assets || state.min !== '' || state.max !== '');
-}
+
 function resetFilters() {
   state = Object.assign(defaultState(), { sort: state.sort, view: state.view });
   syncControls();
@@ -341,7 +94,6 @@ function resetFilters() {
 }
 
 /* ------------------------------- URL 同步 ------------------------------- */
-let urlTimer = 0;
 function scheduleUrl() {
   clearTimeout(urlTimer);
   urlTimer = setTimeout(pushUrl, 260);
@@ -562,8 +314,8 @@ function buildShell(rootEl) {
 
   /* 结果区 */
   R.count = h('b', { class: 'lib-count__v', text: '—' });
-  R.countWrap = h('div', { class: 'lib-count' },
-    R.count, h('span', { class: 'lib-count__u', text: '件' }));
+  R.countUnit = h('span', { class: 'lib-count__u', text: '件' });
+  R.countWrap = h('div', { class: 'lib-count' }, R.count, R.countUnit);
   R.pills = h('div', { class: 'lib-pills' });
   R.filterToggle = h('button', {
     class: 'btn btn--ghost btn--sm lib-filtertoggle', type: 'button',
@@ -591,7 +343,7 @@ function buildShell(rootEl) {
   rootEl.append(R.wrap);
 }
 
-/* 数据到位后按实际分布生成 部位族 / 标签 / 套装 控件 */
+/* 数据到位后按实际分布生成 标签 / 套装 控件 */
 function buildDynamicControls() {
   const R = EL;
   if (R.dynamicReady) return;
@@ -654,8 +406,8 @@ function toggleIn(field, value) {
 function rebuildSortOptions() {
   const R = EL;
   if (!R || !R.sort) return;
-  normalizeSort();
-  const ids = availableSortIds(state.cat, state.assets);
+  normalizeSort(state, ITEMS);
+  const ids = availableSortIds(state.cat, state.assets, ITEMS);
   const cur = state.sort;
   clear(R.sort);
   for (const [id, zh] of sortOptionsForCat(state.cat)) {
@@ -705,8 +457,8 @@ function syncControls() {
     R.sort.value = state.sort;
   }
   syncViewSeg();
-  R.resetBtn.disabled = !isActive();
-  R.filterToggle.classList.toggle('is-on', MODE !== MODE_SETS && isActive());
+  R.resetBtn.disabled = !isActive(state);
+  R.filterToggle.classList.toggle('is-on', MODE !== MODE_SETS && isActive(state));
 }
 
 /* ------------------------------- 已生效筛选 pills ------------------------------- */
@@ -757,91 +509,22 @@ function ensureObserver() {
   }, { rootMargin: '640px 0px' });
   io.observe(EL.sentinel);
 }
-const ARMOR_FAMS = new Set(['head', 'body', 'legs', 'gloves']);
-const WEAPON_FAMS = new Set(['longGun', 'handGun', 'melee']);
 
-function plainText(v) {
-  return String(v == null ? '' : v).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function rowStat(ico, val, digits, unit, label) {
-  if (typeof val !== 'number' || !Number.isFinite(val)) return null;
-  const num = fmt.num(val, digits == null ? 0 : digits);
+/** 行数值：present 给规格，这里只负责变成节点 */
+function rowStatNode(spec) {
+  if (spec.text != null) {
+    return h('span', { class: 'lib-row__stat' },
+      icon(spec.icon, { size: 11 }),
+      h('b', { class: 'stat__val', text: spec.text }));
+  }
+  const num = fmt.num(spec.value, spec.digits);
   return h('span', {
-    class: `lib-row__stat lib-row__stat--${ico}`,
-    attrs: { title: label ? `${label} ${num}${unit || ''}` : undefined },
+    class: `lib-row__stat lib-row__stat--${spec.icon}`,
+    attrs: { title: spec.label ? `${spec.label} ${num}${spec.unit || ''}` : undefined },
   },
-  icon(ico, { size: 11 }),
+  icon(spec.icon, { size: 11 }),
   h('b', { class: 'stat__val', text: num }),
-  unit ? h('i', { class: 'stat__unit', text: unit }) : '');
-}
-
-/** 列表行关键数值：按部位族挑最有用的 2–4 个（护甲/武器/饰品…） */
-function rowStats(it) {
-  const out = [];
-  // 少数道具的 slot 归在 other（如部署型武器），用 cat 兜底，保证关键数值仍有列
-  const isArmor = ARMOR_FAMS.has(it.family) || it.cat === 'armor';
-  const isWeapon = WEAPON_FAMS.has(it.family) || it.cat === 'weapon';
-  if (isArmor) {
-    out.push(rowStat('armorstat', it.armor, 1, '', '护甲值'), rowStat('weight', it.weight, 1, '', '负重'),
-      rowStat('resist', it.resistSum, 0, '抗', '抗性合计'));
-  } else if (isWeapon) {
-    out.push(rowStat('damage', it.damage, 0, '', '伤害'), rowStat('firerate', it.rate, 2, '', '射速'),
-      rowStat('mag', it.ammoPerClip, 0, '发', '弹匣容量'), rowStat('crit', it.crit, 0, '%', '暴击率'));
-  } else if (it.cat === 'ring' || it.cat === 'amulet' || it.cat === 'relic') {
-    out.push(rowStat('relic', it.value, 0, '', '价值'));
-  } else if (it.family === 'trait' || it.family === 'perk') {
-    out.push(rowStat('trait', it.maxLevel, 0, '级', '等级'));
-  } else {
-    out.push(rowStat('material', it.value, 0, '', '价值'), rowStat('stack', it.stack, 0, '堆', '堆叠'));
-  }
-  const arr = out.filter(Boolean).slice(0, 4);
-  if (!arr.length) {
-    const n = (it.effectLines || []).length;
-    if (n) {
-      arr.push(h('span', { class: 'lib-row__stat' },
-        icon('info', { size: 11 }),
-        h('b', { class: 'stat__val', text: `${n} 条效果` })));
-    } else if (it.resistSum) {
-      arr.push(rowStat('resist', it.resistSum, 0, '抗', '抗性合计'));
-    } else if (typeof it.value === 'number') {
-      arr.push(rowStat('material', it.value, 0, '', '价值'));
-    }
-  }
-  return arr;
-}
-
-/** 需要「效果句」而非风味描述的类别（道具记录的 cat 字段，不是 family） */
-const EFFECT_CATS = ['ring', 'amulet', 'relic', 'consumable', 'mod', 'metagem', 'gem', 'material'];
-
-/** 官方效果句（与详情 zhDisplay 同规则：无未替换占位符、无成串英文） */
-function effectSentence(it) {
-  const raw = String(it.effectZh == null ? '' : it.effectZh).trim();
-  if (!raw) return '';
-  const t = plainText(raw);
-  if (!t) return '';
-  if (/\{[^}]*\}/.test(t)) return '';
-  if (/[A-Za-z]{2,}/.test(t)) return '';
-  return t;
-}
-
-/** 列表行描述：效果句原文优先；
- *  效果类目（饰品/消耗品/改装…）绝不拿风味段落充数：effectZh → effectPreview 数值摘要 → 待核实；
- *  武器/护甲/特性/技能等仍走 descZh → effectPreview 兜底链。 */
-function rowDesc(it) {
-  const effect = effectSentence(it);
-  if (effect) return effect;
-  const preview = plainText(effectPreview(it));
-  if (EFFECT_CATS.includes(it.cat)) {
-    // 没有官方效果句时，退到数值摘要并显式标注「数值」，避免被误读成效果原文
-    return preview ? `数值：${preview}` : '效果数据待核实（官方效果未收录）';
-  }
-  const own = plainText(it.descZh);
-  if (own) return own;
-  if (preview) return preview;
-  // 有摘要但全是 0 值/机器噪声（如 denormal 浮点）：明确标注待核实，不展示 0 值
-  if (plainText(it.summaryZh)) return '效果数据待核实（官方描述未收录）';
-  return '';
+  spec.unit ? h('i', { class: 'stat__unit', text: spec.unit }) : '');
 }
 
 function rowStateBtn(kind, item, row) {
@@ -884,20 +567,40 @@ function safeOpenItemDetail(id, opts) {
   }
 }
 
+/**
+ * 统一详情入口（列表行 / 网格卡 / 套装抽屉行）：资料库拥有详情 URL。
+ * 打开：记录返回地址 → 静默替换成 #/items/<id>；关闭：回到打开前的列表地址。
+ */
+function openDetailFromView(item) {
+  detailOpenId = item.id;
+  const qs = serialize(state);
+  detailReturnPath = `${listPath()}${qs ? `?${qs}` : ''}`;
+  router.replaceSilently(`/items/${encodeURIComponent(item.id)}`);
+  const opened = safeOpenItemDetail(item.id, {
+    onClose: () => {
+      detailOpenId = null;
+      router.go(detailReturnPath, { replace: true });
+    },
+  });
+  if (!opened) {
+    // 详情打不开：把地址栏恢复成列表，避免停在一条打不开的详情 URL 上
+    detailOpenId = null;
+    router.go(detailReturnPath, { replace: true });
+  }
+  return opened;
+}
+
 function makeRow(it, buildIds) {
   const fam = FAMILY[it.family] || FAMILY.other;
   const tagMeta = (it.family === 'other' && it.cat && CAT_BY_ID.has(it.cat))
     ? CAT_BY_ID.get(it.cat) : fam;
-  const desc = rowDesc(it);
+  const desc = rowDesc(it, { preview: effectPreviewText(it, effectPreview) });
   const isEffect = !!effectSentence(it);
   const row = h('div', {
     class: 'lib-row', dataset: { id: it.id },
     attrs: { role: 'button', tabindex: '0', 'aria-label': `${it.zh} 详情` },
   });
-  const open = () => {
-    detailOpenId = it.id;
-    safeOpenItemDetail(it.id, { onClose: () => { detailOpenId = null; } });
-  };
+  const open = () => { openDetailFromView(it); };
   row.addEventListener('click', open);
   row.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
@@ -921,7 +624,7 @@ function makeRow(it, buildIds) {
       h('div', { class: 'lib-row__en', attrs: { title: it.en }, text: it.en }),
       h('span', { class: 'tag lib-row__tag' },
         icon(tagMeta.icon, { size: 11 }), h('span', { text: tagMeta.zh }))),
-    h('div', { class: 'lib-row__stats' }, rowStats(it)),
+    h('div', { class: 'lib-row__stats' }, rowStatsSpec(it).map(rowStatNode)),
     h('div', {
       class: `lib-row__desc${isEffect ? ' lib-row__desc--effect' : ''}`,
       attrs: { title: desc || '' },
@@ -950,24 +653,15 @@ function appendBatch() {
       const card = itemCard(it, {
         mode: 'grid',
         showState: true,
-        onClick: (item) => {
-          detailOpenId = item.id;
-          safeOpenItemDetail(item.id, { onClose: () => { detailOpenId = null; } });
-        },
+        onClick: (item) => { openDetailFromView(item); },
       });
-      // 护甲/武器属性行已足够，不重复预览；其它预览优先官方效果句，其次 effectPreview
-      const statOnly = ARMOR_FAMS.has(it.family) || WEAPON_FAMS.has(it.family);
+      // 护甲/武器属性行已足够，不重复预览；其它预览优先官方效果句，其次数值摘要
       const descEl = card.querySelector('.card__desc');
-      const effect = effectSentence(it);
       if (descEl) {
-        if (statOnly) descEl.remove();
-        else if (effect) descEl.textContent = effect;
-        else if (EFFECT_CATS.includes(it.cat)) {
-          // 效果类目没有效果句时，不展示风味段落；只保留数值摘要或干脆不留
-          const preview = plainText(effectPreview(it));
-          if (preview) descEl.textContent = `数值：${preview}`;
-          else descEl.remove();
-        } else if (!descEl.textContent.trim()) descEl.remove();
+        const spec = cardDescSpec(it, { preview: () => effectPreviewText(it, effectPreview) });
+        if (spec && spec.remove) descEl.remove();
+        else if (spec && spec.text != null) descEl.textContent = spec.text;
+        else if (!descEl.textContent.trim()) descEl.remove();
       }
       frag.append(card);
     }
@@ -977,6 +671,7 @@ function appendBatch() {
   R.sentinel.hidden = rendered >= list.length;
 }
 
+/* 空态内容统一来自 components/states.js（标记与图标尺寸由它决定） */
 function renderEmpty(kind) {
   const R = EL;
   if (!R) return;
@@ -985,11 +680,11 @@ function renderEmpty(kind) {
   R.grid.hidden = true;
   R.sentinel.hidden = true;
   if (kind === 'error') {
-    R.empty.append(
-      h('div', { class: 'empty__ico' }, icon('warning', { size: 40 })),
-      h('div', { class: 'empty__title', text: '数据没有载入' }),
-      h('div', { class: 'empty__hint', text: '请确认 python serve.py 正在运行，然后重试。' }),
-      h('button', {
+    R.empty.append(...emptyBody({
+      icon: 'warning', iconSize: 40,
+      title: '数据没有载入',
+      hint: '请确认 python serve.py 正在运行，然后重试。',
+      actions: [h('button', {
         class: 'btn btn--ghost', type: 'button',
         on: {
           click: () => {
@@ -1000,17 +695,19 @@ function renderEmpty(kind) {
               .catch(() => { if (mine === INSTANCE && EL) renderEmpty('error'); });
           },
         },
-      }, icon('refresh', { size: 15 }), h('span', { text: '重试' })));
+      }, icon('refresh', { size: 15 }), h('span', { text: '重试' }))],
+    }));
     return;
   }
-  R.empty.append(
-    h('div', { class: 'empty__ico' }, icon('filter', { size: 40 })),
-    h('div', { class: 'empty__title', text: '没有符合条件的道具' }),
-    h('div', { class: 'empty__hint', text: '试试减少关键词、切换分类，或清空全部筛选。' }),
-    h('button', {
+  R.empty.append(...emptyBody({
+    icon: 'filter', iconSize: 40,
+    title: '没有符合条件的道具',
+    hint: '试试减少关键词、切换分类，或清空全部筛选。',
+    actions: [h('button', {
       class: 'btn btn--ghost', type: 'button',
       on: { click: () => { resetFilters(); } },
-    }, icon('rotate-ccw', { size: 15 }), h('span', { text: '重置筛选' })));
+    }, icon('rotate-ccw', { size: 15 }), h('span', { text: '重置筛选' }))],
+  }));
 }
 function renderResults() {
   const R = EL;
@@ -1080,25 +777,18 @@ function renderSetCards(arr) {
 }
 
 function openSetDrawer(s) {
-  const totals = setTotals(s);
   const body = h('div', { class: 'lib-setdrawer' });
   body.append(h('div', { class: 'lib-setdrawer__sum' },
-    h('div', { class: 'statbox' },
-      h('span', { class: 'statbox__k' }, icon('armorstat', { size: 11 }), h('span', { text: '合计护甲值' })),
-      h('span', { class: 'statbox__v', text: totals.armor == null ? '—' : fmt.num(totals.armor, 1) })),
-    h('div', { class: 'statbox' },
-      h('span', { class: 'statbox__k' }, icon('weight', { size: 11 }), h('span', { text: '负重' })),
-      h('span', { class: 'statbox__v', text: totals.weight == null ? '—' : fmt.num(totals.weight, 1) })),
-    h('div', { class: 'statbox' },
-      h('span', { class: 'statbox__k' }, icon('resist', { size: 11 }), h('span', { text: '抗性合计' })),
-      h('span', { class: 'statbox__v', text: totals.res == null ? '—' : fmt.num(totals.res, 0) }))));
+    ...setSummary(s).map((spec) => h('div', { class: 'statbox' },
+      h('span', { class: 'statbox__k' }, icon(spec.icon, { size: 11 }), h('span', { text: spec.label })),
+      h('span', { class: 'statbox__v', text: spec.value == null ? '—' : fmt.num(spec.value, spec.digits) })))));
   body.append(h('div', { class: 'lib-setdrawer__parts' },
     s.parts.map((p) => {
       const row = h('div', {
         class: 'lib-setrow', attrs: { role: 'button', tabindex: '0', 'aria-label': `查看 ${p.zh}` },
         on: {
-          click: () => safeOpenItemDetail(p.id),
-          keydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); safeOpenItemDetail(p.id); } },
+          click: () => { openDetailFromView(p); },
+          keydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetailFromView(p); } },
         },
       },
       h('div', { class: 'lib-setrow__media' }, itemIconEl(p)),
@@ -1154,8 +844,8 @@ function renderAll() {
   syncControls();
 
   if (isSets) {
-    list = computeSets();
-    R.countWrap.querySelector('.lib-count__u').textContent = '套';
+    list = computeSets({ sets: SETS || [], keywords: keywords(state.q) });
+    R.countUnit.textContent = '套';
     R.count.textContent = fmt.num(list.length);
     clear(R.pills);
     R.pills.hidden = true;
@@ -1168,9 +858,9 @@ function renderAll() {
     return;
   }
 
-  const { counts, list: next } = computeAll();
+  const { counts, list: next } = computeAll({ items: ITEMS, state, deps: DEPS });
   list = next;
-  R.countWrap.querySelector('.lib-count__u').textContent = '件';
+  R.countUnit.textContent = '件';
   R.count.textContent = fmt.num(list.length);
   for (const [id, ref] of R.catChips) {
     if (ref.count) ref.count.textContent = fmt.num(counts.get(id) || 0);
@@ -1184,11 +874,12 @@ function renderAll() {
 /* ------------------------------- 路由 ------------------------------- */
 function handleRoute(ctx) {
   if (!ctx || ctx.domain !== 'items') return;
+  if (!ITEMS) return;   // 数据未就绪：bootView 会在数据到位后按当前 URL 再走一次
   const sub = ctx.sub || '';
   if (sub && sub !== 'sets') {
     // 深链 #/items/<itemId>?q=… ：先把 query 落到筛选态，关闭抽屉后参数不丢
     const nextDetail = parseState(ctx.query);
-    normalizeSortFor(nextDetail);
+    normalizeSort(nextDetail, ITEMS);
     MODE = MODE_ITEMS;
     state = nextDetail;
     EL.ready = true;
@@ -1199,7 +890,7 @@ function handleRoute(ctx) {
   }
   const mode = sub === 'sets' ? MODE_SETS : MODE_ITEMS;
   const next = parseState(ctx.query);
-  normalizeSortFor(next);
+  normalizeSort(next, ITEMS);
   const canon = serialize(next);
   const curQs = ctx.query ? ctx.query.toString() : '';
   if (mode === MODE && canon === stateKey(state) && EL && EL.ready) {
@@ -1233,9 +924,10 @@ function openDetailRoute(id) {
   }
   if (detailOpenId) { detailOpenId = null; closeDetailLayers(); }
   detailOpenId = id;
-  detailReturnPath = `${listPath()}${serialize(state) ? `?${serialize(state)}` : ''}`;
+  const qs = serialize(state);
+  detailReturnPath = `${listPath()}${qs ? `?${qs}` : ''}`;
   safeOpenItemDetail(id, {
-    route: false,
+    // 深链：URL 已经是 #/items/<id>，无需再 replaceSilently
     onClose: () => {
       detailOpenId = null;
       router.go(detailReturnPath, { replace: true });
@@ -1253,59 +945,8 @@ function toggleMore(force) {
   R.moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   R.moreBtn.classList.toggle('is-on', open);
 }
-function buildCliQuery() {
-  const q = {};
-  if (state.cat !== 'all') q.cat = [state.cat];
-  if (state.assets) q.include_assets = true; else q.kind = ['item'];
-  if (state.set) q.set = state.set;
-  if (state.tags.length) q.tag = [...state.tags];
-  if (state.confs.length) q.confidence = [...state.confs];
-  if (state.icon) q.has_icon = true;
-  if (state.stats) q.has_effect = true;
-  if (state.q) q.text = state.q;
-  const metric = METRIC_BY_ID.get(state.metric) || METRIC_BY_ID.get('armor');
-  const baseStat = [];
-  if (state.min !== '') baseStat.push(`${metric.key}>=${state.min}`);
-  if (state.max !== '') baseStat.push(`${metric.key}<=${state.max}`);
-  if (baseStat.length) q.base_stat = baseStat;
-  const sortMap = {
-    name: 'zh', armor: '-armor', weight: '-weight', damage: '-damage', rate: '-rof',
-    mag: '-stat:AmmoPerClip', maxammo: '-stat:MaxAmmo', crit: '-stat:CritChance',
-    weakspot: '-stat:WeakSpotDamageMod', resist: '-base:ResistanceSum',
-    value: '-value', dlc: 'dlc', order: 'id',
-  };
-  if (sortMap[state.sort]) q.sort = sortMap[state.sort];
-  q.limit = 200;
-  return q;
-}
-function exportPayload() {
-  const query = buildCliQuery();
-  return {
-    schema: 'rmn2.cli/1-query',
-    generated_at: new Date().toISOString(),
-    from: 'web/items',
-    web: Object.assign(JSON.parse(JSON.stringify(state)), {}),
-    query,
-    count: list.length,
-    ids: list.slice(0, 400).map((it) => it.id),
-  };
-}
-function cliJsonText() { return JSON.stringify(exportPayload(), null, 2); }
-function powershellText() {
-  const json = JSON.stringify(buildCliQuery(), null, 2);
-  return [
-    '# 1) 把当前筛选写成 query.json（PowerShell）',
-    "$json = @'",
-    json,
-    "'@",
-    "Set-Content -Path query.json -Value $json -Encoding utf8",
-    '',
-    '# 2) 用本地 CLI 查询（默认只返回真道具，与页面默认一致）',
-    '.\mimocode\bin\rmn2.ps1 search --query-json @query.json --json',
-  ].join('\n');
-}
 function downloadPayload() {
-  const p = exportPayload();
+  const p = exportPayload(state, list);
   downloadText(`rmn2-query-${p.count}.json`, JSON.stringify(p, null, 2));
 }
 function buildMoreMenu() {
@@ -1320,11 +961,11 @@ function buildMoreMenu() {
   R.moreMenu.append(
     h('div', { class: 'lib-menu__head', text: '导出查询串' }),
     item('hash', '复制 CLI JSON', 'rmn2.cli/1 查询对象', async () => {
-      const ok = await copyText(cliJsonText());
+      const ok = await copyText(cliJsonText(state, list));
       ui.toast(ok ? '已复制 CLI JSON' : '复制失败', ok ? 'ok' : 'err');
     }),
     item('clipboard', '复制 PowerShell', '写入 query.json 并查询', async () => {
-      const ok = await copyText(powershellText());
+      const ok = await copyText(powershellText(state));
       ui.toast(ok ? '已复制 PowerShell 脚本' : '复制失败', ok ? 'ok' : 'err');
     }),
     item('download', '下载查询 JSON', '含当前 Web 筛选态', () => {
