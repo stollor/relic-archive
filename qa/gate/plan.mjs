@@ -4,8 +4,6 @@
         提交前/发布前才跑 full。
    ========================================================================== */
 
-import path from 'node:path';
-
 /**
  * 文件前缀 → 模块标签（越具体的放前面）。
  * 标签是「行为域」，不是目录：例如 js/main.js 与 router.js 同属 shell。
@@ -138,4 +136,3 @@ export function moduleOfFile(file) {
 }
 
 export const isDocOnly = (files) => files.length > 0 && files.every((f) => /^(AGENTS|README|CHANGELOG)\.md$|^docs\//.test(f));
-export { path };

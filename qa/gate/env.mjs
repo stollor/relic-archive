@@ -2,11 +2,10 @@
    qa/gate/env.mjs — 验收门禁的环境探测
    目标：不假设任何本机路径/命令存在；探测不到时给出可执行的修复建议，
         并让上层决定「这是 SKIP（环境不具备）还是 FAIL（关键能力缺失）」。
-   探测项：node / python / Chrome / git / 上游 .mimocode 工作区 / 空闲端口。
+   探测项：node / python / Chrome / git / 上游 .mimocode 工作区。
    ========================================================================== */
 
 import fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -126,20 +125,6 @@ export function detectWorkspace() {
       ? `上游工作区可用：${root}`
       : `未检测到上游 .mimocode 工作区（${root} 缺少 AGENTS.md/data 等标记）；依赖工作区的检查会标记 SKIP`,
   };
-}
-
-/* --------------------------------- 端口 ---------------------------------- */
-/** 申请一个空闲端口（bind 0 后立即释放，交给 serve.py 使用） */
-export function allocPort() {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.unref();
-    srv.on('error', reject);
-    srv.listen(0, '127.0.0.1', () => {
-      const { port } = srv.address();
-      srv.close(() => resolve(port));
-    });
-  });
 }
 
 /* ------------------------------ serve 管理 ------------------------------ */

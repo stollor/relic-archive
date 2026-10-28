@@ -28,7 +28,6 @@ export const SLOT_KEYS = ['head', 'body', 'legs', 'gloves'];
 export const TYPE_ZH = {
   physical: '物理', bleed: '流血', fire: '火焰', shock: '电击', corrosive: '腐蚀', blight: '枯萎',
 };
-export const STATUS_ZH = { easy: '商店', craft: '制作', boss: '头目掉落', rng: '随机' };
 
 /** 与 Python 对齐的浮点容差：25.000000000000004 应判为 ≤25 */
 export const WEIGHT_EPS = 1e-6;

@@ -3,9 +3,7 @@
    实验室专用中文文案：效果转写、条件说明、获取难度徽章映射。
    术语严格按 UX_SPEC §7（护甲值 / 减伤率 / 护甲效果 / 负重 / 负重档位 / 体力 / 闪避 / 壁垒）。
    ========================================================================== */
-import { TYPE_ZH, CLASS_ZH } from './engine.js';
 
-const RES_ZH = { bleed: '流血', fire: '火焰', shock: '电击', corrosive: '腐蚀', blight: '枯萎', all: '全' };
 const f0 = (v) => String(Math.round(v * 100));
 const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
 
@@ -68,16 +66,7 @@ const COND_ZH = {
   melee: '仅近战伤害', while_bulwark: '有壁垒层数时',
 };
 
-export function condText(m) {
-  if (!m || !m.condition) return '';
-  const zh = COND_ZH[m.condition] || '条件触发';
-  const up = m.uptime == null ? 1 : m.uptime;
-  return `条件：${zh}（覆盖率 ${Math.round(up * 100)}%）`;
-}
-
 export function condShort(m) {
   if (!m || !m.condition) return '';
   return COND_ZH[m.condition] || '条件触发';
 }
-
-export { TYPE_ZH, CLASS_ZH, RES_ZH };

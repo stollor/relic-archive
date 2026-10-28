@@ -47,13 +47,6 @@ BUILDS = SOURCE / "builds.json"
 ITEMS = DATA / "items.json"
 OUT = DATA / "builds.json"
 
-# 配装槽位 → 全站槽位族（与 js/core/api.js 的 SLOT_FAMILY 对应）
-SLOT_FAMILY = {
-    "amulet": "amulet", "ring": "ring", "relic": "relic",
-    "long_gun": "longGun", "hand_gun": "handGun", "melee_weapon": "melee",
-    "mod": "mod", "meta_gem": "metagem", "perk": "perk", "skill": "skill",
-    "trait": "trait", "fragment": "fragment", "legendary": "legendary",
-}
 # 槽位展示顺序（详情页按此排版）
 SLOT_ORDER = [
     "long_gun", "hand_gun", "melee_weapon", "mod", "meta_gem",

@@ -96,9 +96,6 @@ export const RES_COLOR = {
   corrosive: 'var(--dmg-corrode)', blight: 'var(--dmg-blight)',
 };
 
-/** 效果行分类 → 展示顺序 */
-export const EFFECT_ORDER = ['offense', 'defense', 'utility', 'status', 'other'];
-
 /* ---------------------------------------------------------------------------
    数据表数值键 → 中文（资料库/详情/实验室共用）。
    只收「玩法有意义」的键；其余键只出现在折叠的原始数值表里。

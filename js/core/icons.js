@@ -151,5 +151,3 @@ export function icon(name, opts = {}) {
   svg.innerHTML = body;
   return svg;
 }
-
-export const ICON_NAMES = Object.keys(ICONS);

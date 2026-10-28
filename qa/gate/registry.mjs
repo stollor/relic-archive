@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT as ROOT } from './env.mjs';
 import {
-  parseNodeTest, parseUnittest, parseCounts, readJsonSafe, rel,
+  parseNodeTest, parseUnittest, parseCounts, readJsonSafe,
 } from './report.mjs';
 
 /** 工具函数：python / node 命令 */
@@ -22,22 +22,7 @@ const node = (args) => ({ command: process.execPath, args });
 /** 读取一个 JSON 产物；不存在返回 null（多数场景说明脚本没跑到产出步骤） */
 const artifact = (ctx, p) => readJsonSafe(path.join(ctx.repoRoot, p));
 
-const relPath = (ctx, p) => rel(ctx.repoRoot, path.join(ctx.repoRoot, p));
-
 /* ------------------------------ 通用检查模板 ------------------------------ */
-/** 纯命令检查：只看退出码（可选再读产物补充统计） */
-function commandCheck({
-  id, label, kind = 'static', requires = [], server = null, cost = 'fast', timeout = 180000,
-  module, hint, repro, artifacts = [], result = 'exit', baseline = null, optional = false,
-  build,
-}) {
-  return {
-    id, label, kind, requires, server, cost, timeout, module, hint, repro, artifacts,
-    baseline, optional, result, build,
-    run: build,
-  };
-}
-
 /** node --test 检查（TAP 解析） */
 function nodeTestCheck({ id, label, kind = 'unit', target = '"qa/tests/*.test.mjs"', module, hint, repro, cost = 'fast', baseline = null }) {
   const targetArg = target.replace(/^"|"$/g, '');

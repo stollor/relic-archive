@@ -135,7 +135,7 @@ fmt.num(v, d=0), fmt.pct(v, d=1), fmt.pp(v), fmt.kg(v), fmt.int(v)
 
 // core/icons.js
 icon(name, {size=16, cls='', title=''}) -> SVGElement     // 名称见 §6
-ICON_NAMES: string[]
+// ICON_NAMES 已移除：图标名直接从 ICONS 的键派生，无需额外常量
 
 // core/store.js  （持久化：localStorage key = r2.v2.*）
 store.state = { owned:Set, fav:Set, build:Object, ui:Object }
