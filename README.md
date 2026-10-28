@@ -34,9 +34,9 @@ Windows 也可以双击 `start.cmd`。
 
 > ⚠️ 必须通过本地服务器访问：`file://` 下浏览器会拦截 ES module 与 `fetch`。
 > 部署到静态托管（GitHub Pages / Netlify / 任意 Nginx）同样可用，把整个目录作为站点根即可；
-> `/data/*`、`/assets/*` 都是同源相对路径。
-> 若部署在子路径（如 `https://user.github.io/relic-archive/`），需把 `js/core/api.js` 的
-> `/data/...` 前缀改成相对路径（见 `docs/DATA.md` §5）。
+> 数据与图标均使用**相对路径**（`./data/*`、`./assets/*`），所以既能部署在域名根路径，
+> 也能部署在子路径（如 `https://<user>.github.io/relic-archive/`）。
+> 在线版本：**https://stollor.github.io/relic-archive/**。
 
 ---
 

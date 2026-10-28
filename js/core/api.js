@@ -1,21 +1,21 @@
 /* =============================================================================
    遗迹2 · 遗物档案 — api.js
-   唯一数据入口：加载 /data/*.json、规范化、缓存、派生（套装/分类/搜索索引）。
+   唯一数据入口：加载 ./data/*.json（相对站点根，根路径/子路径部署通用）、规范化、缓存、派生（套装/分类/搜索索引）。
    视图禁止直接 fetch；一律 api.xxx()。
    ========================================================================== */
 
 import { stripTags } from './dom.js';
 
 const URLS = {
-  items: '/data/items.json',
-  icons: '/data/icon_index.json',
-  site: '/data/site_data.json',
-  terms: '/data/terms.json',
-  acq: '/data/acq.json',
-  codex: '/data/codex/index.json',
-  archetypes: '/data/archetypes.json',
-  effects: '/data/item_effects.json',
-  builds: '/data/builds.json',
+  items: './data/items.json',
+  icons: './data/icon_index.json',
+  site: './data/site_data.json',
+  terms: './data/terms.json',
+  acq: './data/acq.json',
+  codex: './data/codex/index.json',
+  archetypes: './data/archetypes.json',
+  effects: './data/item_effects.json',
+  builds: './data/builds.json',
 };
 
 /* 数据侧 slot → 全站槽位族 */
@@ -169,8 +169,8 @@ function buildIconMap(index) {
   const icons = (index && index.icons) || {};
   for (const [key, val] of Object.entries(icons)) {
     if (!val || !val.file) continue;
-    map.set(key.toLowerCase(), `/assets/${val.file}`);
-    if (val.stem) map.set(`stem:${String(val.stem).toLowerCase()}`, `/assets/${val.file}`);
+    map.set(key.toLowerCase(), `./assets/${val.file}`);
+    if (val.stem) map.set(`stem:${String(val.stem).toLowerCase()}`, `./assets/${val.file}`);
   }
   return map;
 }
@@ -333,7 +333,7 @@ function resolveBuildEntity(raw) {
 async function loadBuilds() {
   if (S.builds) return S.builds;
   const data = await loadJSON(URLS.builds);
-  if (!data || !Array.isArray(data.builds)) throw new Error('/data/builds.json 格式不正确');
+  if (!data || !Array.isArray(data.builds)) throw new Error('data/builds.json 格式不正确');
   const builds = data.builds.slice().sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
   S.builds = { ...data, builds };
   S.buildByKey = new Map(builds.map((b) => [b.key, b]));

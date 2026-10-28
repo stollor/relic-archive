@@ -124,15 +124,18 @@ python pipeline/mk_builds_json.py         # 写 data/builds.json
 
 ---
 
-## 5. 部署到子路径（非根路径）
+## 5. 部署（根路径 / 子路径都可用）
 
-站点的运行时请求使用**根路径**：`/data/*`、`/assets/*`（`js/core/api.js` 的 `URLS`、
-`js/core/icons.js` 的图标路径在 `api.iconUrl` 内拼接）。因此：
+站点的数据与图标请求使用**相对路径**：`js/core/api.js` 的 `URLS` 是 `./data/*`，
+图标由 `api.iconUrl()` 拼成 `./assets/icons/*.png`。页面都在站点根（`index.html`、`lab.html`），
+hash 路由不改变文档 URL，因此：
 
-- **根路径部署**（`https://example.com/`、`http://127.0.0.1:8777/`）：开箱即用。
-- **子路径部署**（`https://user.github.io/relic-archive/`）：把 `js/core/api.js` 顶部 `URLS` 里的
-  `'/data/...'` 改成 `'./data/...'`（或 `import.meta.url` 推导的相对路径），即不会再请求站点根。
-  `serve.py` 的 `/data/*`、`/assets/*` 路由是按站点根设计的，子路径部署请改用静态托管而非 serve.py。
+- **本地 / 根路径部署**（`http://127.0.0.1:8777/`、`https://example.com/`）：开箱即用（`python serve.py`）。
+- **子路径部署**（GitHub Pages 项目站点 `https://<user>.github.io/relic-archive/`）：同样开箱即用，
+  无需改任何路径（`./data/...` 会解析到 `/relic-archive/data/...`）。
+- 在线版本：**https://stollor.github.io/relic-archive/**（GitHub Pages，`main` 分支根目录）。
+- 注意：`qa/` 里的门禁脚本用绝对 URL 访问本机 `serve.py`（开发用）；对线上子路径跑 QA 时
+  只适合 `qa/shot.js`（它按 `--base` 拼接 URL），`qa/interactions.js` 的页面内 import 是根路径。
 
 ---
 
