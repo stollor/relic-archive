@@ -170,6 +170,19 @@ lab-arch 审计发现并修复（均有探针证据与像素级 A/B）：
 **教训（真实回归）**：`js/lab/text.js` 的 `RES_ZH` 被判定零引用删除，但它在**模板字符串** `${RES_ZH[rk]}` 里被使用，
 `node --check`/单元测试均不报错，直到真实浏览器进 `#/lab` 才炸（`ReferenceError`）。已恢复并修复，
 且把「删运行时符号后必须跑真实浏览器 lab/详情路径」写入 LESSONS；后续审计需把模板字符串引用计入。
+### 3.6 图标按显示尺寸压缩（资产管线；仓库 54.98MB→24.15MB，-56.1%）
+
+- **证据**：1004 张 PNG 共 54.98MB（均 56KB，p50 58.6KB；855 张 256×256、105 张 256×128、42 张 128×256），
+  而页面最大显示是桌面网格 74×74、移动 64×64、列表 40×40 —— 2× DPR 也只需 148px，等于下载了约 3.5× 于显示的像素。
+  首屏 46 张 ~2.9MB，是 items 首屏除了 items.json 之外的最大单项。
+- **做法**：新增 `pipeline/minify_icons.py`（仅发布数据时需要 Pillow）：长边缩到 148px（LANCZOS，PNG 无损 optimize），
+  同步 `data/icon_index.json` 的 `w/h/png_bytes/max_side`；上游工作区 `assets/icons` 同步缩放、`tools/tex_build.py`
+  的 `MAX_SIDE` 改为 148（避免下次重新生成又回到 256），`sync-data --check` 无漂移。
+- **结果（同脚本 S1，负载 14%）**：仓库图标 54.98MB→24.15MB（**-56.1%**）；items 首屏图片 2988→1217.7KB（**-59.2%**）、
+  总传输 11321→9410.6KB（-16.9%）、firstView 211.9→169.3ms（-20.1%，负载不同仅作方向参考）；
+  lab 首屏图片 254.2KB（原 ~620KB）、codex 不变。像素无可见差异（148px vs 74px 显示，`shot` 54×2 全绿）。
+- **代价**：DPR > 2 的超高密度屏会由浏览器放大 148px（可接受）；重跑上游 `tex_build.py` 后需再跑一次 minify（或依赖已改的 MAX_SIDE）。
+
 <!-- PERF-OPTIMIZATIONS:END -->
 
 ---
@@ -186,7 +199,7 @@ lab-arch 审计发现并修复（均有探针证据与像素级 A/B）：
 | 其它领域数据「跨域预取」 | items 首屏后 idle 只值得预取 codex(21KB)/archetypes(5KB)；增加带宽与一致性成本 | 不做 |
 | `index.html` 按初始 hash preload items | 收益约 1 RTT；需改 HTML 并兼顾子路径，本轮性价比不足 | 不做（后续可选） |
 | items.json 拆分「列表/详情」两份 | 列表字段可减 24%（gzip 0.73 vs 0.96MB），但需 pipeline+api+views 联动、数据契约双份 | 不做（后续专项） |
-| 图标按显示尺寸生成缩略图 / 压缩 PNG | 真实大头：图标 ~65KB 显示 74px、首屏 46 张 ~2.9MB；属发布资产管线，非运行时优化 | 不做（后续建议，见 §5） |
+| 图标按显示尺寸生成缩略图 / 压缩 PNG | 真实大头：图标 ~56KB 显示 74px、首屏 46 张 ~2.9MB | ✅ 已做（§3.6，148px，-56.1%） |
 | Web Worker 跑穷举 | 单次枚举 45–90ms、已被分帧到每帧 ≤10ms；4× 节流的卡顿主因是同帧 workbench 全量重建 + 完成双渲染 + 软件光栅 layout，Worker 省不掉主线程渲染 | 不做（先做去重/早退/缓存后已消除） |
 | `statsFor` memo / 枚举剪枝 | 热路径已内联，无重复调用；现有 classTarget 剪枝已把 LIGHT 降到 0.6ms；进一步剪枝有改变 top 顺序风险 | 不做（不得改变数值/排序） |
 | 资料库图标 IO 控 src / 尺寸属性 | 已 `loading=lazy`+`decoding=async`，滚动 900 卡只发 222 个唯一请求、0 重复；CI 不应引入新观察器 | 不做 |
@@ -195,7 +208,7 @@ lab-arch 审计发现并修复（均有探针证据与像素级 A/B）：
 | 删除 21 个 `export default`、机械收敛导出面 | 零消费者但 diff 噪声大、几乎全模块受影响；维护收益≈0 | 不做（文档说明「默认导出不是契约」） |
 | 合并重复工具（isNum/clamp/isPlainObject/deferTitle） | 真重复但分散在 api/dom/engine/store/state/views，跨 10+ 文件、收益≈行数 | 不做（只记录） |
 | 重复配置合并（护甲四槽数组 14 处、RES_KEYS 2 处、领域中文名 2 处） | 同上，且易与数据生成链耦合 | 不做（写入 `docs/AI_MAP.md` 的重复清单，后续专项） |
-| 开发服务器加 ETag/Last-Modified | 只影响本地开发二次加载（serve.py 现在每个请求全量 7.3MB）；不影响线上 Pages（有 ETag+max-age） | 不做（收益仅在开发体验，列为建议） |
+| 开发服务器加 ETag/Last-Modified | 只影响本地开发二次加载（serve.py 原来每个请求全量 7.3MB）；线上 Pages 自带 ETag | ✅ 已做（serve.py 协商缓存 + 单测） |
 | IndexedDB / 数据分片 / 额外缓存层 | 无证据表明需要；现有 Map 去重 + 浏览器 HTTP 缓存已足够 | 不做 |
 <!-- PERF-REJECTED:END -->
 

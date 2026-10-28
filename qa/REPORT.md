@@ -565,8 +565,8 @@ statsFor memo/枚举剪枝（有改变排序风险）、图标 IO 控 src、事�
 
 ### 13.6 未解决风险与后续建议
 
-1. **图标与 items.json 体积**：首屏 items 仍 11.3MB（图标 46 张 ~2.9MB；items 7.33MB 未压缩原文，线上 gzip 约 1.0MB）。
-   真正的大头在发布资产管线（图标 ~65KB 显示 74px、items 列表字段可裁剪 24%），需要改数据生成/发布结构，属下一阶段。
+1. **items.json 体积**：首屏 items 仍 9.4MB（图标已压缩：46 张 2.9MB→1.2MB；items 7.33MB 原文，线上 gzip 约 1.0MB，
+   列表字段可再裁 24%）。items 拆分需 pipeline+api+views 联动，属下一阶段专项。
 2. **实测噪声**：本机有游戏+IDE 长驻负载，S3/S5/S7/S8 只能作方向参考；若要硬性性能门禁，需要安静专用环境 +
    阈值策略（当前刻意不做硬阈值，避免 flaky）。
 3. **GitHub Pages 侧暴露面**：静态托管会公开仓库内 `docs/qa/pipeline` 等文件；要隐藏需改发布结构（如只发布构建产物），
@@ -575,31 +575,52 @@ statsFor memo/枚举剪枝（有改变排序风险）、图标 IO 控 src、事�
    `${SYMBOL}` 引用扫描 + 删除后强制浏览器冒烟。
 5. **`qa/perf.mjs` 不进 full**：性能是参考指标，机器噪声大；如需回归守门，应先固定环境再定阈值。
 6. 线上 Pages 未在本阶段重新发布/复验（本轮不改变发布结构与数据；发布仍走 `deploy.py` 内容指纹）。
-7. **缺件状态残留**：外部写 `store.ui['lab.missing']` 后读取端已归零，但顶栏 badge/面板要等 lab 下一次自身事件才重绘
-   （当前无产品路径外部写；若未来接 `resetAll` 需补 `ui→missing` 事件桥）。
-8. `ui.closeOverlays({silent})` 关闭 confirm 时 Promise 不 resolve（极端路径：弹窗打开时按 back 触发；
-   如需可改非 silent + 卸载后回调守卫）。
+7. ~~缺件状态残留~~ / ~~confirm 静默关闭不结算~~ → 已完成（`lab/state.js watchMissingBridge()`、`ui.closeOverlays` 按取消结算），
+   见 §13.8。
 
 ### 13.7 最终回归
 
 <!-- PERF-FINAL-GATE:START -->
-**`node qa/gate.mjs full --update-baseline`（干净负载轮）= 16 PASS / 0 FAIL / 0 SKIP，484.2s**
+**`node qa/gate.mjs full --update-baseline`（第二轮收口后，发布 v3.6）= 16 PASS / 0 FAIL / 0 SKIP，451.9s**
 
 | 检查 | 结果 | 耗时 |
 |---|---|---|
-| unit-js | **195/195** | 4.2s |
-| unit-py | **45/45** | 3.3s |
-| audit / contrast | 60/60 · 130/130 | 0.3s · 0.1s |
-| data-builds / data-schema / data-sync | 1/1 · 38/38 · 无漂移 | 0.2/3.6/15.2s |
-| shot-dark / shot-light / shot-subpath | **54/54 · 54/54 · 25/25** | 79.5/78.0/46.9s |
-| interactions / lifecycle / lab-async | **67/67 · 25/25 · 8/8** | 129.7/42.1/37.5s |
-| components / nav / nav-subpath | 20/20 · 6+1skip · 7/7 | 1.0/19.8/22.1s |
+| unit-js | **195/195** | 2.8s |
+| unit-py | **46/46** | 2.3s |
+| audit / contrast | 60/60 · 130/130 | 0.2s · 0.1s |
+| data-builds / data-schema / data-sync | 1/1 · 38/38 · 无漂移 | 0.2/2.7/1.4s |
+| shot-dark / shot-light / shot-subpath | **54/54 · 54/54 · 25/25** | 73.7/74.5/45.5s |
+| interactions / lifecycle / lab-async | **67/67 · 25/25 · 8/8** | 127.5/41.3/37.3s |
+| components / nav / nav-subpath | **21/21** · 6+1skip · 7/7 | 1.0/19.2/21.7s |
 
-- `quick`：5/5 PASS，约 7–9s（unit-js 195 + audit 60 + contrast 130 + data-builds + data-schema 38）。
+- `quick`：5/5 PASS，约 6–7s（unit-js 195 + audit 60 + contrast 130 + data-builds + data-schema 38）。
 - `perf` 模式：`node qa/gate.mjs perf` 走统一入口调度 `qa/perf.mjs`（参考指标、不设阈值）→ **8/8 PASS，87.3s**，结果 `qa/results/perf.json`。
-- 基线已 `--update-baseline` 更新（unit-js 175→195、unit-py 37→45；新增 boot 8 / security 8 / serve security 8 并入）。
+- 基线已 `--update-baseline` 更新（unit-js 195、unit-py 46、components 21；第二轮新增 ETag 1 例 + C21 1 例并入）。
 - 浏览器子集回归（各 owner 在代码改动后自跑）：shot-dark/light 各 54/54、interactions 67/67、lifecycle 25/25、
   nav 6+1skip、nav-subpath 7/7、lab-async 8/8、components 20/20；像素 A/B 证明死 CSS 删除零视觉变化。
 - **性能数值**：见 `docs/PERF.md`（codex 冷启 -96.3% 传输 / -61.6% firstView；实验室穷举 2→1 次；排序切换 ~4–9×）；
   性能不进 full 硬门禁（噪声原因见 13.6）。
 <!-- PERF-FINAL-GATE:END -->
+### 13.8 第二轮遗留收口（2026-10-28 晚间，发布 v3.6）
+
+> 背景：第四阶段报告列出 6 类遗留后，按「先做能证实收益的、其余留理由」原则再收一轮。
+> 原则不变：不改数值/排序、不新增依赖/构建、一个事实只留一个权威。
+
+| 遗留 | 处理 | 证据 |
+|---|---|---|
+| **特性双表示**（详情写 `build.traits`，实验室只读 `meta.traitLevels`，加入后 0/10） | 唯一事实源改为 `build.meta.traitLevels`；store 读取时把旧 `traits` 迁移为 1 级且不再持久化；新增 `store.build.addTrait()`；详情按钮改调它 | `store.test` 23/23、`build-state.test` 7/7（含持久化字节）；`interactions` I11 新增断言「加入后 `meta.traitLevels[itemId]===1`」，67/67 |
+| **图标 256px 下载、74px 显示**（1004 张 54.98MB，首屏 46 张 2.9MB） | `pipeline/minify_icons.py` 长边→148px（2× DPR），同步 `icon_index` 的 w/h/png_bytes/max_side；上游 `tex_build.py` `MAX_SIDE` 同步改 148；工作区图标同步缩放 | 仓库 **54.98MB→24.15MB（-56.1%）**；S1 items 首屏图片 **2988→1217.7KB（-59.2%）**、总传输 **11321→9410.6KB（-16.9%）**；`sync-data --check` 无漂移、`data-schema` 38/38、`shot` 54×2 全绿 |
+| 外部写 `store.ui['lab.missing']` 时 badge/面板不重绘 | `lab/state.js` 新增 `watchMissingBridge()`（store `ui` 事件→lab 事件），lab 视图挂到 scope | 代码路径 + `lab-async` 8/8、`interactions` lab 子集 67/67 |
+| `ui.closeOverlays({silent})` 关闭未决 confirm 时 Promise 永久挂起 | `closeOverlays` 检测未决 confirm 并按「取消」结算（finish 内部正常关闭 modal） | 新增 `components` C21（打开→静默关闭→resolve(false)），21/21 |
+| 开发服务器无协商缓存（刷新重下 7.3MB items.json） | `serve.py` 静态资源加 `ETag`/`Last-Modified`，匹配 `If-None-Match` 返回 304 | `test_serve_security` 新增 1 例（js/items/css 三资源 304 且无 body），`unit-py` 46/46 |
+| 配置重复：15 槽中文名两份 | `lab/model.js` 的 `SLOT_LABEL` 改为引用 `labels.SLOT_ZH` | `architecture.test` 16/16 |
+| 本地临时产物（`qa/_tmp` 112 文件 29MB、`qa/shots` 16MB、`D:	mp-lab` 8.3MB） | 清空（全部 gitignored/工作区外，可随时重生成） | `du` 归零；仓库仍 fail-safe |
+
+**评估后仍不做（理由）**：
+- items.json 拆分列表/详情：跨 `pipeline/mk_builds_json` + `api` + 两个视图 + 数据契约，属独立专项（收益：gzip 0.73 vs 0.96MB）；
+- GitHub Pages 隐藏仓库内 `docs/qa/pipeline`：需改发布结构（只发布产物），与「仓库即站点、零构建」冲突，单独立项；
+- 像素回归/基准图：维护成本高、字体/DPI 噪声大；本轮用结构断言 + 真机截图 + 临时 sha A/B 代替；
+- CSP/SRI：站点有内联样式与多入口 HTML，成本中等且无外部资源注入面；
+- 未用 CSS（~30 个）、`export default` 清理、重复小工具合并：视觉/回归风险 > 维护收益（详见 `docs/PERF.md` §4）；
+- 隐藏面板脏标记（OPT-5）：实测每次 5–10ms，未达「需优化」阈值；
+- 死代码 `${SYMBOL}` 扫描守卫：通用静态分析误报率高，保留「删运行时符号必跑真实浏览器」流程规则。

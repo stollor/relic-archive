@@ -263,7 +263,7 @@ index.html ──→ js/main.js ──→ js/domains.js ──→ js/views/<doma
 
 | 配置 | 位置 | 备注 |
 |---|---|---|
-| 15 槽中文名 | `js/core/labels.js SLOT_ZH` / `js/lab/model.js SLOT_LABEL` | 值完全相等；model 侧待后续改为引用 |
+| 15 槽中文名 | `js/core/labels.js SLOT_ZH` / `js/lab/model.js SLOT_LABEL` | ✅ 已统一：`SLOT_LABEL = SLOT_ZH`（引用同一对象） |
 | 护甲四槽数组 | `labels` / `store.BUILD_SLOTS` / `lab/engine.SLOT_KEYS` / `lab/model.SLOT_GROUPS` / `lab/replace.SLOT_KEYS` / `lab/wb-slots.ARMOR_SLOTS` / `builds/ui.ARMOR_SLOTS` / `library/present.ARMOR_FAMS` / `views/library` / `item-card` / `item-detail-sections` 等 14 处 | 改槽位口径时 grep `head.*body.*legs.*gloves` 全部同步 |
 | 槽位分组顺序 | `store.BUILD_SLOTS`（注释「全站唯一」）vs `lab/model.SLOT_GROUPS` | 同 ids/顺序各一份；增加槽位必须两处同步 |
 | 五类抗性键 | `api.RES_KEYS` vs `lab/engine.RES_KEYS` | engine 为纯数据层不 import api（可独立单测），保留副本 |
@@ -273,7 +273,9 @@ index.html ──→ js/main.js ──→ js/domains.js ──→ js/views/<doma
 
 ### 8.5 未解决 backlog（产品决策）
 
-- **配装特性双表示**：资料库详情「加入特性」写 `store.build.traits`（字符串数组），实验室只读
-  `build.meta.traitLevels`（等级表）；实测 `setTraits(['Trait_Fortify'])` 后实验室仍显示「特性 0/10」，
-  `build.traits` 无其它读者。两者表示同一事实但不同步；统一方案（实验室展示未定级特性 / 详情不再写 traits /
-  加迁移桥）需产品确认，本轮代码不动。
+- （已解决 2026-10-28）**配装特性双表示**：唯一事实源改为 `build.meta.traitLevels`（id→1..10 级）；
+  旧的 `build.traits`（仅 id）在 store 读取时迁移为 1 级且不再持久化；详情「加入特性」改走
+  `store.build.addTrait()`（默认 1 级、上限 10），实验室立即可见并可直接调等级。
+  守卫：`qa/tests/store.test.mjs`（迁移/API）、`qa/tests/build-state.test.mjs`（持久化字节）、
+  `qa/interactions.js` I11（加入后断言 `meta.traitLevels[itemId] === 1`）。
+- 待产品决策：无（图标压缩、缺件事件桥、confirm 结算已在本轮收口，见 `qa/REPORT.md` §13.8）。

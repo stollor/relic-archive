@@ -3,6 +3,21 @@
 > 只记「形态/能力」级变更与关键数字；细枝末节的改动见 `git log`。
 > 早期里程碑来自 `.mimocode` 工作区历史（站点曾是工作区内的 `web/`）。
 
+## v3.6 — 2026-10-28 · 遗留问题收口（特性单一事实源 / 图标压缩 / 事件与边界修复）
+
+- **配装特性改为单一事实源**：`build.meta.traitLevels` 为唯一权威（id→1..10 级）；旧 `build.traits` 读取时迁移为 1 级、
+  不再持久化；详情「加入特性」改走 `store.build.addTrait()`（1 级、上限 10），实验室立即可见并可调等级。
+  实测修复前「详情加入后实验室仍 0/10」。守卫：store/build-state 单测 + interactions I11 断言。
+- **图标压缩（资产管线）**：1004 张 PNG 长边 256→148px（页面最大显示 74px/2× DPR），仓库 54.98MB→24.15MB（**-56.1%**），
+  items 首屏图片 2988→1217.7KB（**-59.2%**）、总传输 11321→9410.6KB（-16.9%）；新增 `pipeline/minify_icons.py`
+  （同步 `icon_index.json` 的 w/h/png_bytes/max_side），上游 `tex_build.py` 的 `MAX_SIDE` 同步为 148，`sync-data --check` 无漂移。
+- **事件/边界修复**：`ui.closeOverlays({silent})` 关闭未决 confirm 时按取消结算（`components` C21 守卫）；
+  实验室新增 `watchMissingBridge()`，外部写 `store.ui['lab.missing']` 时 badge/面板立即刷新；
+  `lab/model.js` 的 `SLOT_LABEL` 改为引用 `labels.SLOT_ZH`（去掉重复词表）；`serve.py` 增加 ETag/Last-Modified + 304
+  （开发时刷新不再重下 7MB items.json，`test_serve_security` 新增 1 例）。
+- 遗留评估后仍不做：items.json 拆分、Pages 隐藏仓库文件（需改发布结构）、像素回归、CSP、未用 CSS/export default 清理、
+  隐藏面板脏标记（无实测收益）、死代码 `${SYMBOL}` 扫描守卫；理由见 `docs/PERF.md` §4 与 `qa/REPORT.md` §13.8。
+
 ## v3.5 — 2026-10-28 · 第四阶段：性能、安全与长期可维护性（不新增功能、不改视觉/数值）
 
 - **性能基准（P2-1）**：新增 `qa/perf.mjs`（零依赖 CDP，S1–S8：四领域冷启/JSON 解析/领域首开/切换/搜索筛选/
