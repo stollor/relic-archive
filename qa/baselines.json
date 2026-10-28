@@ -1,11 +1,11 @@
 {
   "checks": {
     "unit-js": {
-      "min_pass": 175,
+      "min_pass": 195,
       "max_skip": 0
     },
     "unit-py": {
-      "min_pass": 37,
+      "min_pass": 45,
       "max_skip": 0
     },
     "audit": {
