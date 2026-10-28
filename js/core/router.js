@@ -2,23 +2,21 @@
    遗迹2 · 遗物档案 — router.js
    hash 路由（file:// 也能用；无需服务端重写）。
    路由形如 #/items  #/items/sets  #/items/<itemId>  #/lab/calc?profile=fortify_sb
+   领域清单与默认领域归应用壳（js/domains.js）；router 只解析路由形态、不校验领域。
    视图契约：mount(rootEl, ctx) -> { onRoute?(ctx), unmount?() }
    ========================================================================== */
-
-const DOMAINS = new Set(['items', 'lab', 'builds', 'codex']);
 
 let listeners = new Set();
 let currentCtx = null;
 
 function parse(hash) {
   let raw = String(hash || '').replace(/^#/, '');
-  if (!raw) raw = '/items';
   if (!raw.startsWith('/')) raw = `/${raw}`;
   const qi = raw.indexOf('?');
-  const path = (qi >= 0 ? raw.slice(0, qi) : raw).replace(/\/+$/, '') || '/items';
+  const path = (qi >= 0 ? raw.slice(0, qi) : raw).replace(/\/+$/, '');
   const query = new URLSearchParams(qi >= 0 ? raw.slice(qi + 1) : '');
   const segs = path.split('/').filter(Boolean);
-  const domain = DOMAINS.has(segs[0]) ? segs[0] : 'items';
+  const domain = segs[0] || '';
   const params = {};
   for (const [k, v] of query.entries()) params[k] = v;
   return {
@@ -66,7 +64,7 @@ export function setQuery(obj, { replace = true } = {}) {
     if (v == null || v === '') q.delete(k); else q.set(k, String(v));
   }
   const s = q.toString();
-  go(`${ctx ? ctx.path : '/items'}${s ? `?${s}` : ''}`, { replace });
+  go(`${ctx ? ctx.path : '/'}${s ? `?${s}` : ''}`, { replace });
 }
 
 export function onChange(fn) {
@@ -87,7 +85,7 @@ function handleHash() {
 
 export function start() {
   window.addEventListener('hashchange', handleHash);
-  if (!location.hash) history.replaceState(history.state, '', '#/items');
+  // 空 hash 不在这里兜底：parse() 给出 domain=''，由应用壳统一重定向到默认领域
   handleHash();
 }
 

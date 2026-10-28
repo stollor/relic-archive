@@ -1,6 +1,7 @@
 /* =============================================================================
    遗迹2 · 遗物档案 — main.js
    应用外壳：初始化、路由派发、视图生命周期、顶栏状态、错误边界。
+   领域清单（导航 / 标题 / 快捷键 / 视图与样式加载）唯一来源：js/domains.js。
    视图契约：mount(rootEl, ctx) -> { onRoute?(ctx), unmount?() }
    ========================================================================== */
 import { router } from './core/router.js';
@@ -10,21 +11,62 @@ import { ui } from './core/ui.js';
 import { h, $, clear, fmt } from './core/dom.js';
 import { icon } from './core/icons.js';
 import { createEpoch } from './core/task.js';
-
-const VIEW_FILES = {
-  items: './views/library.js',
-  lab: './views/lab.js',
-  builds: './views/builds.js',
-  codex: './views/codex.js',
-};
-const DOMAIN_ZH = { items: '资料库', lab: '实验室', builds: '流派', codex: '知识库' };
-const DOMAIN_ORDER = ['items', 'lab', 'builds', 'codex'];
+import { loadingState, errorState } from './components/states.js';
+import { DOMAINS, DEFAULT_DOMAIN, domainById, domainLabel, isDomain, shortcutDomains } from './domains.js';
 
 const root = $('#view-root');
 let mounted = null;
+let navBadgeEl = null;
 const moduleCache = new Map();
+/* 样式 href → 载入 Promise：每个视图样式只注入一次，且 mount 前必须就位 */
+const styleLinks = new Map();
 /* 派发代际：只有最新一次 dispatch 有权挂载视图，晚返回的旧 dispatch 直接放弃 */
 const epoch = createEpoch();
+/* Alt+数字 → 领域：由 domains.js 的 shortcut 字段生成 */
+const shortcuts = new Map(shortcutDomains().map(({ key, domain }) => [key, domain]));
+
+/* ----------------------------- 顶栏导航 ----------------------------- */
+function renderNav() {
+  const nav = $('#domnav');
+  if (!nav) return;
+  clear(nav);
+  for (const d of DOMAINS) {
+    const link = h('a', {
+      class: 'domnav__link',
+      dataset: { domain: d.id },
+      attrs: { href: `#${d.path}` },
+    }, icon(d.icon, { size: 16 }), h('span', { text: d.zh }));
+    // badge：'build' = 挂「当前配装已填槽位」计数（updateCounters 填充）
+    if (d.badge === 'build') link.append(h('span', { class: 'domnav__count', hidden: true }));
+    nav.append(link);
+  }
+  navBadgeEl = nav.querySelector('.domnav__count');
+}
+
+/* --------------------------- 视图样式（懒注入） --------------------------- */
+function injectStyle(href) {
+  const cached = styleLinks.get(href);
+  if (cached) return cached;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  const done = new Promise((resolve) => {
+    link.addEventListener('load', () => resolve(), { once: true });
+    // 载入失败不阻塞视图：内容优先，基础样式（tokens/base/components）仍在
+    link.addEventListener('error', () => {
+      console.warn('[styles] 视图样式载入失败：', href);
+      resolve();
+    }, { once: true });
+  });
+  document.head.append(link);
+  styleLinks.set(href, done);
+  return done;
+}
+
+function ensureStyles(domain) {
+  const def = domainById(domain);
+  return Promise.all(((def && def.styles) || []).map(injectStyle));
+}
 
 /* ----------------------------- 状态条 ----------------------------- */
 function updateCounters() {
@@ -32,41 +74,22 @@ function updateCounters() {
   const fav = $('#statFav b');
   if (owned) owned.textContent = store.ownedCount();
   if (fav) fav.textContent = store.favCount();
-  const navBadge = document.querySelector('.domnav__link[data-domain="lab"] .domnav__count');
-  if (navBadge) {
+  if (navBadgeEl) {
     const n = store.build.filled();
-    navBadge.textContent = n ? String(n) : '';
-    navBadge.hidden = n === 0;
-    navBadge.title = n ? `当前配装已填 ${n} 个槽位` : '';
+    navBadgeEl.textContent = n ? String(n) : '';
+    navBadgeEl.hidden = n === 0;
+    navBadgeEl.title = n ? `当前配装已填 ${n} 个槽位` : '';
   }
-}
-
-/* ----------------------------- 占位面板 ----------------------------- */
-function loadingPanel(text = '正在载入数据…') {
-  return h('div', { class: 'wrap' },
-    h('div', { class: 'empty', attrs: { style: 'padding-top:120px' } },
-      h('div', { class: 'empty__ico' }, icon('library', { size: 40 })),
-      h('div', { class: 'empty__title', text }),
-      h('div', { class: 'empty__hint', text: '数据来自本地 data/，不联网。' }),
-    ),
-  );
-}
-
-function errorPanel(err, retry) {
-  return h('div', { class: 'wrap' },
-    h('div', { class: 'empty', attrs: { style: 'padding-top:100px' } },
-      h('div', { class: 'empty__ico' }, icon('warning', { size: 40 })),
-      h('div', { class: 'empty__title', text: '页面载入失败' }),
-      h('div', { class: 'empty__hint', text: String(err && err.message ? err.message : err) }),
-      h('button', { class: 'btn btn--primary', type: 'button', text: '重试', on: { click: retry } }),
-    ),
-  );
 }
 
 /* ----------------------------- 视图派发 ----------------------------- */
 async function loadView(domain) {
   if (moduleCache.has(domain)) return moduleCache.get(domain);
-  const mod = await import(VIEW_FILES[domain]);
+  const def = domainById(domain);
+  if (!def || typeof def.load !== 'function') throw new Error(`未知领域：${domain}`);
+  // 样式与视图模块并行加载；首次进入领域时两者都就位后才允许 mount（避免无样式首屏）
+  const [mod] = await Promise.all([def.load(), ensureStyles(domain)]);
+  if (!mod || typeof mod.mount !== 'function') throw new Error(`视图 ${domain} 未导出 mount()`);
   moduleCache.set(domain, mod);
   return mod;
 }
@@ -78,11 +101,20 @@ function failDispatch(err, domain, ctx) {
     mounted = null;
   }
   clear(root);
-  root.append(errorPanel(err, () => { moduleCache.delete(domain); dispatch(ctx); }));
+  root.append(errorState({
+    err,
+    onRetry: () => { moduleCache.delete(domain); dispatch(ctx); },
+  }));
 }
 
 async function dispatch(ctx) {
   const domain = ctx.domain;
+  // 未知领域：统一替换到默认领域（replace 不污染前进/后退；isDomain 保证不会循环重定向）
+  if (!isDomain(domain)) {
+    const fallback = domainById(DEFAULT_DOMAIN);
+    if (fallback) router.go(fallback.path, { replace: true });
+    return;
+  }
   // 同一领域：当前视图仍然有效时交给它处理路由，不必重新挂载。
   // 该分支必须自带 try/catch —— dispatch 是 async，这里抛错会变成未处理拒绝。
   if (mounted && epoch.isCurrent(mounted.token)
@@ -106,9 +138,8 @@ async function dispatch(ctx) {
     // 无论是否有旧视图都清空容器：错误态重试/并发派发后必须从干净 DOM 开始
     clear(root);
     const mod = await loadView(domain);
-    // 等待模块期间可能已有更新的 dispatch：过期就放弃，绝不能把旧视图挂到新页面上
+    // 等待模块/样式期间可能已有更新的 dispatch：过期就放弃，绝不能把旧视图挂到新页面上
     if (!epoch.isCurrent(token)) return;
-    if (!mod || typeof mod.mount !== 'function') throw new Error(`视图 ${domain} 未导出 mount()`);
     const viewRoot = h('div', { class: 'view fade-in' });
     root.append(viewRoot);
     const handle = mod.mount(viewRoot, ctx);
@@ -135,7 +166,7 @@ function syncNav(domain) {
   for (const a of document.querySelectorAll('.domnav__link')) {
     a.classList.toggle('is-on', a.dataset.domain === domain);
   }
-  router.setTitle(DOMAIN_ZH[domain] || '');
+  router.setTitle(domainLabel(domain));
 }
 
 /* ----------------------------- 帮助 ----------------------------- */
@@ -151,11 +182,11 @@ function openHelp() {
     ['Esc', '关闭抽屉、弹窗或悬浮层'],
     ['?', '打开本说明'],
   ];
+  const domainsLine = `四个领域：${DOMAINS.map((d) => `${d.zh}（${d.purpose}）`).join('、')}。`;
   ui.openModal({
     title: '说明与快捷键',
     body: h('div', { class: 'stack-3' },
-      h('p', { class: 'lumen dim', attrs: { style: 'font-size:12px' } },
-        '四个领域：资料库（这是什么、怎么获得）、实验室（组合起来怎样）、流派（成型的配装怎么玩）、知识库（机制为什么这样）。'),
+      h('p', { class: 'lumen dim', attrs: { style: 'font-size:12px' } }, domainsLine),
       h('div', { class: 'evidence' },
         h('div', { class: 'evidence__row evidence__row--head' },
           h('span', { text: '操作' }), h('span', { text: '' }), h('span', { text: '结果' })),
@@ -172,6 +203,7 @@ function openHelp() {
 /* ----------------------------- 顶栏 / 快捷键 ----------------------------- */
 function wireShell() {
   ui.initUI();
+  renderNav();
 
   $('#helpBtn')?.addEventListener('click', openHelp);
   document.querySelector('[data-modal-close]')?.addEventListener('click', () => ui.closeModal());
@@ -189,9 +221,10 @@ function wireShell() {
     const t = e.target;
     const inField = t instanceof Element && t.matches('input, textarea, select, [contenteditable="true"]');
     if (inField && e.key !== 'Escape') return;
-    if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
+    const target = e.altKey ? shortcuts.get(e.key) : null;
+    if (target) {
       e.preventDefault();
-      router.go(`/${DOMAIN_ORDER[Number(e.key) - 1]}`);
+      router.go(target.path);
     } else if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       openHelp();
@@ -203,17 +236,17 @@ function wireShell() {
 async function boot() {
   wireShell();
   clear(root);
-  root.append(loadingPanel());
+  root.append(loadingState());
 
   try {
     await api.ready();
   } catch (err) {
     console.error('[boot]', err);
     clear(root);
-    root.append(errorPanel(
-      new Error(`无法读取 /data/items.json —— 请用 python serve.py 启动本地服务后访问 http://127.0.0.1:8777/`),
-      () => location.reload(),
-    ));
+    root.append(errorState({
+      err: new Error('无法读取 /data/items.json —— 请用 python serve.py 启动本地服务后访问 http://127.0.0.1:8777/'),
+      onRetry: () => location.reload(),
+    }));
     return;
   }
 

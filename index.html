@@ -14,10 +14,6 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/components-picker.css">
-<link rel="stylesheet" href="css/view-library.css">
-<link rel="stylesheet" href="css/view-lab.css">
-<link rel="stylesheet" href="css/view-builds.css">
-<link rel="stylesheet" href="css/view-codex.css">
 <script type="module" src="js/core/theme.js"></script>
 </head>
 <body>
@@ -34,25 +30,8 @@
     <span class="brand__text"><b>遗物档案</b><i>REMNANT II</i></span>
   </a>
 
-  <nav class="domnav" aria-label="主导航">
-    <a class="domnav__link" data-domain="items" href="#/items">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h12.5v15.5H7A2.5 2.5 0 0 0 4.5 21z"/><path d="M4.5 5.5V21M8.5 7.5h7M8.5 11.5h7"/></svg>
-      <span>资料库</span>
-    </a>
-    <a class="domnav__link" data-domain="lab" href="#/lab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10.2 3v5.6L5.6 17a3 3 0 0 0 2.7 4.2h7.4A3 3 0 0 0 18.4 17l-4.6-8.4V3"/><path d="M7.4 15.6c2.2-1.6 6.9 1.4 9.2 0"/></svg>
-      <span>实验室</span>
-      <span class="domnav__count" hidden></span>
-    </a>
-    <a class="domnav__link" data-domain="builds" href="#/builds">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7.6" y="3.6" width="10.8" height="14.6" rx="2"/><path d="M4.9 7.2v11.2a2 2 0 0 0 2 2h7.6"/><path d="m13 7.6 1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1z" fill="currentColor" stroke="none"/></svg>
-      <span>流派</span>
-    </a>
-    <a class="domnav__link" data-domain="codex" href="#/codex">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.4C10.2 4.9 7.4 4.4 3.5 4.6v13.9c3.9-.2 6.7.3 8.5 1.8 1.8-1.5 4.6-2 8.5-1.8V4.6c-3.9-.2-6.7.3-8.5 1.8z"/><path d="M12 6.4v13.9"/></svg>
-      <span>知识库</span>
-    </a>
-  </nav>
+  <!-- 导航项由 js/domains.js 注册表 + js/main.js 渲染（新增领域不必改本文件） -->
+  <nav class="domnav" id="domnav" aria-label="主导航"></nav>
 
   <div class="topbar__right">
     <a class="topbar__stat" id="statOwned" href="#/items?owned=1" title="已拥有的道具（点击查看）">
