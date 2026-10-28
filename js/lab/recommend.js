@@ -68,6 +68,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     running: false,
     dirty: true,
     error: null,
+    runKey: null,
     elapsed: 0,
     candidates: [],
     result: null,
@@ -90,12 +91,36 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
   //   · 条件一变就 start()，runner.run 会先取消上一次分帧并让其代际失效；
   //   · 完成/失败回调只在「仍是当前代际」时落地，过期任务不写 state、不碰 DOM；
   //   · destroy() → epoch.invalidate + runner.cancel + cleanup.dispose，之后的回调全部短路。
+  // 额外：同条件去重（conditionKey）——设置变更会同时触发 S.on 的立即重算与 store 'build'
+  // 的 220ms 防抖重算，两者条件相同；指纹相同且已有结果/正在跑时不再起第二次全量穷举。
   const epoch = createEpoch();
   const cleanup = createScope();
   let destroyed = false;
   const runner = createTaskRunner({
     onError: (err) => { console.error('[lab:recommend]', err); if (!destroyed) failRun(err); },
   });
+
+  /** 穷举条件指纹：引擎是纯函数，同指纹 → 结果（含排序）必然逐字节相同，可安全复用。 */
+  function conditionKey(picks) {
+    const ids = (map) => Object.keys(map || {}).sort().join(',');
+    const traits = Object.keys(picks.traits || {}).sort()
+      .map((id) => `${id}:${picks.traits[id]}`).join(',');
+    return [
+      S.scenarioId(),
+      S.classTarget(),
+      state.hideMissing ? '1' : '0',
+      state.ownedOnly ? '1' : '0',
+      traits,
+      ids(picks.rings),
+      picks.amulet || '',
+      ids(picks.fragments),
+      ids(picks.consumables),
+      ids(picks.perks),
+      // 缺件始终进指纹：即使 hideMissing=false，候选行的「含缺件 N」标记也依赖它
+      [...S.missingSet()].sort().join(','),
+      state.ownedOnly ? [...S.ownedSet()].sort().join(',') : '',
+    ].join('|');
+  }
 
   function requestRun() {
     if (destroyed) return;
@@ -116,8 +141,23 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     renderList();
   }
 
-  function start() {
+  function start(force = false) {
     if (destroyed) return;
+    let picks;
+    try {
+      picks = S.workbenchPicks(model);
+    } catch (err) {
+      failRun(err);
+      return;
+    }
+    const key = conditionKey(picks);
+    // 同条件去重：已有结果或正在跑同一条件 → 不再起第二次全量穷举。
+    // force=true 仅由「重新穷举」按钮传入，保持「显式重算」语义。
+    if (!force && key === state.runKey && (state.running || state.result)) {
+      state.dirty = false;
+      return;
+    }
+    state.runKey = key;
     state.running = true;
     state.dirty = false;
     state.error = null;
@@ -131,7 +171,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     let t0 = 0;
     try {
       en = E.createEnumeration({
-        picks: S.workbenchPicks(model),
+        picks,
         scenarioId: S.scenarioId(),
         classTarget: S.classTarget(),
         exclude: state.hideMissing ? S.missingSet() : null,
@@ -268,7 +308,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
         h('button', {
           class: 'btn btn--ghost btn--sm', type: 'button',
           disabled: state.running,
-          on: { click: () => start() },
+          on: { click: () => start(true) },
         }, icon('refresh', { size: 13 }), h('span', { text: '重新穷举' })),
       ),
     );
@@ -383,6 +423,12 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     };
     const needRerun = next.ownedOnly !== state.ownedOnly || next.hideMissing !== state.hideMissing;
     const hadPageParam = p.page != null && p.page !== '';
+    // 空更新提前返回：完成回调里的 syncQuery→applyParams 重入、排序/翻页/切面板的
+    // 同参数 applyParams 都不需要再渲染一遍（修复前每次完成会多渲染一组 bar/status/list）。
+    const changed = next.sort !== state.sort || next.ownedOnly !== state.ownedOnly
+      || next.hideMissing !== state.hideMissing || next.diff !== state.diff
+      || next.page !== state.page;
+    if (!changed) return;
     Object.assign(state, next);
     if ((needRerun || state.running) && hadPageParam) state.pendingPage = next.page;
     if (needRerun) { requestRun(); return; }

@@ -6,6 +6,22 @@
 import { api } from '../core/api.js';
 import { createEngine } from './engine.js';
 
+/**
+ * 引擎按 site 数据对象缓存：api.site() 在同一页面会话内返回同一引用，而 createEngine 是
+ * 纯装配（只读 site、无外部状态），其派生缓存（tableA/B/C、frontier 等）可跨 #/lab 挂载复用。
+ * 这样「离开实验室再回来，首次展开档位对照」不再重跑 tableB（812,224 组合，实测 105~190ms 长任务）。
+ * WeakMap 以 site 引用为键：页面刷新 / 数据对象被替换时自动失效，不引入版本号或全局状态。
+ */
+const ENGINE_CACHE = new WeakMap();
+function engineFor(site) {
+  let engine = ENGINE_CACHE.get(site);
+  if (!engine) {
+    engine = createEngine(site);
+    ENGINE_CACHE.set(site, engine);
+  }
+  return engine;
+}
+
 /** site_data.pieces[].icon 是相对 assets/ 的路径（icons/xxx.png） */
 function assetUrl(rel) {
   if (!rel) return null;
@@ -57,7 +73,7 @@ export async function loadLabModel() {
     api.archetypes ? api.archetypes().catch(() => ({ archetypes: [] })) : Promise.resolve({ archetypes: [] }),
   ]);
   await api.icons().catch(() => null);
-  const engine = createEngine(site);
+  const engine = engineFor(site);
 
   const itemsById = new Map(itemList.map((it) => [it.id, it]));
   const itemIcon = (it) => (it ? api.iconUrl(it) : null);
