@@ -204,6 +204,18 @@ node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
 - `qa/shots/_summary-dark.json`、`_summary-light.json`：两次门禁的逐路由 console/异常/4xx 记录（全 0）。
 - `qa/results/interactions.json`（67 项）、`results/audit.json`。
 
+### 9.6 线上（GitHub Pages）验证（2026-10-28 发布后）
+
+| 项 | 结果 |
+|---|---|
+| 部署形态 | `main / (root)`、legacy 构建 + 根目录 `.nojekyll`（文件原样下发） |
+| 地址 | https://stollor.github.io/relic-archive/ |
+| 资源探活 | `/`、`/data/builds.json`、`/data/items.json`、`/js/theme-boot.js`、`/css/tokens.css`、`/assets/icons/*.png`、`/lab.html` 全 **200** |
+| 真实浏览器门禁 | `node qa/shot.js --base https://stollor.github.io/relic-archive`：**dark 桌面 25/25 PASS**、**light 移动 15/15 PASS**；0 console error / 0 异常 / 0 个 4xx |
+| 结论 | 子路径部署 + 相对路径方案有效；线上与本地表现一致 |
+
+> 注意：`qa/interactions.js` 的页面内 import 是根路径，只适合本地根路径；线上只跑 `qa/shot.js --base`。
+
 ### 9.5 已知非阻断
 
 1. 流派详情里 29 个「纯文本实体」（遗物碎片 / 棱镜传奇词条 / wiki-only 名称）无本地 id，显示为只读 chip（带中文效果 tip），不可点开详情 —— 数据本身如此，符合「不编造 id」。

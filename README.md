@@ -42,6 +42,21 @@ Windows 也可以双击 `start.cmd`。
 
 ---
 
+## 文档地图（先读哪份）
+
+| 文档 | 给谁看 | 内容 |
+|---|---|---|
+| [`AGENTS.md`](AGENTS.md) | **接手的人 / AI** | 入口：30 秒速览、必跑命令、高频任务配方、不变量、代码地图、已知坑 |
+| [`docs/UX_SPEC.md`](docs/UX_SPEC.md) | 改 UI/交互前 | 契约：IA / 交互 / 组件 / JS API / 术语 / 视觉 / 验收（**改页面前必读**） |
+| [`docs/DATA.md`](docs/DATA.md) | 改数据前 | 数据来源、schema、快照同步与再生、已知限制 |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | 发布/运维 | GitHub Pages 发布、线上验收、故障排查、回滚、凭据安全 |
+| [`docs/LESSONS.md`](docs/LESSONS.md) | 想少踩坑 | 8 条设计决策（ADR）+ 23 条踩坑记录 + 有效工作法 + 反模式 + 数字基线 |
+| [`CHANGELOG.md`](CHANGELOG.md) | 了解演进 | v1 数据管线 → v2 单页应用 → v3 流派+双主题 → v3.1 仓库化发布 |
+| [`pipeline/README.md`](pipeline/README.md) | 改流派数据 | `mk_builds_json.py` / `sync-data.py` 用法与数据流向 |
+| [`qa/REPORT.md`](qa/REPORT.md) | 验收 | 四套门禁的断言清单与历史结果 |
+
+---
+
 ## 截图
 
 | 流派列表（黑夜） | 流派详情（黑夜） |
