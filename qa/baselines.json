@@ -5,7 +5,7 @@
       "max_skip": 0
     },
     "unit-py": {
-      "min_pass": 45,
+      "min_pass": 46,
       "max_skip": 0
     },
     "audit": {
@@ -53,7 +53,7 @@
       "max_skip": 0
     },
     "components": {
-      "min_pass": 20,
+      "min_pass": 21,
       "max_skip": 0
     },
     "nav": {
