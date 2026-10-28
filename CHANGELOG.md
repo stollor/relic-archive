@@ -36,6 +36,9 @@
 - **新回归测试**：`qa/tests/library-query.test.mjs`（21 例：状态往返/排序可用性/过滤组合/计数口径/导出）；
   同步更新 `AGENTS.md` 必跑命令与任务配方、新增 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)（分层规则 + 模块地图 +
   六类高频任务配方）、`docs/LESSONS.md` §2.8（#29–#36）。
+- **发布工具化**：新增 `pipeline/deploy.py`（一行 `python pipeline/deploy.py`）：预检分支/工作树 → 系统 Git 推送 →
+  校验远端 sha = 本地 HEAD → 用本次改动的站点资源做内容指纹轮询，确认 GitHub Pages 真的重建完成 →
+  关键资源探活 + 线上 `qa/shot.js` 冒烟。发布不再靠「等一会儿刷新看看」，也不引入 CI（Pages legacy 仍是推送即重建）。
 - 门禁结果：`shot 54/54 × 2`、`interactions 67/67`、`audit 0 FAIL`、`contrast 130/130`、
   `node --test 69/69`、`lifecycle 25/25`、`lab-async 8/8`、`test_sync_data.py 23 OK`、
   `mk_builds_json.py --check` 与 `sync-data.py --check` 均 0；全新 clone 集成复验通过。
