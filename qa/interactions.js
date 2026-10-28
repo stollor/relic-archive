@@ -18,6 +18,7 @@
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 const { CDP, launchChrome, cleanupChrome, sleep } = require('./lib/cdp.js');
+const { prefixOf, pageUrl } = require('./lib/base.js');
 
 const QA_DIR = __dirname;
 const SHOTS = path.join(QA_DIR, 'shots');
@@ -42,6 +43,8 @@ const BASE = (() => {
   const i = argv.indexOf('--base');
   return (i >= 0 ? argv[i + 1] : 'http://127.0.0.1:8777').replace(/\/+$/, '');
 })();
+/** 部署前缀：根部署 ''，GitHub Pages 子路径部署 '/relic-archive'（页面内 import/fetch 必须带） */
+const PFX = prefixOf(BASE);
 const ONLY = (() => {
   const i = argv.indexOf('--only');
   return i >= 0 ? String(argv[i + 1] || '').split(',').map((s) => s.trim()).filter(Boolean) : null;
@@ -143,7 +146,7 @@ class Page {
   }
 
   async goto(hash, { fresh = false } = {}) {
-    const url = `${BASE}/${hash}`;
+    const url = pageUrl(BASE, hash);
     if (fresh) await this.root.send('Page.navigate', { url: 'about:blank' }, this.sid).catch(() => {});
     await this.root.send('Page.navigate', { url }, this.sid);
     await this.waitReady();
@@ -232,7 +235,7 @@ class Page {
   }
 
   async apiItems() {
-    return this.ev(`(async () => { const { api } = await import('/js/core/api.js');
+    return this.ev(`(async () => { const { api } = await import('${PFX}/js/core/api.js');
       return api.itemsSync().map((i) => ({ id: i.id, cat: i.cat, family: i.family,
         damage: i.damage, armor: i.armor, weight: i.weight, zh: i.zh,
         descZh: i.descZh || '', summaryZh: i.summaryZh || '', effectPreview: i.effectPreview || '' })); })()`, { awaitPromise: true });
@@ -367,7 +370,7 @@ async function runItems() {
   });
 
   await step(A, 'I5d', 'effectZh 并入 haystack：搜索「状态效果」可命中 Ring_PanMageSigil', async () => {
-    const info = await page.ev(`(async () => { const { api } = await import('/js/core/api.js');
+    const info = await page.ev(`(async () => { const { api } = await import('${PFX}/js/core/api.js');
       const it = api.item('Ring_PanMageSigil') || {};
       const hits = api.itemsSync().filter((x) => (x.haystack || '').includes('状态效果'));
       return { effectZh: it.effectZh || '', hayHit: (it.haystack || '').includes('状态效果'),
@@ -400,7 +403,7 @@ async function runItems() {
   });
 
   await step(A, 'I8', '深链 #/items/<id> 直达弹窗（标题匹配）', async () => {
-    const id = await page.ev(`(async () => { const { api } = await import('/js/core/api.js');
+    const id = await page.ev(`(async () => { const { api } = await import('${PFX}/js/core/api.js');
       const its = api.itemsSync().filter((i) => i.isItem && i.cat === 'amulet');
       return its[0] ? its[0].id : (api.itemsSync()[0] || {}).id; })()`, { awaitPromise: true });
     assert(id, '取不到 item id');
@@ -466,24 +469,24 @@ async function runItems() {
       return i >= 0 ? decodeURIComponent(h.slice(i + 7)) : ''; })()`);
     const hasAdd = await page.ev(`[...document.querySelectorAll('#modal button')].some((x) => /加入特性/.test(x.textContent || ''))`);
     assert(hasAdd, '弹窗内没有加入特性按钮');
-    await page.ev(`(async () => { const { store } = await import('/js/core/store.js'); store.build.setTraits([]); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); store.build.setTraits([]); return 0; })()`, { awaitPromise: true });
     await page.click(`[...document.querySelectorAll('#modal button')].find((x) => /加入特性/.test(x.textContent || ''))`, { label: '加入特性' });
     await sleep(350);
-    const n1 = await page.ev(`(async () => { const { store } = await import('/js/core/store.js'); return store.build.traits().length; })()`, { awaitPromise: true });
+    const n1 = await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); return store.build.traits().length; })()`, { awaitPromise: true });
     assert(n1 === 1, `首次加入后特性数 ${n1} ≠ 1`);
     await page.click(`[...document.querySelectorAll('#modal button')].find((x) => /加入特性/.test(x.textContent || ''))`, { label: '加入特性（重复）' });
     await sleep(350);
     const toastInfo = await page.ev(`(document.querySelector('#toasts') || {}).textContent || ''`);
     assert(/已在配装中/.test(toastInfo), `重复加入无 info 提示：${toastInfo.slice(0, 60)}`);
-    const seeded = await page.ev(`(async () => { const { store } = await import('/js/core/store.js');
-      const { api } = await import('/js/core/api.js');
+    const seeded = await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js');
+      const { api } = await import('${PFX}/js/core/api.js');
       const ids = api.itemsSync().filter((i) => i.family === 'trait' && i.id !== ${JSON.stringify(itemId)}).slice(0, 10).map((i) => i.id);
       store.build.setTraits(ids); return store.build.traits().length; })()`, { awaitPromise: true });
     assert(seeded === 10, `灌满特性失败（${seeded}）`);
     await page.click(`[...document.querySelectorAll('#modal button')].find((x) => /加入特性/.test(x.textContent || ''))`, { label: '第 11 个特性' });
     await sleep(350);
     const toastWarn = await page.ev(`(document.querySelector('#toasts') || {}).textContent || ''`);
-    const after = await page.ev(`(async () => { const { store } = await import('/js/core/store.js'); return store.build.traits().length; })()`, { awaitPromise: true });
+    const after = await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); return store.build.traits().length; })()`, { awaitPromise: true });
     assert(/已满|10/.test(toastWarn), `第 11 个无 warn：${toastWarn.slice(0, 60)}`);
     assert(after === 10, `第 11 个后数量 ${after} ≠ 10`);
     await page.key('Escape');
@@ -747,7 +750,7 @@ async function runLab() {
   await step(A, 'B8', '特性 stepper：+1 后等级/已用徽章/护甲值变化', async () => {
     await page.ensureClean();
     // 前置：直接写 store 放满四件护甲（v2 结果面板在空槽时只显示「—」）
-    await page.ev(`(async () => { const { store } = await import('/js/core/store.js');
+    await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js');
       store.build.setTraits([]);
       [['head','Armor_Head_Leto1'],['body','Armor_Body_Leto1'],['legs','Armor_Legs_Leto1'],['gloves','Armor_Gloves_Leto1']]
         .forEach(([s, id]) => store.build.set(s, id)); return 1; })()`, { awaitPromise: true });
@@ -865,7 +868,7 @@ async function runLab() {
     await page.ensureClean();
     await page.goto('#/lab?panel=replace', { fresh: true });
     await page.waitFor(`!!document.querySelector('.lab-panel[data-panel="replace"]:not([hidden])')`, 12000);
-    const seeded = await page.ev(`(async () => { const S = await import('/js/lab/state.js');
+    const seeded = await page.ev(`(async () => { const S = await import('${PFX}/js/lab/state.js');
       S.clearMissing();
       if (!S.isMissing('Armor_Head_Leto1')) S.toggleMissing('Armor_Head_Leto1');
       if (!S.isMissing('Armor_Body_Leto2')) S.toggleMissing('Armor_Body_Leto2');
@@ -885,7 +888,7 @@ async function runLab() {
     assert(!/莱托 2 型护甲/.test(firstRow), `首行仍含缺件「莱托 2 型护甲」：${firstRow.slice(0, 120)}`);
     await page.click(`[...document.querySelectorAll('.lab-rec__row button')].find((b) => /写入四件/.test(b.textContent))`, { label: '写入四件' });
     await sleep(700);
-    const after = await page.ev(`(async () => { const { store } = await import('/js/core/store.js');
+    const after = await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js');
       return { slots: store.build.slots(), owned: [...store.state.owned] }; })()`, { awaitPromise: true });
     const armor = ['head', 'body', 'legs', 'gloves'].map((x) => after.slots[x]);
     assert(armor.every(Boolean), `写入四件后仍有空槽：${JSON.stringify(armor)}`);
@@ -898,7 +901,7 @@ async function runLab() {
 
   await step(A, 'B18', '选择器筛选：标签多选 + 按槽位动态排序，点行仍装备', async () => {
     await page.ensureClean();
-    await page.ev(`(async () => { const { store } = await import('/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
     await page.goto('#/lab', { fresh: true });
     // 饰品槽：标签候选最多（23 个 GAME_TAGS）
     await page.waitFor(`!!document.querySelector('.slot--empty[data-slot="amulet"]')`, 12000);
@@ -1080,7 +1083,7 @@ async function runBuilds() {
   });
 
   await step(A, 'P5', '「装入实验室」：写入 15 槽配装并跳转 #/lab', async () => {
-    await page.ev(`(async () => { const { store } = await import('/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
     await page.goto('#/builds', { fresh: true });
     await page.waitFor(`!!document.querySelector('.bcard')`, 9000);
     const href = await page.ev(`document.querySelector('#view-root .bcard').getAttribute('href')`);
@@ -1093,7 +1096,7 @@ async function runBuilds() {
     const filled = Object.entries(slots).filter(([, v]) => !!v);
     assert(filled.length >= 8, `装入后只填了 ${filled.length} 个槽（应 ≥8）：${JSON.stringify(slots)}`);
     // 抵抗后续用例受影响：清空
-    await page.ev(`(async () => { const { store } = await import('/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
     return { detail: `「${name}」→ ${filled.length} 槽：${filled.map(([k]) => k).join('/')}` };
   });
 
@@ -1110,7 +1113,7 @@ async function runBuilds() {
 
   await step(A, 'P7', '页面内链接无坏链（域名合法 + 流派 key 存在）', async () => {
     const domains = ['items', 'lab', 'builds', 'codex'];
-    const keys = new Set(await page.ev(`(async () => (await (await fetch('/data/builds.json')).json()).builds.map((b) => b.key))()`, { awaitPromise: true }));
+    const keys = new Set(await page.ev(`(async () => (await (await fetch('${PFX}/data/builds.json')).json()).builds.map((b) => b.key))()`, { awaitPromise: true }));
     const pages = ['#/builds'];
     await page.goto('#/builds', { fresh: true });
     await page.waitFor(`document.querySelectorAll('#view-root .bcard').length === 7`, 9000);
@@ -1263,14 +1266,14 @@ async function runGlobal() {
 
   await step(A, 'D1', '数据门禁：/data/item_effects.json 200 且 items ≥300；/api/health extra_data 含 item_effects', async () => {
     const info = await page.ev(`(async () => {
-      const r = await fetch('/data/item_effects.json', { cache: 'no-store' });
+      const r = await fetch('${PFX}/data/item_effects.json', { cache: 'no-store' });
       let count = -1; let sample = ''; let shape = '';
       try { const j = await r.json(); const its = j.items || {};
         shape = Array.isArray(its) ? 'array' : typeof its;
         const keys = Object.keys(its);
         count = keys.length;
         const k = keys[0]; sample = k ? String((its[k] || {}).zh || '').slice(0, 24) : ''; } catch (e) { /* ignore */ }
-      const h = await (await fetch('/api/health', { cache: 'no-store' })).json();
+      const h = await (await fetch('${PFX}/api/health', { cache: 'no-store' })).json();
       const extra = Object.keys((h && h.extra_data) || {});
       return { status: r.status, count, sample, extra, hasItemEffects: extra.includes('item_effects') }; })()`, { awaitPromise: true });
     assert(info.status === 200, `/data/item_effects.json HTTP ${info.status}`);
@@ -1292,7 +1295,7 @@ async function runGlobal() {
         metaColor: meta ? String(meta.getAttribute('content') || '') : '',
         sysLight: !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) }; })()`);
     // 先归位到 auto
-    await page.ev(`(async () => { const { theme } = await import('/js/core/theme.js'); theme.set('auto'); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { theme } = await import('${PFX}/js/core/theme.js'); theme.set('auto'); return 0; })()`, { awaitPromise: true });
     await sleep(260);
     let st = await read();
     const seen = [`${st.mode}:${st.theme}`];
@@ -1315,7 +1318,7 @@ async function runGlobal() {
     }
     assert(new Set(seen).size === 3, `三态循环异常：${seen.join(' → ')}`);
     // 持久化：显式设 light 后整页刷新
-    await page.ev(`(async () => { const { theme } = await import('/js/core/theme.js'); theme.set('light'); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { theme } = await import('${PFX}/js/core/theme.js'); theme.set('light'); return 0; })()`, { awaitPromise: true });
     await page.goto('#/items', { fresh: true });
     st = await read();
     assert(st.mode === 'light' && st.theme === 'light', `刷新后 mode=${st.mode}/theme=${st.theme}（应 light/light）`);
@@ -1325,7 +1328,7 @@ async function runGlobal() {
     const afterAlt = await read();
     assert(afterAlt.mode === 'dark' && afterAlt.theme === 'dark', `Alt+T 后 mode=${afterAlt.mode}/theme=${afterAlt.theme}（应 dark/dark）`);
     // 还原 auto，避免影响后续用例
-    await page.ev(`(async () => { const { theme } = await import('/js/core/theme.js'); theme.set('auto'); return 0; })()`, { awaitPromise: true });
+    await page.ev(`(async () => { const { theme } = await import('${PFX}/js/core/theme.js'); theme.set('auto'); return 0; })()`, { awaitPromise: true });
     return { detail: `循环 ${seen.join(' → ')}；刷新保持 light；Alt+T→dark；theme-color 随主题更新` };
   });}
 

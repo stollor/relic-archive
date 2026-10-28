@@ -1,6 +1,6 @@
 /* =============================================================================
    qa/tests/lab-async.browser.mjs — 实验室「推荐方案」异步穷举回归（真实浏览器 / CDP）
-   运行：node qa/tests/lab-async.browser.mjs        （需先在 127.0.0.1:8777 起 serve.py）
+   运行：node qa/tests/lab-async.browser.mjs --base http://127.0.0.1:8777   （或 QA_BASE=…）
    退出码：0 全绿 / 1 有 FAIL / 2 致命错误
 
    覆盖（P0-2）：
@@ -31,7 +31,11 @@ const { CDP, launchChrome, cleanupChrome, sleep } = require('../lib/cdp.js');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TMP = path.join(__dirname, '..', '_tmp');
-const BASE = process.env.LAB_QA_BASE || 'http://127.0.0.1:8777/';
+// 站点地址：--base 优先，其次 QA_BASE / LAB_QA_BASE（兼容旧用法），默认本机 8777。
+// gate 用随机端口起服务时必须靠这个传进来，否则会连到不存在的 8777 而「视图就绪超时」。
+const ARGV = process.argv.slice(2);
+const BASE_ARG = (() => { const i = ARGV.indexOf('--base'); return i >= 0 ? ARGV[i + 1] : null; })();
+const BASE = `${String(BASE_ARG || process.env.QA_BASE || process.env.LAB_QA_BASE || 'http://127.0.0.1:8777/').replace(/\/+$/, '')}/`;
 
 /* ------------------------------ 结果记录 ------------------------------ */
 const results = [];

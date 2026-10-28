@@ -444,7 +444,7 @@ def main(argv=None):
         'summary': {'fail': len(fails), 'warn': len(warns), 'info': len(infos),
                     'by_area': by_area, 'pass': not fails},
         'items': c.items,
-    }, ensure_ascii=False, indent=2), encoding='utf-8')
+    }, ensure_ascii=False, indent=2), encoding='utf-8', newline='\n')
     if not args.quiet:
         print(f'[audit] → {out_path}')
     return 0 if not fails else 1

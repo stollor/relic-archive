@@ -14,13 +14,9 @@
    ========================================================================== */
 'use strict';
 
-const { spawn } = require('node:child_process');
-const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
-const os = require('node:os');
 
-const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const QA_DIR = __dirname;
 const SHOTS_DIR = path.join(QA_DIR, 'shots');
 
@@ -29,12 +25,13 @@ if (argv.includes('--help') || argv.includes('-h')) {
   console.log([
     '用法：node qa/shot.js [选项]',
     '',
-    '  截图 + 错误门禁：默认 24 条路由 × 1440×1000 / 390×844 两档（含 7 套流派详情），',
+    '  截图 + 错误门禁：默认路由表由 data 推导（当前 27 条）× 1440×1000 / 390×844 两档，',
     '  等 #view-root 出内容再截；收集 console error / 未捕获异常 / 4xx-5xx / 失败请求。',
     '',
     '选项：',
     '  --all              全部路由 × 两档视口（默认行为，可显式写）',
-    '  --base <url>       站点地址（默认 http://127.0.0.1:8777）',
+    '  --base <url>       站点地址（默认 http://127.0.0.1:8777；子路径部署可写 …/relic-archive）',
+    '  --chrome <path>    指定 Chrome/Chromium 可执行文件（默认自动探测：CHROME_PATH → 平台路径 → where/which）',
     '  --only a,b         只截指定 name（包含匹配，如 --only lab,codex,builds）',
     '  --theme auto|light|dark  模拟系统配色偏好（默认 auto；亮暗双跑用两次 --theme）',
     '  --desktop-only     只 1440×1000',
@@ -68,6 +65,7 @@ const TIMEOUT = Number(arg('timeout', 20000));
 const NAV_TIMEOUT = Number(arg('nav-timeout', 25000));
 const SETTLE = Number(arg('settle', 450));
 const URLS_FILE = arg('urls', null);
+const CHROME_ARG = arg('chrome', null);
 const QUIET = !!arg('quiet', false);
 /** 主题：auto（不模拟，跟随 OS 偏好）/ light / dark（用 CDP 模拟 prefers-color-scheme） */
 const THEME = String(arg('theme', 'auto'));
@@ -81,57 +79,6 @@ if (!DESKTOP_ONLY) VIEWPORTS.push({ name: '390', w: 390, h: 844, mobile: true })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => { if (!QUIET) console.log(...a); };
 
-const DETAIL_OVERLAY = `!!document.querySelector('#modal:not([hidden]), #drawer:not([hidden])')`;
-const panelWait = (id) => `!!document.querySelector('.lab-panel[data-panel="${id}"]:not([hidden])')`;
-
-async function deriveRoutes() {
-  // v2 路由：实验室单页 + ?panel=；旧 #/lab/builds|matrix|calc 保留（验证重定向）
-  const routes = [
-    { name: 'items', path: '#/items' },
-    { name: 'items-sets', path: '#/items/sets' },
-    { name: 'items-list', path: '#/items?view=list' },
-    { name: 'items-weapon-sort', path: '#/items?cat=weapon&sort=damage' },
-    { name: 'lab', path: '#/lab' },
-    { name: 'lab-recommend', path: '#/lab?panel=recommend', waitFor: panelWait('recommend') },
-    { name: 'lab-replace', path: '#/lab?panel=replace', waitFor: panelWait('replace') },
-    { name: 'lab-classes', path: '#/lab?panel=classes', waitFor: panelWait('classes') },
-    { name: 'lab-calc', path: '#/lab?panel=calc', waitFor: panelWait('calc') },
-    { name: 'lab-saved', path: '#/lab?panel=saved', waitFor: panelWait('saved') },
-    { name: 'lab-legacy-builds', path: '#/lab/builds', waitFor: panelWait('recommend') },
-    { name: 'lab-legacy-matrix', path: '#/lab/matrix', waitFor: panelWait('classes') },
-    { name: 'lab-legacy-calc', path: '#/lab/calc', waitFor: panelWait('calc') },
-    { name: 'codex', path: '#/codex' },
-  ];
-  // 深链：从真实数据里取第一个文章 / 第一件护甲
-  try {
-    const c = await (await fetch(`${BASE}/data/codex/index.json`)).json();
-    const a = (c.articles || [])[0];
-    if (a && a.id) routes.push({ name: 'codex-article', path: `#/codex/${encodeURIComponent(a.id)}` });
-  } catch { /* 数据不可用不阻断截图 */ }
-  try {
-    const items = (await (await fetch(`${BASE}/data/items.json`)).json()).items || [];
-    const armor = items.find((i) => i && i.id && (i.cat === 'armor' || String(i.id).startsWith('Armor_')));
-    const weapon = items.find((i) => i && i.id && i.cat === 'weapon');
-    const pick = armor || weapon || items[0];
-    if (pick && pick.id) routes.push({ name: 'item-detail', path: `#/items/${encodeURIComponent(pick.id)}`, waitFor: DETAIL_OVERLAY });
-    const pick2 = weapon || pick;
-    if (pick2 && pick2.id && pick2.id !== (pick && pick.id)) {
-      routes.push({ name: 'item-detail-2', path: `#/items/${encodeURIComponent(pick2.id)}`, waitFor: DETAIL_OVERLAY });
-    }
-    routes.push({ name: 'items-owned', path: '#/items?owned=1' });
-  } catch { /* ignore */ }
-  // 流派（配装推荐）：列表 + 7 套详情 + 404（详情 key 全部来自 data/builds.json）
-  try {
-    const b = await (await fetch(`${BASE}/data/builds.json`)).json();
-    routes.push({ name: 'builds', path: '#/builds' });
-    for (const x of (b.builds || [])) {
-      if (x && x.key) routes.push({ name: `builds-${x.key}`, path: `#/builds/${encodeURIComponent(x.key)}` });
-    }
-    routes.push({ name: 'builds-404', path: '#/builds/__no_such_build__' });
-  } catch { /* 数据不可用不阻断截图 */ }
-  return routes;
-}
-
 async function readRoutesFile(file) {
   const txt = await fsp.readFile(file, 'utf8');
   return txt.split(/\r?\n/).map((line) => line.trim()).filter((l) => l && !l.startsWith('#'))
@@ -143,8 +90,8 @@ async function readRoutesFile(file) {
     });
 }
 
-/* CDP 客户端 / Chrome 启动：复用 qa/lib/cdp.js（零依赖） */
-const { CDP, launchChrome, cleanupChrome } = require('./lib/cdp.js');
+/* CDP 客户端 / Chrome 启动 / 路由表：复用 qa/lib/（零依赖） */
+const { CDP, launchChrome, cleanupChrome, resolveChrome } = require('./lib/cdp.js');
 
 /* --------------------------- 单路由 × 单视口 --------------------------- */
 const READY_EXPR = `(() => {
@@ -291,15 +238,37 @@ async function captureRoute(cdp, browserSession, route, vp) {
 /* -------------------------------- 主流程 -------------------------------- */
 async function main() {
   await fsp.mkdir(SHOTS_DIR, { recursive: true });
-  let routes = URLS_FILE ? await readRoutesFile(path.resolve(String(URLS_FILE))) : await deriveRoutes();
+  // 路由表与 gate 共用 qa/lib/routes.mjs（ESM，动态导入以兼容 CJS 入口）
+  let routes;
+  if (URLS_FILE) {
+    routes = await readRoutesFile(path.resolve(String(URLS_FILE)));
+  } else {
+    const { deriveRoutes } = await import('./lib/routes.mjs');
+    routes = await deriveRoutes(BASE);
+  }
   if (ONLY) {
     const pats = String(ONLY).split(',').map((s) => s.trim()).filter(Boolean);
     routes = routes.filter((r) => pats.some((p) => r.name.includes(p)));
   }
   if (!routes.length) { console.error('[shot] 没有可截的 URL'); return 2; }
 
+  // Chrome：--chrome 显式指定 → 否则自动探测（CHROME_PATH / CHROME_BIN / 平台候选 / where|which）
+  let chromePath = CHROME_ARG && CHROME_ARG !== true ? String(CHROME_ARG) : '';
+  let chromeSource = chromePath ? '--chrome' : '';
+  if (!chromePath) {
+    try {
+      const found = resolveChrome();
+      chromePath = found.path;
+      chromeSource = found.source;
+    } catch (e) {
+      console.error(`[shot] ${e && e.message ? e.message : e}`);
+      return 2;
+    }
+  }
+
   log(`[shot] base=${BASE}  主题=${THEME}  路由 ${routes.length} 条 × 视口 ${VIEWPORTS.map((v) => v.name).join('/')}`);
-  const { child, wsUrl, profile } = launchChrome();
+  log(`[shot] Chrome=${chromePath}（来源：${chromeSource}）`);
+  const { child, wsUrl, profile } = launchChrome({ chromePath });
   let bg;
   let fatal = null;
   const results = [];
