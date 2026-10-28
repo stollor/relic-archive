@@ -7,6 +7,7 @@
 pipeline/
 ├─ mk_builds_json.py   # 生成 data/builds.json（流派视图的唯一数据源）
 ├─ sync-data.py        # 从 .mimocode 工作区同步运行时数据/图标快照（开发用）
+├─ deploy.py           # 一键发布：推送 → 等 GitHub Pages 自动重建 → 线上冒烟
 ├─ _source/            # 配装源数据快照（上游 build/ui_data.json、loadouts.json、builds.json）
 └─ README.md
 ```
@@ -74,3 +75,12 @@ node qa/theme-contrast.mjs                     # 双主题对比度（130 组）
 ```
 
 全部通过再提交。门禁说明见 `qa/REPORT.md`。
+
+提交后发布用一键脚本（推送 + 等 Pages 自动重建 + 线上验收，详见 [`docs/DEPLOY.md`](../docs/DEPLOY.md) §2）：
+
+```bash
+python pipeline/deploy.py                    # 推送 main 并等到线上内容真的换成本次提交
+python pipeline/deploy.py --dry-run          # 只看计划，不推送
+python pipeline/deploy.py --verify-only      # 手动 push 后复验
+python pipeline/deploy.py --skip-browser     # 跳过线上浏览器门禁（更快）
+```

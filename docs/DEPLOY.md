@@ -40,14 +40,29 @@ node qa/theme-contrast.mjs
 python pipeline/mk_builds_json.py --check
 python pipeline/sync-data.py --check               # 若来自工作区同步
 
-# 2) 提交与推送
+# 2) 提交（一次只做一件事）
 git status                                          # 只应有预期文件
 git add -A
 git commit -m "feat: ..."                           # 中文 + conventional 前缀
-git push origin main
 
-# 3) 等 Pages 重建后做线上验收（见 §4）
+# 3) 一键发布：推送 → 等 Pages 自动重建 → 线上冒烟（推荐）
+python pipeline/deploy.py
 ```
+
+### 2.1 `pipeline/deploy.py` 做了什么
+
+GitHub Pages（legacy 构建）**推送即自动重建**，无需 CI；脚本负责把「推送 → 重建 → 线上真的换了」做成可验证的一步：
+
+| 步骤 | 动作 | 失败码 |
+|---|---|---|
+| 预检 | 分支必须是 `main`、工作树必须干净（防止推半截） | 2 |
+| 推送 | 优先用系统 Git（本机 ucrt64 git 上传会卡死）；自动带 `http.version=HTTP/1.1`，失败再重试一次 | 3 |
+| 校验 | 远端 `main` 的 sha 必须等于本地 `HEAD` | 5 |
+| 等发布 | 用本次改动涉及的站点资源做「内容指纹」（换行归一后 sha256）轮询线上，直到一致 | 4（超时可用 `--verify-only` 复验） |
+| 冒烟 | 关键资源全部 200；再跑 `node qa/shot.js --base … --theme dark --desktop-only` | 1 |
+
+常用参数：`--dry-run`（只看计划）、`--verify-only`（不推送，手动 push 后复验）、`--skip-browser`（跳过浏览器门禁）、
+`--timeout 600`（发布等待上限）、`--base`（换线上地址）。推送失败时也可手动用系统 Git 后跑 `--verify-only`。
 
 **推送用系统 Git**（重要）：本机 PATH 里的 `@dsh-ops/.../ucrt64` git 在上传阶段会卡死；
 用 `C:\Program Files\Git\cmd\git.exe`（Git for Windows）：
@@ -84,6 +99,9 @@ git -c http.version=HTTP/1.1 push origin main
 ---
 
 ## 4. 线上验收（发布后必做）
+
+**推荐**：`python pipeline/deploy.py` 已包含本节 4.1 + 4.2 的全部检查（失败会给出具体资源/退出码）。
+需要手动复验时：
 
 ```bash
 BASE=https://stollor.github.io/relic-archive

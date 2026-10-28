@@ -117,10 +117,13 @@ node qa/shot.js --theme dark --only builds  # 看 7 套详情是否还正常
 
 ### 3.7 发布
 ```bash
-git add -A && git commit -m "feat: ..." && git push origin main
+git add -A && git commit -m "feat: ..."
+python pipeline/deploy.py        # 推送 + 等 Pages 自动重建 + 线上冒烟（推荐）
 ```
-GitHub Pages 会自动重建（约 20–60 秒）。验证：`https://stollor.github.io/relic-archive/` + `qa/shot.js --base <线上地址>`。
-⚠️ 本机推送必须用系统 Git（见 LESSONS #3）。
+GitHub Pages 会自动重建（约 20–60 秒，legacy 构建，无 CI）。`deploy.py` 会校验远端 sha、轮询线上内容指纹确认真的换了版本，
+再跑线上 `qa/shot.js`；失败给出退出码（2 预检 / 3 推送 / 4 发布超时 / 5 sha 不一致 / 1 冒烟）。
+手动等价：用系统 Git `push origin main` 后执行 `python pipeline/deploy.py --verify-only`。
+⚠️ 本机推送必须用系统 Git（见 LESSONS #3），脚本已自动优先选它。
 
 ---
 
