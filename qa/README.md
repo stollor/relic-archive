@@ -58,7 +58,7 @@ SKIP 分两种：`required`（关键检查被环境阻断 → 退出码 3）与�
 | `audit` | 静态审计：硬编码色、裸英文、重复标题、a11y、外部网络 | fast | Python |
 | `contrast` | 双主题 WCAG AA 对比度（130 组） | fast | — |
 | `data-builds` | `mk_builds_json.py --check`：流派引用完整性 | fast | Python |
-| `data-schema` | 9 个 JSON 的结构/类型/唯一性/跨文件引用/版本兼容 | fast | — |
+| `data-schema` | 10 个 JSON 的结构/类型/唯一性/跨文件引用/版本兼容 | fast | — |
 | `data-sync` | `sync-data.py --check`：仓库快照 vs 上游工作区漂移 | medium | Python + 工作区（独立 clone 下 SKIP） |
 | `shot-dark` / `shot-light` | 27 路由 × 2 视口截图 + console/异常/4xx 门禁 | medium | Chrome + 服务器 |
 | `shot-subpath` | 子路径（`/relic-archive/`）下资源加载（Pages 等价） | medium | Chrome + 子路径服务器 |

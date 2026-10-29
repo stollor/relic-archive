@@ -379,7 +379,7 @@ node qa/shot.js --all && node qa/interactions.js && python qa/audit.py
 | 3 | `audit` | **0 FAIL / 0 WARN / 60 INFO** | 0.2s | 硬编码色/裸英文/重复标题/a11y/外链 |
 | 4 | `contrast` | **130/130** | 0.1s | 双主题 WCAG AA |
 | 5 | `data-builds` | **1/1** | 0.2s | 流派引用完整性 |
-| 6 | `data-schema` | **38/38** | 2.5s | 9 个 JSON 的结构/引用/版本契约 |
+| 6 | `data-schema` | **38/38** | 2.5s | 9 个 JSON 的结构/引用/版本契约（v3.2 起 10 个，含 lab_gear.json） |
 | 7 | `data-sync` | **1/1（无漂移）** | 1.3s | 仓库快照 vs 上游工作区（独立 clone 下 SKIP） |
 | 8 | `shot-dark` | **54/54** | 109.5s | 27 路由 × 2 视口 + console/异常/4xx |
 | 9 | `shot-light` | **54/54** | 93.9s | 同上（亮色） |
@@ -414,7 +414,7 @@ registry-plan-文档一致性），防止「门禁静默失效」。
 ### 12.4 数据 Schema 与契约（P1-3）
 
 - 新增 `qa/lib/schema.mjs`（通用校验器：纯数据规则、RFC6901 JSON Pointer、`required` 必须带 why、
-  `nullable`/`enum`/`uniqueBy`/`additionalProperties`）与 `qa/lib/data-schema.mjs`（9 个运行时文件的契约 +
+  `nullable`/`enum`/`uniqueBy`/`additionalProperties`）与 `qa/lib/data-schema.mjs`（10 个运行时文件的契约 +
   跨文件引用 + 版本策略 + 模块级缓存）。
 - 契约覆盖：items（唯一 id/枚举/counts 对账/套装引用）、builds（槽位引用解析：items id ∪ i18n ∪ `_source`）、
   site_data（公式常数/preset 唯一/引用）、archetypes、codex（分类/block 类型与视图同步）、terms、

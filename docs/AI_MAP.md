@@ -39,7 +39,7 @@ js/main.js + js/domains.js        应用层：可依赖任意层
 | `js/views/lab.js` + `js/lab/*` | 实验室装配（`PANELS` 注册表）/ `engine`（纯计算，口径冻结）/ `model`/`state`/`parts`/`workbench`/`wb-*`/五个面板 | core/*、components/item-detail、picker、lab/* | `related`（lab-async + lab-engine 单测） |
 | `js/views/codex.js` | 知识库装配：目录/条目/块渲染（`blocks[].t` 分支） | core/*、components/states、panel | `related`（interactions-codex） |
 | `css/*` | `tokens.css` 唯一色值；`base/components/view-*` 分层；视图样式按领域懒注入 | 无 | `related`（audit + contrast + 截图） |
-| `data/*` + `qa/lib/data-schema.mjs` | 9 个运行时 JSON（items/builds/site_data/archetypes/codex/terms/item_effects/icon_index/acq）的结构与跨文件引用契约 | `qa/lib/schema.mjs` | `data`（data-schema/data-builds/data-sync） |
+| `data/*` + `qa/lib/data-schema.mjs` | 10 个运行时 JSON（items/builds/site_data/archetypes/codex/terms/item_effects/icon_index/acq/lab_gear）的结构与跨文件引用契约 | `qa/lib/schema.mjs` | `data`（data-schema/data-builds/data-sync） |
 | `pipeline/*` | `sync-data.py`（工作区→快照，只读 check/原子落盘/回滚）、`mk_builds_json.py`（`_source`→builds.json）、`deploy.py`（推送+等 Pages+线上冒烟） | 仅标准库 | `data`（数据脚本）；发布 `deploy` |
 | `qa/*` | `gate.mjs`+`gate/*` 统一门禁；`lib/` 公共能力；`tests/` 回归；`shot/interactions/audit/contrast` 能力；`baselines.json` 基线 | 内部相对路径 | `related`（qa 改动）；提测 `full` |
 

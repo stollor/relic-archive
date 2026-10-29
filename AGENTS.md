@@ -10,7 +10,7 @@
 
 - 是什么：四领域静态 SPA —— `#/items` 资料库 / `#/lab` 实验室 / `#/builds` 流派 / `#/codex` 知识库；亮暗双主题。
 - 技术栈：原生 ES module + 原生 CSS + Python 标准库（`serve.py`）。**无打包器、无框架、无 npm、无联网请求、无外部 CDN/字体。**
-- 数据：`data/` 9 个 JSON + `assets/icons/*.png` 随仓库分发，页面用相对路径 `./data/*`、`./assets/*` 读取。
+- 数据：`data/` 10 个 JSON + `assets/icons/*.png` 随仓库分发，页面用相对路径 `./data/*`、`./assets/*` 读取。
 - 入口：`index.html`（SPA 外壳）+ `serve.py`（本地服务）+ `verify.ps1`（pwsh 包装）/ `node qa/gate.mjs`（验收）。
 - 环境：Node 22+、Python 3.10+、Chrome（仅浏览器检查需要）；无 `npm install`，改完刷新即可。
 - 关键入口文件：`js/main.js`（启动/派发）、`js/domains.js`（领域表）、`js/core/api.js`（数据）、`js/core/store.js`（状态）、`qa/gate.mjs`（验收）。
@@ -94,7 +94,7 @@
 | `js/components/*` | 唯一共享 UI：`item-detail(+sections)` `picker` `item-card` `states` `panel` |
 | `js/views/*.js` | 四个领域视图的**装配**（业务逻辑在领域目录） |
 | `js/library/*` `js/builds/*` | 领域模块（纯函数优先，可直接 `node --test`） |
-| `js/lab/*` | 实验室引擎/状态/工作台（`wb-*`）/五个面板 |
+| `js/lab/*` | 实验室引擎/状态/工作台（`wb-*`）/九个面板（推荐/饰品组合/武器改装/特性/圣物碎片/逐槽替换/档位对照/计算器/存档导出）+ 纯计算 `score/combos/fit` |
 | `css/*` | `css/tokens.css` 唯一色值来源；`css/base.css`/`css/components.css`/`css/view-*.css` 分层 |
 | `data/*` + `assets/icons/*` | 运行时数据与图标（结构契约 `qa/lib/data-schema.mjs`） |
 | `pipeline/*` | `pipeline/sync-data.py` 快照同步、`pipeline/mk_builds_json.py` 流派生成、`pipeline/deploy.py` 一键发布 |
