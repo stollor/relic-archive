@@ -68,24 +68,9 @@ export function catShell({ title, sub = '', iconName = '', actions = [] } = {}) 
   return { el, head, body, foot, acts };
 }
 
-/** 列头行：cols = [{ zh, w? }]（w 目前仅作数据属性，列宽由分类页 CSS 变量控制） */
-export function catBar(cols = []) {
-  return h('div', { class: 'lab-cat__bar', attrs: { role: 'row' } },
-    cols.map((c) => h('span', { class: 'lab-cat__barcol', dataset: c.w ? { w: c.w } : undefined, text: c.zh || '' })));
-}
-
 /** 通用行容器：cells 依次为 槽位 / 装备 / 属性 / 效果 / 操作 */
 export function crow(cells, { cls = '' } = {}) {
   return h('div', { class: `lab-crow ${cls}`.trim(), attrs: { role: 'row' } }, cells.filter(Boolean));
-}
-
-/** 槽位单元格：名称 + 可选徽标（缺件 / 当前 / 空） */
-export function slotCell(label, iconName, { badge = null } = {}) {
-  return h('div', { class: 'lab-crow__slot', attrs: { role: 'cell' } },
-    iconName ? h('span', { class: 'lab-crow__slotico' }, icon(iconName, { size: 13 })) : '',
-    h('span', { class: 'lab-crow__slotk', text: label }),
-    badge || '',
-  );
 }
 
 /**
@@ -109,17 +94,6 @@ export function itemCell({ iconUrl = null, zh = '', en = '', sub = '', tags = []
   return cell;
 }
 
-/** 属性单元格：pairs = [{ k, v, unit?, iconName?, title? }] */
-export function statCell(pairs = []) {
-  return h('div', { class: 'lab-crow__stats', attrs: { role: 'cell' } },
-    pairs.filter(Boolean).map((p) => h('span', { class: 'lab-stat', title: p.title || p.k || '' },
-      p.iconName ? icon(p.iconName, { size: 11 }) : '',
-      h('span', { class: 'lab-stat__v', text: p.v == null || p.v === '' ? '—' : String(p.v) }),
-      p.unit ? h('span', { class: 'lab-stat__u', text: p.unit }) : '',
-      h('span', { class: 'lab-stat__k', text: p.k || '' }),
-    )));
-}
-
 /** 效果单元格：字符串按纯文本；Node 直接放 */
 export function effectCell(content) {
   return h('div', { class: 'lab-crow__effect', attrs: { role: 'cell' } },
@@ -129,22 +103,6 @@ export function effectCell(content) {
 /** 操作单元格 */
 export function actsCell(buttons = []) {
   return h('div', { class: 'lab-crow__acts', attrs: { role: 'cell' } }, buttons.filter(Boolean));
-}
-
-/** 空槽行：整行可点 → onPick；虚线样式 */
-export function emptyCrow({ label, iconName = 'plus', hint = '点击选择装备', onPick = null, acts = [] } = {}) {
-  const el = h('div', {
-    class: 'lab-crow lab-crow--empty', attrs: { role: 'row', tabindex: onPick ? '0' : null },
-  },
-    slotCell(label, iconName),
-    h('div', { class: 'lab-crow__emptyhint' }, icon('plus', { size: 14 }), h('span', { text: hint })),
-    actsCell(acts),
-  );
-  if (onPick) {
-    el.addEventListener('click', (e) => { if (e.target.closest('button')) return; onPick(); });
-    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(); } });
-  }
-  return el;
 }
 
 /** 子区块（武器挂件 / 职业技能 / 碎片槽等）：标题 + tools + 内容 */
@@ -167,6 +125,141 @@ export function noteLine(text) {
 /** 空态行 */
 export function emptyTab(text) {
   return h('div', { class: 'lab-emptyline' }, icon('info', { size: 14 }), h('span', { text }));
+}
+
+/* ----------------------------- 槽位卡片条（v5：像游戏装备栏，不再一行一行） ----------------------------- */
+/** 把整块变成可点击/可聚焦（内部按钮不触发） */
+function activate(el, fn, label) {
+  if (!fn) return el;
+  el.classList.add('is-click');
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  if (label) el.setAttribute('aria-label', label);
+  el.addEventListener('click', (e) => { if (e.target.closest('button, a, input, select, details')) return; fn(e); });
+  el.addEventListener('keydown', (e) => {
+    if (e.target !== el) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(e); }
+  });
+  return el;
+}
+
+/**
+ * 槽位卡（并排显示，一格一槽）：槽位名 / 大图标 / 名称 / 数值 chips / 小标签 / 卡底附加区 / 悬停操作。
+ * @param {object} o
+ *  label   槽位名（必填，卡头小字）
+ *  iconName 空槽占位图标
+ *  iconUrl  已装备图标
+ *  zh/en    名称（空槽不传）
+ *  stats    [{ k, v, unit, iconName, title }] → 卡内数值（复用 .lab-stat）
+ *  tags     Node[] → 维度 / 套装 / 颜色等小标签
+ *  extra    Node|null → 卡底附加区（武器挂件 / 职业技能 / 碎片色带）
+ *  empty    空槽（虚线卡）
+ *  missing  缺件
+ *  onOpen   主体点击：空槽 = 选择，有件 = 更换
+ *  actions  [{ icon, title, onClick, danger, on }] → 悬停右上角操作
+ */
+export function slotCard({
+  label = '', iconName = 'plus', iconUrl = null, zh = '', en = '',
+  stats = [], tags = [], extra = null, empty = false, missing = false,
+  onOpen = null, actions = [],
+} = {}) {
+  const acts = actions.filter(Boolean).length
+    ? h('div', { class: 'lab-slot__acts' }, actions.filter(Boolean).map((a) => iconAct(a.icon, a.title, a.onClick, { danger: !!a.danger, on: !!a.on })))
+    : null;
+  const card = h('div', {
+    class: `lab-slot${empty ? ' is-empty' : ''}${missing ? ' is-missing' : ''}${onOpen ? ' is-click' : ''}`.trim(),
+    attrs: { 'aria-label': onOpen ? `${label}：${empty ? '空槽，点击选择' : `已装备${zh}，点击更换`}` : `${label}：${zh || '空槽'}` },
+  },
+    h('div', { class: 'lab-slot__head' },
+      h('span', { class: 'lab-slot__k', text: label }),
+      missing ? h('span', { class: 'lab-slot__flag' }, '缺件') : '',
+    ),
+    h('div', { class: 'lab-slot__media' }, empty ? icon(iconName, { size: 26 }) : itemMedia(iconUrl, { size: 68, alt: zh || label })),
+    empty
+      ? h('div', { class: 'lab-slot__emptyhint' }, icon('plus', { size: 12 }), h('span', { text: '点击选择' }))
+      : h('div', { class: 'lab-slot__name', text: zh || '待验证' }),
+    !empty && en ? h('div', { class: 'lab-slot__en', text: en }) : '',
+    !empty && stats.length ? h('div', { class: 'lab-slot__stats' }, stats.filter(Boolean).map((p) => h('span', { class: 'lab-stat', title: p.title || p.k || '' },
+      p.iconName ? icon(p.iconName, { size: 10 }) : '',
+      h('span', { class: 'lab-stat__v', text: p.v == null || p.v === '' ? '—' : String(p.v) }),
+      p.unit ? h('span', { class: 'lab-stat__u', text: p.unit }) : '',
+      h('span', { class: 'lab-stat__k', text: p.k || '' }),
+    ))) : '',
+    !empty && tags.filter(Boolean).length ? h('div', { class: 'lab-slot__tags' }, tags.filter(Boolean)) : '',
+    extra || '',
+    acts || '',
+  );
+  return activate(card, onOpen, null);
+}
+
+/** 槽位卡容器：自动换行网格（5 槽 = 一行 5 张，窄屏自动收成 2–3 列） */
+export function slotStrip(cards = [], { cls = '' } = {}) {
+  return h('div', { class: `lab-slots ${cls}`.trim() }, cards.filter(Boolean));
+}
+
+/** 卡片与汇总行联动：悬停 / 聚焦任一侧，双侧同时高亮 */
+export function linkHover(a, b) {
+  if (!a || !b) return;
+  const on = () => { a.classList.add('is-hi'); b.classList.add('is-hi'); };
+  const off = () => { a.classList.remove('is-hi'); b.classList.remove('is-hi'); };
+  for (const el of [a, b]) {
+    el.addEventListener('mouseenter', on);
+    el.addEventListener('mouseleave', off);
+    el.addEventListener('focusin', on);
+    el.addEventListener('focusout', off);
+  }
+}
+
+/* ----------------------------- 效果汇总（v5：下方把所有已选件效果并排列出） ----------------------------- */
+/**
+ * 汇总行：槽位 | 图标 | 名称 + 效果。
+ *  lines 里每项可为字符串或 Node（多行时逐行排）。
+ *  onClick 存在时整行可点（详情）。
+ */
+export function digestRow({ label = '', iconUrl = null, zh = '', tags = [], effect = '', lines = [], extra = null, onClick = null, empty = false } = {}) {
+  const body = h('div', { class: 'lab-digest__body' },
+    h('div', { class: 'lab-digest__name' }, h('span', { text: empty ? '未选择' : (zh || '待验证') }), empty ? '' : tags.filter(Boolean)),
+    empty
+      ? h('div', { class: 'lab-digest__eff muted', text: effect || '空槽：点击上方卡片选择' })
+      : (effect ? h('div', { class: 'lab-digest__eff', text: effect, attrs: { title: effect } })
+        : (lines.length ? '' : h('div', { class: 'lab-digest__eff muted', text: '无已收录效果' }))),
+    !empty && lines.filter((l) => l != null && l !== '').map((l) => (l instanceof Node ? l : h('div', { class: 'lab-digest__line', text: String(l) }))),
+    extra || '',
+  );
+  const row = h('div', { class: `lab-digest__row${empty ? ' is-empty' : ''}`.trim() },
+    h('span', { class: 'lab-digest__k', text: label }),
+    h('span', { class: 'lab-digest__ico' }, empty ? icon('plus', { size: 13 }) : itemMedia(iconUrl, { size: 26, alt: zh || label })),
+    body,
+  );
+  return activate(row, onClick, onClick ? `${label}${zh ? `：${zh}` : ''} · 查看详情` : null);
+}
+
+/**
+ * 效果汇总区：标题 + 逐件效果行 + 底部合计 chips。
+ *  { title, sub, iconName, actions:[Node], rows:[Node], sums:[{k,v,iconName,title}], foot:[string|Node], empty }
+ */
+export function digest({ title = '效果汇总', sub = '', iconName = 'listchecks', actions = [], rows = [], sums = [], foot = [], empty = '' } = {}) {
+  const el = h('div', { class: 'lab-digest' },
+    h('div', { class: 'lab-digest__head' },
+      h('span', { class: 'lab-digest__title' }, icon(iconName, { size: 13 }), h('span', { text: title })),
+      sub ? h('span', { class: 'lab-digest__sub', text: sub }) : '',
+      actions.filter(Boolean).length ? h('div', { class: 'lab-digest__acts' }, ...actions.filter(Boolean)) : '',
+    ),
+    h('div', { class: 'lab-digest__rows' }, rows.filter(Boolean).length ? rows.filter(Boolean) : emptyTab(empty || '还没有放入装备。')),
+  );
+  const items = sums.filter(Boolean);
+  const footLines = foot.filter((f) => f != null && f !== '');
+  if (items.length || footLines.length) {
+    el.append(h('div', { class: 'lab-digest__foot' },
+      items.map((s) => h('span', { class: 'lab-digest__footitem', title: s.title || '' },
+        s.iconName ? icon(s.iconName, { size: 12 }) : '',
+        h('b', { text: s.v == null || s.v === '' ? '—' : String(s.v) }),
+        h('span', { text: s.k || '' }),
+      )),
+      footLines.length ? h('span', { class: 'lab-digest__footnote' }, ...footLines) : '',
+    ));
+  }
+  return el;
 }
 
 /* ----------------------------- 推荐卡片 ----------------------------- */
@@ -223,4 +316,8 @@ export const U = {
 };
 
 export { h, clear, fmt, icon };
-export default { CATS, catShell, catBar, crow, slotCell, itemCell, statCell, effectCell, actsCell, emptyCrow, catSection, noteLine, recCard, recList, tag, fragColorBadge, iconAct, stepper, emptyTab, U };
+export default {
+  CATS, catShell, crow, itemCell, effectCell, actsCell, catSection, noteLine,
+  recCard, recList, tag, fragColorBadge, iconAct, stepper, emptyTab, U,
+  slotCard, slotStrip, linkHover, digestRow, digest,
+};

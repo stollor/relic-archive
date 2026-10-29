@@ -1,21 +1,23 @@
 /* =============================================================================
-   遗迹2 · 遗物档案 — lab/wb-cat-relic.js（装配台 v3 · 圣物与碎片）
-   圣物行（relic 槽）+ 3 个碎片槽卡片 + 全量碎片表（45 条，颜色筛选）。
+   遗迹2 · 遗物档案 — lab/wb-cat-relic.js（装配台 v5 · 圣物与碎片）
+   并排槽位卡：圣物 1 张 + 碎片槽 3 张 = 4 张卡；卡下方「效果汇总」逐件列效果
+   并统计碎片颜色；「全部碎片」目录表（45 条，颜色筛选）保留在汇总之后。
    碎片槽写入只经 S.setFragmentSlot / clearFragmentSlot；碎片的颜色 / 属性 / 效果
    全部取 model.gear.all('fragment')，不新增数据口径。右侧推荐由 renderRec(host) 渲染。
    ========================================================================== */
 import { h, clear, fmt, frag } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { itemMedia } from './parts.js';
 import { SLOT_LABEL } from './model.js';
 import { createScorer } from './score.js';
 import { createFit } from './fit.js';
 import {
-  CAT_BY_ID, catShell, catBar, crow, emptyCrow, slotCell, itemCell, effectCell, actsCell,
-  catSection, noteLine, recCard, recList, tag, fragColorBadge, iconAct, emptyTab,
+  CAT_BY_ID, catShell, catSection, crow, itemCell, effectCell, actsCell,
+  noteLine, recCard, recList, tag, fragColorBadge, emptyTab,
+  slotCard, slotStrip, linkHover, digest, digestRow,
 } from './wb-parts.js';
 
 const COLOR_ZH = { red: '红', yellow: '黄', blue: '蓝' };
+const FRAG_COLORS = ['red', 'yellow', 'blue'];
 const FILTERS = ['all', 'red', 'yellow', 'blue'];
 const SCORE_TOP = 6;
 
@@ -26,6 +28,7 @@ export function createRelicTab(ctx) {
   const cat = CAT_BY_ID.get('relic') || { zh: '圣物与碎片', sub: '', icon: 'relic' };
   const shell = catShell({ title: cat.zh, sub: cat.sub, iconName: cat.icon });
   const fragments = gear.all('fragment');
+  const relicLabel = SLOT_LABEL.relic || '圣物';
 
   /* 局部筛选：refresh() 重建 DOM 时保留 */
   let listFilter = 'all';
@@ -55,16 +58,16 @@ export function createRelicTab(ctx) {
   }
   const fragEffectZh = (f) => (f && f.effectZh) || '';
   const fragName = (f, id) => (f && (f.zh || f.en)) || model.nameOf(id) || id;
+  /** 碎片效果节点：中文效果优先；缺失时主行「效果待验证」+ 次要行英文原文 */
+  function effectFragment(f) {
+    const zh = fragEffectZh(f);
+    return frag(h('span', { class: zh ? '' : 'muted', text: zh || '效果待验证' }), zh ? '' : enOriginal(f));
+  }
   /** 只有英文原文的碎片：原文进次要行（10.5px / muted + title），不当中文效果用 */
   function enOriginal(f) {
     const en = (f && f.effectEn) || '';
     if (!en) return '';
     return h('div', { class: 'lab-crow__en muted', text: `原文：${en}`, attrs: { title: en } });
-  }
-  /** 碎片效果节点：中文效果优先；缺失时主行「效果待验证」+ 次要行英文原文 */
-  function effectFragment(f) {
-    const zh = fragEffectZh(f);
-    return frag(h('span', { class: zh ? '' : 'muted', text: zh || '效果待验证' }), zh ? '' : enOriginal(f));
   }
   function dimCell(rec, stat) {
     const dims = dimsOf(rec, 3);
@@ -86,81 +89,146 @@ export function createRelicTab(ctx) {
     }));
   }
 
-  /* ----------------------------- 圣物行 ----------------------------- */
-  function relicRow() {
+  /* ----------------------------- 槽位卡（圣物 + 3 碎片 = 4 张并排） ----------------------------- */
+  function relicCard() {
     const id = store.build.get('relic') || null;
-    const label = SLOT_LABEL.relic || '圣物';
     if (!id) {
-      return emptyCrow({ label, iconName: 'relic', hint: `点击选择${label}`, onPick: () => ctx.pickForSlot('relic') });
+      return slotCard({ label: relicLabel, iconName: 'relic', empty: true, onOpen: () => ctx.pickForSlot('relic') });
     }
     const rec = gearRec(id, 'relic');
     const item = model.itemsById.get(id) || null;
     const missing = ctx.isMissing(id);
-    const effRec = rec || { effectZh: (item && item.effectZh) || '', effectEn: (item && item.effectEn) || '' };
-    return crow([
-      slotCell(label, 'relic', { badge: missing ? tag('缺件') : null }),
-      itemCell({
-        iconUrl: model.iconOf(id), zh: model.nameOf(id), en: (item && item.en) || '',
-        tags: rec && rec.dlc && rec.dlc !== 'base' ? [tag('DLC')] : [],
-        onClick: () => ctx.openDetail(id),
-      }),
-      dimCell(rec, ''),
-      effectCell(effectFragment(effRec)),
-      actsCell([
-        iconAct('eye', `查看${label}详情`, () => ctx.openDetail(id)),
-        iconAct('x-circle', missing ? '取消缺件标记' : `标记${label}为缺件`, () => ctx.toggleMissing(id), { on: missing }),
-        iconAct('swap', `更换${label}`, () => ctx.pickForSlot('relic')),
-        iconAct('x', `移除${label}`, () => ctx.removeSlot('relic'), { danger: true }),
-      ]),
-    ], { cls: missing ? 'is-missing' : '' });
+    const zh = model.nameOf(id);
+    const tags = [];
+    if (rec && rec.dlc && rec.dlc !== 'base') tags.push(tag('DLC'));
+    return slotCard({
+      label: relicLabel,
+      iconName: 'relic',
+      iconUrl: model.iconOf(id),
+      zh,
+      en: (item && item.en) || (rec && rec.en) || '',
+      tags,
+      missing,
+      onOpen: () => ctx.pickForSlot('relic'),
+      actions: [
+        { icon: 'eye', title: `查看${relicLabel}详情`, onClick: () => ctx.openDetail(id) },
+        {
+          icon: 'x-circle', title: missing ? '取消缺件标记' : `标记${relicLabel}为缺件`, on: missing,
+          onClick: () => {
+            const on = S.toggleMissing(id);
+            ui.toast(on ? `已标记缺件：${zh}` : `已取消缺件：${zh}`, on ? 'warn' : 'ok');
+          },
+        },
+        { icon: 'x', title: `移除${relicLabel}`, danger: true, onClick: () => ctx.removeSlot('relic') },
+      ],
+    });
   }
 
-  /* ----------------------------- 碎片槽卡片 ----------------------------- */
-  function slotCard(id, index) {
-    const k = `碎片槽 ${index + 1}`;
+  function fragSlotCard(index) {
+    const label = `碎片槽 ${index + 1}`;
+    const id = S.fragmentSlots()[index] || null;
     if (!id) {
-      return h('button', {
-        class: 'lab-relicslot is-empty', type: 'button',
-        attrs: { title: `为${k}选择碎片`, 'aria-label': `为${k}选择碎片` },
-        on: { click: () => openFragDrawer(index) },
-      },
-        h('span', { class: 'lab-relicslot__head' },
-          h('span', { class: 'lab-tag', text: k }),
-          h('span', { class: 'row muted' }, icon('plus', { size: 13 }), h('span', { text: '点击放入' }))),
-      );
+      return slotCard({ label, iconName: 'plus', empty: true, onOpen: () => openFragDrawer(index) });
     }
     const f = gearRec(id, 'fragment');
-    const zhEffect = fragEffectZh(f);
-    const card = h('div', {
-      class: 'lab-relicslot is-on',
-      attrs: { role: 'button', tabindex: '0', title: `${k}：点击更换碎片`, 'aria-label': `${k}：点击更换碎片` },
-    },
-      h('div', { class: 'lab-relicslot__head' },
-        fragColorBadge(f ? f.color : ''),
-        h('span', { class: 'lab-tag', text: k }),
-        h('span', { class: 'grow' }),
-        iconAct('swap', `更换${k}`, () => openFragDrawer(index)),
-        iconAct('x', `移除${k}的碎片`, () => { S.clearFragmentSlot(index); ui.toast(`已清空${k}`, 'ok'); }, { danger: true }),
-      ),
-      h('div', { class: 'row' },
-        itemMedia(model.iconOf(id), { size: 30, alt: fragName(f, id) }),
-        h('div', { class: 'grow' },
-          h('div', { class: 'lab-relicslot__name' }, h('span', { text: fragName(f, id) }), f && f.en ? h('span', { class: 'lab-crow__en', text: f.en }) : ''),
-          h('div', { class: 'lab-relicslot__eff' }, effectFragment(f)),
-        ),
-      ),
-    );
-    card.addEventListener('click', (e) => { if (!e.target.closest('button')) openFragDrawer(index); });
-    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFragDrawer(index); } });
-    return card;
-  }
-  function fragSlotsSection() {
-    const slots = S.fragmentSlots();
-    const host = h('div', { class: 'lab-relicslots' });
-    slots.forEach((id, i) => host.append(slotCard(id, i)));
-    return catSection(`碎片槽 · ${S.FRAGMENT_SLOTS}`, [host], {
-      sub: `红 / 黄 / 蓝 · 已放 ${slots.filter(Boolean).length}/${S.FRAGMENT_SLOTS}`,
+    return slotCard({
+      label,
+      iconName: 'plus',
+      iconUrl: model.iconOf(id),
+      zh: fragName(f, id),
+      en: (f && f.en) || '',
+      tags: [fragColorBadge(f && f.color)],
+      onOpen: () => openFragDrawer(index),
+      actions: [
+        { icon: 'swap', title: `更换${label}`, onClick: () => openFragDrawer(index) },
+        {
+          icon: 'x', title: `清空${label}`, danger: true,
+          onClick: () => { S.clearFragmentSlot(index); ui.toast(`已清空${label}`, 'ok'); },
+        },
+      ],
     });
+  }
+
+  /* ----------------------------- 效果汇总 ----------------------------- */
+  /**
+   * 效果行内容：有中文效果 → 主行；没有 → 主行「效果待验证」+ 英文原文进次行。
+   * 返回 { effect, lines } 直接给 digestRow，避免把英文原文当中文效果展示。
+   */
+  function effectRows(zh, en) {
+    if (zh) return { effect: zh, lines: [] };
+    const lines = [h('div', { class: 'lab-digest__eff muted', text: '效果待验证' })];
+    if (en) lines.push(h('div', { class: 'lab-digest__line muted', text: `原文：${en}`, attrs: { title: en } }));
+    return { effect: '', lines };
+  }
+
+  function relicDigestRow() {
+    const id = store.build.get('relic') || null;
+    if (!id) return digestRow({ label: relicLabel, empty: true });
+    const rec = gearRec(id, 'relic');
+    const item = model.itemsById.get(id) || null;
+    const tags = dimsOf(rec, 3).map((d) => tag(d));
+    if (rec && rec.dlc && rec.dlc !== 'base') tags.push(tag('DLC'));
+    if (ctx.isMissing(id)) tags.push(tag('缺件'));
+    const { effect, lines } = effectRows(
+      (rec && rec.effectZh) || (item && item.effectZh) || '',
+      (rec && rec.effectEn) || (item && item.effectEn) || '',
+    );
+    return digestRow({
+      label: relicLabel,
+      iconUrl: model.iconOf(id),
+      zh: model.nameOf(id),
+      tags,
+      effect,
+      lines,
+      onClick: () => ctx.openDetail(id),
+    });
+  }
+
+  function fragDigestRow(index) {
+    const label = `碎片槽 ${index + 1}`;
+    const id = S.fragmentSlots()[index] || null;
+    if (!id) return digestRow({ label, empty: true });
+    const f = gearRec(id, 'fragment');
+    const tags = [fragColorBadge(f && f.color)];
+    for (const d of dimsOf(f, 3)) tags.push(tag(d));
+    const { effect, lines } = effectRows(fragEffectZh(f), f && f.effectEn);
+    return digestRow({
+      label,
+      iconUrl: model.iconOf(id),
+      zh: fragName(f, id),
+      tags,
+      effect,
+      lines,
+      onClick: () => openFragDrawer(index),
+    });
+  }
+
+  /** 汇总合计：已放入件数 + 碎片颜色统计（颜色取自已收录数据） */
+  function relicSums() {
+    const slots = S.fragmentSlots();
+    const placed = slots.filter(Boolean).length;
+    const counts = { red: 0, yellow: 0, blue: 0 };
+    let unknown = 0;
+    for (const id of slots) {
+      if (!id) continue;
+      const f = gearRec(id, 'fragment');
+      const color = f && f.color;
+      if (FRAG_COLORS.includes(color)) counts[color] += 1;
+      else unknown += 1;
+    }
+    const total = placed + (store.build.get('relic') ? 1 : 0);
+    const out = [{
+      k: '已放入', v: `${total}/${1 + S.FRAGMENT_SLOTS}`, iconName: 'relic',
+      title: '圣物 + 3 个碎片槽的已放入件数',
+    }];
+    for (const color of FRAG_COLORS) {
+      out.push({
+        k: `${COLOR_ZH[color]}色碎片`, v: counts[color], iconName: 'relic',
+        title: `已放入碎片中${COLOR_ZH[color]}色碎片的件数（颜色取自已收录数据）`,
+      });
+    }
+    if (unknown) out.push({ k: '颜色待验证', v: unknown, iconName: 'relic', title: '已放入但没有颜色数据的碎片件数' });
+    return out;
   }
 
   /* ----------------------------- 碎片抽屉 ----------------------------- */
@@ -322,10 +390,41 @@ export function createRelicTab(ctx) {
   /* ----------------------------- 组装 ----------------------------- */
   function render() {
     clear(shell.body);
-    shell.body.append(catBar([{ zh: '槽位' }, { zh: '圣物 / 碎片' }, { zh: '属性' }, { zh: '效果' }, { zh: '操作' }]));
-    shell.body.append(relicRow());
-    shell.body.append(fragSlotsSection());
+    const slots = S.fragmentSlots();
+    const fragIndexes = slots.map((_, index) => index);
+    const cards = new Map();
+    const rows = new Map();
+    const strip = slotStrip([
+      (() => { const card = relicCard(); cards.set('relic', card); return card; })(),
+      ...fragIndexes.map((index) => {
+        const card = fragSlotCard(index);
+        cards.set(index, card);
+        return card;
+      }),
+    ]);
+    const filled = slots.filter(Boolean).length + (store.build.get('relic') ? 1 : 0);
+    const sum = digest({
+      title: '效果汇总',
+      sub: `圣物 + ${S.FRAGMENT_SLOTS} 碎片槽 · 已放入 ${filled}/${1 + S.FRAGMENT_SLOTS}`,
+      iconName: 'relic',
+      rows: [
+        (() => { const row = relicDigestRow(); rows.set('relic', row); return row; })(),
+        ...fragIndexes.map((index) => {
+          const row = fragDigestRow(index);
+          rows.set(index, row);
+          return row;
+        }),
+      ],
+      sums: relicSums(),
+      foot: filled
+        ? ['颜色统计取自已放入碎片；红 / 黄 / 蓝加成机制出处为 locres（置信 mid），未证实处标「待验证」。']
+        : ['放入圣物与碎片后，这里逐件列出效果并统计颜色。'],
+    });
+    shell.body.append(h('div', { class: 'lab-cat__pad' }, strip, sum));
     shell.body.append(fragTableSection());
+    /* 悬停卡片 ↔ 汇总行双向高亮：一眼看清这件装备的效果落在哪一行 */
+    linkHover(cards.get('relic'), rows.get('relic'));
+    for (const index of fragIndexes) linkHover(cards.get(index), rows.get(index));
     clear(shell.foot);
     shell.foot.append(noteLine('圣物碎片共 3 槽、45 件（红 / 黄 / 蓝），颜色与效果取自已收录数据；颜色加成与棱晶机制的出处是游戏本地化文本（locres，置信 mid），红色 / 黄色 / 蓝色加成机制待验证。推荐按当前流派维度权重近似排序，写入后随配装存档。'));
   }

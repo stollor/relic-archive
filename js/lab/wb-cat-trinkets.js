@@ -14,8 +14,8 @@ import { effectText } from './text.js';
 import { createScorer } from './score.js';
 import { createComboSearch } from './combos.js';
 import {
-  CAT_BY_ID, catShell, catBar, crow, slotCell, itemCell, effectCell, actsCell, emptyCrow,
-  catSection, noteLine, recCard, recList, tag, iconAct, emptyTab,
+  CAT_BY_ID, catShell, catSection, noteLine, recCard, recList, tag, emptyTab,
+  slotCard, slotStrip, linkHover, digest, digestRow,
 } from './wb-parts.js';
 
 const SLOTS = ['amulet', 'ring1', 'ring2', 'ring3', 'ring4'];
@@ -76,45 +76,95 @@ export function createTrinketsTab(ctx) {
       .sort((a, b) => b[1] - a[1]).slice(0, n).map(([id, v]) => ({ zh: gear.dimensionZh(id), v }));
   }
 
-  function statsCell(kind, g) {
-    const ps = S.playstyleId();
-    const tags = dimsOf(g).map((d) => tag(d.zh, { title: `${d.zh} · 维度强度 ${fmt.num(d.v, 2)}（近似映射）` }));
-    const score = g && scorer ? scorer.itemScore(kind, g, ps).score : 0;
-    return h('div', { class: 'lab-crow__stats', attrs: { role: 'cell' } },
-      tags.length ? tags : tag('维度待验证'),
-      h('span', { class: 'lab-stat', title: `对「${psZh(ps)}」流派的契合度（0–1 近似比较值：没有命中该流派维度时显示 —）` },
-        icon('target', { size: 11 }),
-        h('span', { class: 'lab-stat__v', text: score > 0 ? fmt.num(score, 2) : '—' }),
-        h('span', { class: 'lab-stat__k', text: '契合' })));
+  /* ------------------------- 槽位卡（并排 5 格）+ 效果汇总 ------------------------- */
+  /** 卡片上最多 2 个维度（近似比较值），完整维度在详情与汇总行 */
+  function cardTags(g) {
+    return dimsOf(g, 2).map((d) => tag(d.zh, { title: `${d.zh} · 维度强度 ${fmt.num(d.v, 2)}（近似映射）` }));
   }
 
-  function trinketRow(slot) {
+  function trinketCard(slot) {
     const id = store.build.get(slot);
     const label = labelOf(slot);
-    if (!id) return emptyCrow({ label, iconName: slotIcon(slot), hint: `点击选择${label}`, onPick: () => ctx.pickForSlot(slot) });
+    if (!id) {
+      return slotCard({ label, iconName: slotIcon(slot), empty: true, onOpen: () => ctx.pickForSlot(slot) });
+    }
     ensureEngines();
     const g = gear.of(id);
     const it = model.itemOf(id) || null;
     const kind = slot === 'amulet' ? 'amulet' : 'ring';
     const miss = typeof ctx.isMissing === 'function' ? ctx.isMissing(id) : S.isMissing(id);
     const zh = (g && g.zh) || model.nameOf(id) || id;
+    const ps = S.playstyleId();
+    const score = g && scorer ? scorer.itemScore(kind, g, ps).score : 0;
+    return slotCard({
+      label,
+      iconName: slotIcon(slot),
+      iconUrl: ctx.iconOf(id),
+      zh,
+      en: (g && g.en) || (it && it.en) || '',
+      stats: [{
+        k: '契合', v: score > 0 ? fmt.num(score, 2) : '—', iconName: 'target',
+        title: `对「${psZh(ps)}」流派的契合度（0–1 近似比较值：没有命中该流派维度时显示 —）`,
+      }],
+      tags: cardTags(g),
+      missing: miss,
+      onOpen: () => ctx.pickForSlot(slot),
+      actions: [
+        { icon: 'eye', title: `查看${label}详情`, onClick: () => openDetail(id) },
+        {
+          icon: 'x-circle', title: miss ? '取消缺件标记' : '标记为缺件（没有这件）', on: miss,
+          onClick: () => {
+            const on = S.toggleMissing(id);
+            ui.toast(on ? `已标记缺件：${zh}` : `已取消缺件：${zh}`, on ? 'warn' : 'ok');
+          },
+        },
+        { icon: 'x', title: `移除${label}`, onClick: () => ctx.removeSlot(slot), danger: true },
+      ],
+    });
+  }
+
+  /** 汇总行：一件一行，槽位 / 名称 / 效果句（点行看详情） */
+  function trinketDigest(slot) {
+    const id = store.build.get(slot);
+    const label = labelOf(slot);
+    if (!id) return digestRow({ label, empty: true });
+    const g = gear.of(id);
+    const it = model.itemOf(id) || null;
+    const zh = (g && g.zh) || model.nameOf(id) || id;
     const effect = (g && (g.effectZh || effectText(g.effect) || effectText(g.numeric && g.numeric.effect)))
       || (it && (it.effectZh || it.summaryZh)) || '效果原文待验证';
-    return crow([
-      slotCell(label, slotIcon(slot), { badge: miss ? h('span', { class: 'badge badge--low', text: '缺件' }) : null }),
-      itemCell({ iconUrl: ctx.iconOf(id), zh, en: (g && g.en) || (it && it.en) || '', sub: g && g.dlc ? `来源：${g.dlc}` : '', onClick: () => openDetail(id) }),
-      statsCell(kind, g),
-      effectCell(effect),
-      actsCell([
-        iconAct('eye', '查看详情', () => openDetail(id)),
-        iconAct('x-circle', miss ? '取消缺件标记' : '标记为缺件（没有这件）', () => {
-          const on = S.toggleMissing(id);
-          ui.toast(on ? `已标记缺件：${zh}` : `已取消缺件：${zh}`, on ? 'warn' : 'ok');
-        }, { on: miss }),
-        iconAct('swap', `更换${label}`, () => ctx.pickForSlot(slot)),
-        iconAct('x', '移除', () => ctx.removeSlot(slot), { danger: true }),
-      ]),
-    ], { cls: miss ? 'is-missing' : '' });
+    const miss = typeof ctx.isMissing === 'function' ? ctx.isMissing(id) : S.isMissing(id);
+    const tags = dimsOf(g, 3).map((d) => tag(d.zh, { title: `${d.zh} · 维度强度 ${fmt.num(d.v, 2)}` }));
+    if (miss) tags.push(tag('缺件'));
+    return digestRow({
+      label, iconUrl: ctx.iconOf(id), zh, tags, effect,
+      onClick: () => openDetail(id),
+    });
+  }
+
+  /** 汇总合计：已放入件的维度合计 Top6 + 当前组合分（近似口径） */
+  function trinketSums() {
+    const ids = SLOTS.map((s) => store.build.get(s)).filter(Boolean);
+    if (!ids.length || !gearReady()) return [];
+    const sums = new Map();
+    for (const id of ids) {
+      const g = gear.of(id);
+      const dims = (g && g.dims) || {};
+      for (const [k, v] of Object.entries(dims)) {
+        if (!(Number(v) > 0)) continue;
+        sums.set(k, (sums.get(k) || 0) + Number(v));
+      }
+    }
+    const out = [];
+    try {
+      if (scorer) out.push({ k: '组合分', v: fmt.num(scorer.loadoutScore(ids, S.playstyleId()).score, 3), iconName: 'star', title: '当前已放入饰品的流派组合分（近似比较值）' });
+    } catch { /* 引擎不可用：不显示组合分 */ }
+    [...sums.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+      .forEach(([id, v]) => out.push({
+        k: gear.dimensionZh(id), v: fmt.num(v, 1), iconName: 'target',
+        title: `「${gear.dimensionZh(id)}」维度合计（已放入 ${ids.length} 件的近似映射之和，不是游戏数值）`,
+      }));
+    return out;
   }
 
   /* ------------------------- 标题栏：流派 / 按流派补空槽 ------------------------- */
@@ -298,13 +348,32 @@ export function createTrinketsTab(ctx) {
     if (destroyed) return;
     ensureEngines();
     clear(shell.body);
-    shell.body.append(
-      catBar([{ zh: '槽位' }, { zh: '饰品' }, { zh: '维度 · 契合' }, { zh: '效果' }, { zh: '操作' }]),
-      ...SLOTS.map(trinketRow),
-    );
+    const cards = new Map();
+    const rows = new Map();
+    const strip = slotStrip(SLOTS.map((slot) => {
+      const card = trinketCard(slot);
+      cards.set(slot, card);
+      return card;
+    }));
+    const filled = SLOTS.filter((slot) => store.build.get(slot)).length;
+    const sum = digest({
+      title: '效果汇总',
+      sub: `1 项链 + 4 戒指 · 已放入 ${filled}/${SLOTS.length}`,
+      iconName: 'gem',
+      rows: SLOTS.map((slot) => {
+        const row = trinketDigest(slot);
+        rows.set(slot, row);
+        return row;
+      }),
+      sums: trinketSums(),
+      foot: filled ? [] : ['放入饰品后，这里逐件列出效果并给出维度合计。'],
+    });
+    shell.body.append(h('div', { class: 'lab-cat__pad' }, strip, sum));
+    /* 悬停卡片 ↔ 汇总行双向高亮：一眼看清这件装备的效果落在哪一行 */
+    for (const slot of SLOTS) linkHover(cards.get(slot), rows.get(slot));
     clear(shell.foot);
     shell.foot.append(
-      noteLine('维度标签与「契合」来自 filter_tags / 关键词映射的维度权重（0–1 近似比较值），不是游戏内精确数值。'),
+      noteLine('维度标签与「契合 / 组合分」来自 filter_tags / 关键词映射的维度权重（0–1 近似比较值），不是游戏内精确数值。'),
       noteLine('戒指不可重复：同一枚戒指放在两个戒指槽不会重复计入契合与组合分；组合推荐已排除缺件。'));
   }
 

@@ -1,6 +1,8 @@
 /* =============================================================================
-   遗迹2 · 遗物档案 — lab/wb-cat-weapons.js（装配台 v3 · 武器与改装）
-   3 把武器（长枪 / 手枪 / 近战）行 + 每把下方的「挂件」子区块（突变因子 / 改装）。
+   遗迹2 · 遗物档案 — lab/wb-cat-weapons.js（装配台 v5 · 武器与改装）
+   3 把武器（长枪 / 手枪 / 近战）并排成卡（游戏装备栏式），挂件选择就在卡底：
+   卡内挂件条 = 突变因子 / 改装（近战无改装槽）；卡片主体点击 = 更换武器。
+   下方「效果汇总」逐把列出武器效果句 + 已装备挂件效果，点行看详情；卡片与汇总行双向高亮。
    挂件候选走 fit.recommendMutators / recommendMods（当前流派 + 武器标签契合近似口径）；
    写入只经 S.setMutator / S.setModOf；右侧推荐面板由 renderRec(host) 渲染。
    数据缺字段一律「待验证」，不编造效果句；同名武器只显示已收录的中文名 + 英文小字。
@@ -12,8 +14,8 @@ import { effectText } from './text.js';
 import { createScorer } from './score.js';
 import { createFit } from './fit.js';
 import {
-  CAT_BY_ID, catShell, catBar, crow, emptyCrow, slotCell, itemCell, statCell, effectCell, actsCell,
-  catSection, noteLine, recCard, recList, tag, iconAct, emptyTab,
+  CAT_BY_ID, catShell, catSection, noteLine, recCard, recList, tag, iconAct, emptyTab,
+  slotCard, slotStrip, linkHover, digest, digestRow,
 } from './wb-parts.js';
 
 const WEAPON_SLOTS = ['longGun', 'handGun', 'melee'];
@@ -103,7 +105,7 @@ export function createWeaponsTab(ctx) {
     } catch { return []; }
   }
 
-  /* ----------------------------- 武器行 ----------------------------- */
+  /* ----------------------------- 武器卡 ----------------------------- */
   function weaponTags(item) {
     const out = [];
     for (const t of item && Array.isArray(item.tags) ? item.tags : []) if (WEAPON_TAG_ZH[t]) out.push(tag(WEAPON_TAG_ZH[t]));
@@ -121,37 +123,47 @@ export function createWeaponsTab(ctx) {
     return pairs.length ? pairs : [{ k: '属性', v: '待验证' }];
   }
 
-  function weaponRow(slot) {
+  /** 卡底附加区：挂件条塞进槽位卡底部（CSS 已按 .lab-slot__extra 收窄） */
+  function attachExtra(slot) {
+    return h('div', { class: 'lab-slot__extra' }, attachSection(slot));
+  }
+
+  function weaponCard(slot) {
     const id = weaponId(slot);
     const label = slotZh(slot);
     if (!id) {
-      return emptyCrow({ label, iconName: SLOT_ICON[slot], hint: `点击选择${label}`, onPick: () => ctx.pickForSlot(slot) });
+      return slotCard({ label, iconName: SLOT_ICON[slot], empty: true, onOpen: () => ctx.pickForSlot(slot) });
     }
     const item = model.itemsById.get(id) || null;
     const missing = ctx.isMissing(id);
-    return crow([
-      slotCell(label, SLOT_ICON[slot], { badge: missing ? tag('缺件') : null }),
-      itemCell({
-        iconUrl: model.iconOf(id), zh: model.nameOf(id), en: (item && item.en) || '',
-        tags: weaponTags(item), onClick: () => ctx.openDetail(id),
-      }),
-      statCell(weaponStats(item)),
-      effectCell(weaponEffect(item) || '无已收录效果'),
-      actsCell([
-        iconAct('eye', `查看${label}详情`, () => ctx.openDetail(id)),
-        iconAct('x-circle', missing ? '取消缺件标记' : `标记${label}为缺件`, () => ctx.toggleMissing(id), { on: missing }),
-        iconAct('swap', `更换${label}`, () => ctx.pickForSlot(slot)),
-        iconAct('x', `移除${label}`, () => ctx.removeSlot(slot), { danger: true }),
-      ]),
-    ], { cls: missing ? 'is-missing' : '' });
+    return slotCard({
+      label,
+      iconName: SLOT_ICON[slot],
+      iconUrl: model.iconOf(id),
+      zh: model.nameOf(id),
+      en: (item && item.en) || '',
+      stats: weaponStats(item).slice(0, 4),
+      tags: weaponTags(item),
+      extra: attachExtra(slot),
+      missing,
+      onOpen: () => ctx.pickForSlot(slot),
+      actions: [
+        { icon: 'eye', title: `查看${label}详情`, onClick: () => ctx.openDetail(id) },
+        {
+          icon: 'x-circle', title: missing ? '取消缺件标记' : `标记${label}为缺件`, on: missing,
+          onClick: () => ctx.toggleMissing(id),
+        },
+        { icon: 'x', title: `移除${label}`, onClick: () => ctx.removeSlot(slot), danger: true },
+      ],
+    });
   }
 
-  /* ----------------------------- 挂件子区块 ----------------------------- */
+  /* ----------------------------- 挂件行（卡底单行） ----------------------------- */
   function clearAttach(kind, slot) {
     if (kind === 'mod') S.setModOf(slot, null); else S.setMutator(slot, null);
     ui.toast(`已清除${kind === 'mod' ? '改装' : '突变因子'}`, 'ok');
   }
-  /* ----------------------------- 挂件子行（单行紧凑） ----------------------------- */
+  /** 卡内挂件控件：名称 + 选择/更换 + 清除；点击按钮不触发卡片主体「更换武器」 */
   function attachInline(kind, slot) {
     const isMod = kind === 'mod';
     const label = isMod ? '改装' : '突变因子';
@@ -175,7 +187,7 @@ export function createWeaponsTab(ctx) {
       currentId && !disabled ? iconAct('rotate-ccw', `清除${label}`, () => clearAttach(kind, slot), { size: 12 }) : '',
     );
   }
-  /** 挂件行：跟随武器行下方，单行显示「突变因子 / 改装」，不再单独占一个带标题的区块 */
+  /** 挂件条：塞在武器卡底部（.lab-slot__extra），不再单独占一行 */
   function attachSection(slot) {
     return h('div', { class: 'lab-attachline' }, icon('metagem', { size: 11 }), attachInline('mutator', slot), attachInline('mod', slot));
   }
@@ -230,6 +242,57 @@ export function createWeaponsTab(ctx) {
           on: { click: () => { clearAttach(kind, slot); ui.closeDrawer(); } },
         }, icon('rotate-ccw', { size: 12 }), h('span', { text: `清除${label}` })) : ''),
     });
+  }
+
+  /* ----------------------------- 效果汇总 ----------------------------- */
+  /** 汇总行里的挂件效果句：`突变因子：名 — 效果句`；未装备不占行（卡内已可点选择） */
+  function attachLine(kind, slot) {
+    if (kind === 'mod' && slot === 'melee') return '';
+    const id = kind === 'mod' ? S.modOf(slot) : S.mutatorOf(slot);
+    if (!id) return '';
+    const info = attachInfo(kind, id);
+    const label = kind === 'mod' ? '改装' : '突变因子';
+    return `${label}：${(info && info.zh) || model.nameOf(id) || id} — ${(info && info.effect) || '效果待验证'}`;
+  }
+
+  /** 汇总行：一把武器一行：弓字/类型标签 + 武器效果句 + 已装备挂件效果；点行看详情 */
+  function weaponDigest(slot) {
+    const id = weaponId(slot);
+    const label = slotZh(slot);
+    if (!id) return digestRow({ label, empty: true });
+    const item = model.itemsById.get(id) || null;
+    const missing = ctx.isMissing(id);
+    const tags = weaponTags(item);
+    if (missing) tags.push(tag('缺件'));
+    return digestRow({
+      label,
+      iconUrl: ctx.iconOf(id),
+      zh: model.nameOf(id),
+      tags,
+      effect: weaponEffect(item) || '无已收录效果',
+      lines: [attachLine('mutator', slot), attachLine('mod', slot)].filter(Boolean),
+      onClick: () => ctx.openDetail(id),
+    });
+  }
+
+  /** 汇总合计：已装备挂件数（突变因子 3 + 改装 2，近战无改装槽）；口径直接来自配装状态 */
+  function attachSums() {
+    const slots = WEAPON_SLOTS.filter((slot) => weaponId(slot));
+    if (!slots.length) return [];
+    let picked = 0;
+    let total = 0;
+    for (const slot of slots) {
+      total += 1;
+      if (S.mutatorOf(slot)) picked += 1;
+      if (slot !== 'melee') {
+        total += 1;
+        if (S.modOf(slot)) picked += 1;
+      }
+    }
+    return [{
+      k: '挂件已选', v: `${picked}/${total}`, iconName: 'metagem',
+      title: '已装备的突变因子 / 改装数量（近战只有突变因子，没有改装槽）',
+    }];
   }
 
   /* ----------------------------- 右侧推荐面板 ----------------------------- */
@@ -293,11 +356,29 @@ export function createWeaponsTab(ctx) {
   /* ----------------------------- 组装 ----------------------------- */
   function render() {
     clear(shell.body);
-    shell.body.append(catBar([{ zh: '槽位' }, { zh: '武器' }, { zh: '属性' }, { zh: '效果' }, { zh: '操作' }]));
-    for (const slot of WEAPON_SLOTS) {
-      shell.body.append(weaponRow(slot));
-      shell.body.append(attachSection(slot));
-    }
+    const cards = new Map();
+    const rows = new Map();
+    const strip = slotStrip(WEAPON_SLOTS.map((slot) => {
+      const card = weaponCard(slot);
+      cards.set(slot, card);
+      return card;
+    }));
+    const filled = WEAPON_SLOTS.filter((slot) => weaponId(slot)).length;
+    const sum = digest({
+      title: '效果汇总',
+      sub: `${cat.sub ? `${cat.sub} · ` : ''}已放入 ${filled}/${WEAPON_SLOTS.length}`,
+      iconName: 'listchecks',
+      rows: WEAPON_SLOTS.map((slot) => {
+        const row = weaponDigest(slot);
+        rows.set(slot, row);
+        return row;
+      }),
+      sums: attachSums(),
+      foot: filled ? [] : ['放入武器后，这里逐把列出武器效果与已装备挂件的效果。'],
+    });
+    shell.body.append(h('div', { class: 'lab-cat__pad' }, strip, sum));
+    /* 悬停卡片 ↔ 汇总行双向高亮：一眼看清这把武器的效果落在哪一行 */
+    for (const slot of WEAPON_SLOTS) linkHover(cards.get(slot), rows.get(slot));
     clear(shell.foot);
     shell.foot.append(noteLine('改装仅远程武器（长枪 / 手枪）可更换；近战只有固有改装（数据待验证）。突变因子按武器类型过滤（通用因子任何武器可用）。属性与效果取自已收录数据，缺项标「待验证」；适配为近似口径。'));
   }

@@ -33,8 +33,8 @@ workbench.js
    └─ 配装设置 panel（wb-settings.js：只剩消耗品 / 预设种子；场景 / 档位 / 流派已上移工具栏）
 ```
 
-`js/lab/wb-parts.js` 是分类页共用的渲染小件（`CATS` 分类表、`catShell/catBar/crow/slotCell/itemCell/statCell/effectCell/actsCell/emptyCrow/catSection/noteLine/recCard/recList/tag/fragColorBadge/iconAct/stepper/emptyTab`）。
-样式全部在 `css/view-lab.css` 的「装配台 v3」段；分类模块不写 CSS、不写颜色。
+`js/lab/wb-parts.js` 是分类页共用的渲染小件（`CATS` 分类表、`catShell/catBar/crow/slotCell/itemCell/statCell/effectCell/actsCell/emptyCrow/catSection/noteLine/recCard/recList/tag/fragColorBadge/iconAct/stepper/emptyTab`；v5 起新增 `slotCard/slotStrip/digest/digestRow/linkHover`，见 §8）。
+样式全部在 `css/view-lab.css` 的「装配台 v3」段（v5 的槽位卡与效果汇总在同文件末尾「装配台 v5」段）；分类模块不写 CSS、不写颜色。
 
 ### 1.1 分类模块契约
 
@@ -79,7 +79,7 @@ node qa/interactions.js --only lab   # B1–B18 装配台交互
 node qa/gate.mjs full      # 提交前：截图 / 交互 / 竞态 / 子路径
 ```
 
-已覆盖的交互断言：6 分类页可达且各页有内容、空槽 → 选择器 → 装备、选择器详情不装备、× 移除 + toast、清空确认、职业抽屉 ≥14 且写入、特性步进器改变合计、结果分组 / EHP、五面板深链、缺件重算、选择器筛选。
+已覆盖的交互断言：6 分类页可达、槽位卡数与效果汇总行数（v5）、空槽卡 → 选择器 → 装备、选择器详情不装备、× 移除 + toast、清空确认、职业抽屉 ≥14 且写入、特性步进器改变合计、结果分组 / EHP、五面板深链、缺件重算、选择器筛选。
 
 ## 6. 已知缺口（如实标注，不编造）
 
@@ -99,3 +99,36 @@ node qa/gate.mjs full      # 提交前：截图 / 交互 / 竞态 / 子路径
 5. **分类页内部**：武器挂件从「带标题的挂件区块 + 两行」压成武器行下的单行挂件条（名称 + 选择/更换 + 清除）；职业技能从 3 张大卡改为「已记录技能」单行 + 「选择/更换」打开抽取抽屉；特性表 43 条改为限高滚动 + 行内 × 悬停出现；护甲抗性从行内小图标改为数值 `title`（详情浮层有逐项）。
 6. **移动端**：修掉 topbar 计数徽章溢出（≤420px 隐藏）与装配台工具栏纵向 flex 的 `flex-wrap` 语义坑（子项按 max-content 撑宽）；390px 无横向溢出。
 7. 交互验收同步改造：B9 展开完整结果后断言分组/EHP；B11 改为从「设置」抽屉切换场景；其余 B1–B18 全部通过。
+
+## 8. v5 槽位卡（2026-10-30 同日）— 游戏装备栏式：并排槽位卡 + 效果汇总
+
+用户反馈「纯一行一行的表格，不如游戏里好看，交互效率也低」。v5 不改数据、不改推荐口径，只换分类页的呈现结构（事实源：代码）：
+
+```
+.lab-cat
+├─ .lab-cat__head   分类标题 + 本类动作（清空四件 / 按流派补空槽）
+├─ .lab-cat__body
+│  └─ .lab-cat__pad
+│     ├─ .lab-slots ── .lab-slot × N（并排槽位卡）
+│     └─ .lab-digest ── .lab-digest__row × N + .lab-digest__foot（合计 chips）
+└─ .lab-cat__foot   口径注释
+```
+
+1. **槽位并排成卡**：护甲 4 / 武器 3 / 职业 2 / 饰品 5 / 圣物与碎片 4。卡片内容 = 槽位名 + 大图标（空槽为虚线框 `+`）
+   + 名称（+ 英文小字）+ 2 个关键数值 + 维度 / 套装 / 颜色小标签；缺件卡走红色描边。空槽与有件都是同一张卡，
+   只是空槽显示「点击选择」。
+2. **交互**：点卡片主体 = 选择 / 更换（空槽与有件同一个 `openPicker` / 职业抽屉 / 碎片抽屉）；
+   卡角悬停（触屏常显）= 详情 / 缺件 / 移除；`linkHover(card, row)` 让卡片与它在汇总里的那一行双向高亮。
+3. **效果汇总**：把本类已选件的效果逐条列在卡下方（槽位 | 图标 | 名称 + 标签 + 效果句，点行打开详情浮层），
+   空槽占位行保证结构稳定；`sums` 是底部合计 chips（护甲：护甲值 / 护甲减伤 / 负重 / 档位；饰品：组合分 + 维度合计；
+   碎片：颜色统计），口径与旧表尾合计一致。
+4. **卡底附加区**（`.lab-slot__extra`）：武器卡的突变因子 / 改装选择、职业卡的技能记录条复用既有 `.lab-attachline` 结构，
+   CSS 已把挂件条压成卡内两行小控件；卡内按钮点击不会冒泡成「更换武器」。
+5. **特性页保留列表**：43 条特性是「勾选 + 0–10 级」清单，不是槽位，仍是 `.lab-trrow` 列表（限高滚动）。
+6. **共享件**（`js/lab/wb-parts.js`，唯一实现，分类页只组合、不各写一套）：
+   - `slotCard({ label, iconName, iconUrl, zh, en, stats, tags, extra, empty, missing, onOpen, actions })`
+   - `slotStrip(cards)` — `.lab-slots` 网格（`auto-fit minmax(138px,1fr)`，窄屏自动收列）
+   - `digest({ title, sub, iconName, actions, rows, sums, foot, empty })` / `digestRow({ label, iconUrl, zh, tags, effect, lines, extra, onClick, empty })`
+   - `linkHover(a, b)` — 卡片 ↔ 汇总行双向高亮
+7. **验收**：B1 断言「每类 `.lab-slot` 数 = 槽位上限、`.lab-digest__row` 数 = 卡数」，B3/B4/B5/B7/B18 选择器改为 `.lab-slot(.is-empty)`；
+   截图路由与 390px 移动端（卡片列数自动收窄）纳入 `full`。

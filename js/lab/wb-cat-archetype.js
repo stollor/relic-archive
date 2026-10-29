@@ -1,10 +1,10 @@
 /* =============================================================================
-   遗迹2 · 遗物档案 — lab/wb-cat-archetype.js（装配台 v3 · 职业与技能）
-   2 行：主职业 / 副职业（名 + 英文 + DLC 徽章 / 定位与防御专长 / 关联特性 / 操作）。
-   每行下方「技能 · 3 选 1」：技能由 skills.js 从解包数据按职业推导，点击卡片记到
-   meta.skills（只做配装记录，不参与防御合计）；英文原文放折叠区，数值缺失标「待验证」。
-   右侧推荐 = 防御向职业 Top4：用已收录防御专长做透明权重的「防御贡献分」排序。
-   数据口径见页脚与推荐脚注；本文件只新增一个分类页，不新增数据、不改 CSS。
+   遗迹2 · 遗物档案 — lab/wb-cat-archetype.js（装配台 v5 · 职业与技能）
+   主 / 副职业 = 2 张并排槽位卡：名 + 英文 + DLC 徽章，卡底技能记录条（选择 / 清除）。
+   卡下方「效果汇总」逐职业列定位、防御专长（专长名 + effectText）与关联特性；
+   技能由 skills.js 从解包数据按职业推导，只做配装记录，不参与防御合计；
+   英文原文放折叠区 / 待验证标记不变。右侧推荐 = 防御向职业 Top4（逻辑不动）。
+   数据口径见页脚与推荐脚注；本文件不新增数据、不改 CSS。
    ========================================================================== */
 import { h, clear, fmt } from '../core/dom.js';
 import { icon } from '../core/icons.js';
@@ -12,8 +12,8 @@ import { SLOT_LABEL } from './model.js';
 import { effectText, condShort } from './text.js';
 import { deriveSkills } from './skills.js';
 import {
-  CAT_BY_ID, catShell, catBar, crow, emptyCrow, slotCell, itemCell, effectCell, actsCell,
-  noteLine, recCard, recList, tag, iconAct, emptyTab,
+  CAT_BY_ID, catShell, noteLine, recCard, recList, tag, iconAct, emptyTab,
+  slotCard, slotStrip, linkHover, digest, digestRow,
 } from './wb-parts.js';
 
 const REC_TOP = 4;
@@ -77,30 +77,22 @@ export function createArchetypeTab(ctx) {
     const zh = a.dlcZh || '未知来源';
     return h('span', { class: 'badge badge--neutral', title: `内容来源：${zh}`, text: zh });
   }
-  /** 防御专长逐条：专长名 + effectText + 触发条件 */
+  /** 防御专长逐条（汇总行）：专长名 + effectText + 触发条件 */
   function perkLine(pm) {
     const cond = condShort(pm);
-    return h('div', { class: 'lab-archrow__perks muted' },
-      h('span', { class: 'badge badge--neutral', text: pm.zh || pm.id || '未知专长' }),
+    return h('div', { class: 'lab-digest__line' },
+      h('b', { text: `${pm.zh || pm.id || '未知专长'}：` }),
       h('span', { text: effectText(pm.effect) || '无防御词条' }),
-      cond ? tag(cond) : '',
+      cond ? h('span', { class: 'muted', text: `（${cond}）` }) : '',
     );
   }
-  function perkBox(a) {
-    const perkIds = model.perksOf(a.id);
-    const lines = [
-      h('div', { class: 'lab-archrow__meta muted', text: a.role ? `定位：${a.role}` : '定位：待验证（游戏内无官方定位分类）' }),
-    ];
-    if (perkIds.length) for (const pid of perkIds) lines.push(perkLine(E.modById.get(pid) || { id: pid }));
-    else lines.push(h('div', { class: 'lab-archrow__perks muted', text: '防御专长未收录（待验证）' }));
-    return h('div', { attrs: { style: 'display:flex;flex-direction:column;gap:2px' } }, lines);
-  }
-  function traitBox(a) {
+  /** 关联特性（汇总行）：特性名 + 满级效果（未收录处标待验证） */
+  function traitLine(a) {
     const trait = a.trait;
     const eff = trait && trait.raw && trait.raw.effect_at_max ? effectText(trait.raw.effect_at_max) : '';
-    return h('div', {},
-      tag(trait && trait.zh ? `特性 · ${trait.zh}` : '特性 · 待验证'),
-      h('div', { class: 'lab-archrow__perks muted', text: eff || '特性数值未收录（待验证）' }),
+    return h('div', { class: 'lab-digest__line' },
+      h('b', { text: `关联特性：${trait && trait.zh ? trait.zh : '待验证'}` }),
+      h('span', { class: 'muted', text: eff ? ` · ${eff}` : ' · 特性数值未收录（待验证）' }),
     );
   }
 
@@ -188,65 +180,120 @@ export function createArchetypeTab(ctx) {
     });
   }
 
-  /** 职业行下的单行技能条：图标 + 已记录技能（或「未记录」）+ [选择/更换] */
+  /** 职业卡底技能记录条：技能名 + 摘要 + [选择/更换] + 清除（卡内单行，窄屏自动换行） */
   function skillLine(slot, a) {
     const list = skillMap.get(a.id) || [];
     const selId = markedId(slot, list);
     const sel = selId ? list.find((skill) => skill.id === selId) : null;
     if (!list.length) {
-      return h('div', { class: 'lab-attachline' }, icon('skill', { size: 11 }),
-        h('span', { class: 'lab-attachline__k', text: '技能' }),
-        h('span', { class: 'muted', text: a.status === 'unreleased' ? '未实装 · 技能数据待验证' : '技能数据未收录（待验证）' }));
+      return h('div', { class: 'lab-attachline' },
+        h('div', { class: 'row row--wrap' },
+          icon('skill', { size: 11 }),
+          h('span', { class: 'lab-attachline__k', text: '技能' }),
+          h('span', { class: 'muted', text: a.status === 'unreleased' ? '未实装 · 技能数据待验证' : '技能数据未收录（待验证）' })));
     }
     return h('div', { class: 'lab-attachline' },
-      icon('skill', { size: 11 }),
-      h('span', { class: 'lab-attachline__k', text: '技能' }),
-      sel
-        ? h('span', { class: 'lab-attachline__v' },
-          h('b', { text: sel.zh }),
-          h('span', { class: 'lab-attachline__eff', text: sel.summary || sel.nums.map((n) => `${n.label} ${n.value}`).join(' · '), attrs: { title: sel.summary || '' } }))
-        : h('span', { class: 'muted', text: '未记录（可选）' }),
-      h('button', {
-        class: 'btn btn--ghost btn--sm', type: 'button',
-        attrs: { title: `查看${a.zh}的 3 个技能并记录一个` },
-        on: { click: (e) => { e.stopPropagation(); openSkillDrawer(slot, a); } },
-      }, h('span', { text: sel ? '更换' : '选择' })),
-      sel ? iconAct('rotate-ccw', '清除技能记录', () => toggleSkill(slot, sel, list), { size: 12 }) : '',
+      h('div', { class: 'row row--wrap' },
+        icon('skill', { size: 11 }),
+        h('span', { class: 'lab-attachline__k', text: '技能' }),
+        sel
+          ? h('span', { class: 'lab-attachline__v' },
+            h('b', { text: sel.zh }),
+            h('span', { class: 'lab-attachline__eff', text: sel.summary || sel.nums.map((n) => `${n.label} ${n.value}`).join(' · '), attrs: { title: sel.summary || '' } }))
+          : h('span', { class: 'muted', text: '未记录（可选）' }),
+        h('button', {
+          class: 'btn btn--ghost btn--sm', type: 'button',
+          attrs: { title: `查看${a.zh}的 3 个技能并记录一个` },
+          on: { click: (e) => { e.stopPropagation(); openSkillDrawer(slot, a); } },
+        }, h('span', { text: sel ? '更换' : '选择' })),
+        sel ? iconAct('rotate-ccw', '清除技能记录', () => toggleSkill(slot, sel, list), { size: 12 }) : '',
+      ),
     );
   }
 
-  /* ----------------------------- 职业行 ----------------------------- */
-  function archetypeRow(slot) {
+  /* ----------------------------- 槽位卡（主 / 副职业 = 2 张并排） ----------------------------- */
+  function archCard(slot) {
     const label = SLOT_LABEL[slot] || slot;
     const id = store.build.get(slot);
-    const acts = actsCell([
-      iconAct('swap', `更换${label}`, () => ctx.pickForSlot(slot)),
-      iconAct('x', `移除${label}`, () => ctx.removeSlot(slot), { danger: true }),
-    ]);
     if (!id) {
-      return emptyCrow({ label, iconName: 'archetype', hint: `选择${label}`, onPick: () => ctx.pickForSlot(slot) });
+      return slotCard({ label, iconName: 'archetype', empty: true, onOpen: () => ctx.pickForSlot(slot) });
     }
     const a = model.findArchetype(id);
+    const actions = [
+      { icon: 'swap', title: `更换${label}`, onClick: () => ctx.pickForSlot(slot) },
+      { icon: 'x', title: `移除${label}`, danger: true, onClick: () => ctx.removeSlot(slot) },
+    ];
     if (!a) {
-      return crow([
-        slotCell(label, 'archetype'),
-        itemCell({ zh: model.nameOf(id) || id, en: '', sub: '职业数据未收录（待验证）' }),
-        effectCell('职业数据未收录（待验证）'),
-        effectCell(tag('关联特性 · 待验证')),
-        acts,
-      ]);
+      return slotCard({
+        label, iconName: 'archetype', zh: model.nameOf(id) || id,
+        tags: [tag('职业数据未收录（待验证）')],
+        onOpen: () => ctx.pickForSlot(slot),
+        actions,
+      });
     }
     const unreleased = a.status === 'unreleased';
-    return crow([
-      slotCell(label, 'archetype', { badge: unreleased ? h('span', { class: 'badge badge--low', text: '未实装' }) : null }),
-      itemCell({
-        iconUrl: archIconUrl(a), zh: a.zh, en: a.en,
-        tags: [dlcBadge(a), unreleased ? h('span', { class: 'badge badge--low', text: '未实装（待验证）' }) : null],
-      }),
-      perkBox(a),
-      traitBox(a),
-      acts,
-    ]);
+    const tags = [dlcBadge(a)];
+    if (unreleased) tags.push(h('span', { class: 'badge badge--low', text: '未实装（待验证）' }));
+    return slotCard({
+      label,
+      iconName: 'archetype',
+      iconUrl: archIconUrl(a),
+      zh: a.zh,
+      en: a.en,
+      tags,
+      onOpen: () => ctx.pickForSlot(slot),
+      actions,
+      extra: h('div', { class: 'lab-slot__extra' }, skillLine(slot, a)),
+    });
+  }
+
+  /* ----------------------------- 效果汇总 ----------------------------- */
+  function archDigestRow(slot) {
+    const label = SLOT_LABEL[slot] || slot;
+    const id = store.build.get(slot);
+    if (!id) return digestRow({ label, empty: true });
+    const a = model.findArchetype(id);
+    if (!a) {
+      return digestRow({
+        label,
+        zh: model.nameOf(id) || id,
+        tags: [tag('职业数据未收录（待验证）')],
+        lines: ['职业数据未收录（待验证）'],
+      });
+    }
+    const tags = [tag(a.role ? `定位：${a.role}` : '定位：待验证')];
+    if (a.status === 'unreleased') tags.push(tag('未实装（待验证）'));
+    const perkIds = model.perksOf(a.id);
+    const lines = perkIds.length
+      ? perkIds.map((pid) => perkLine(E.modById.get(pid) || { id: pid }))
+      : [h('div', { class: 'lab-digest__line muted', text: '防御专长未收录（待验证）' })];
+    lines.push(traitLine(a));
+    return digestRow({ label, iconUrl: archIconUrl(a), zh: a.zh, tags, lines });
+  }
+
+  /** 汇总合计：已记录技能数 + DLC 来源职业数（均取自已选职业与 meta.skills） */
+  function archSums() {
+    const filled = ARCH_SLOTS.filter((slot) => store.build.get(slot)).length;
+    if (!filled) return [];
+    let skillCount = 0;
+    let dlcCount = 0;
+    for (const slot of ARCH_SLOTS) {
+      const id = store.build.get(slot);
+      const a = id ? model.findArchetype(id) : null;
+      const list = a ? (skillMap.get(a.id) || []) : [];
+      if (markedId(slot, list)) skillCount += 1;
+      if (a && a.dlc && a.dlc !== 'base') dlcCount += 1;
+    }
+    return [
+      {
+        k: '已记录技能', v: `${skillCount}/${ARCH_SLOTS.length}`, iconName: 'skill',
+        title: '主 / 副职业各自记录 1 个技能；只做配装记录，不参与防御合计',
+      },
+      {
+        k: 'DLC 来源', v: `${dlcCount}/${ARCH_SLOTS.length}`, iconName: 'archetype',
+        title: '主 / 副职业中内容来源为 DLC 的数量',
+      },
+    ];
   }
 
   /* ----------------------------- 推荐：防御贡献 Top4 ----------------------------- */
@@ -283,7 +330,7 @@ export function createArchetypeTab(ctx) {
         return `${pm.zh || pid}：${effectText(pm.effect) || '无防御词条'}${cond ? `（${cond}）` : ''}`;
       })
       : ['防御专长未收录（待验证）：已收录的防御向专长里没有该职业条目，不代表游戏内没有防御专长。'];
-    if (perkIds.length > MAX_REC_PERKS) lines.push(`等共 ${perkIds.length} 条已收录防御专长（逐条见上方职业行）`);
+    if (perkIds.length > MAX_REC_PERKS) lines.push(`等共 ${perkIds.length} 条已收录防御专长（逐条见上方职业卡汇总）`);
     const traitZh = a.trait && a.trait.zh;
     if (traitZh) lines.push(`关联特性：${traitZh}`);
     const parts = scoreParts(acc);
@@ -322,16 +369,29 @@ export function createArchetypeTab(ctx) {
   /* ----------------------------- 组装 / 刷新 ----------------------------- */
   function render() {
     clear(shell.body);
-    const rows = [catBar([
-      { zh: '槽位' }, { zh: '职业' }, { zh: '定位 · 防御专长' }, { zh: '关联特性' }, { zh: '操作' },
-    ])];
-    for (const slot of ARCH_SLOTS) {
-      rows.push(archetypeRow(slot));
-      const id = store.build.get(slot);
-      const a = id ? model.findArchetype(id) : null;
-      if (a) rows.push(skillLine(slot, a));
-    }
-    shell.body.append(...rows);
+    const cards = new Map();
+    const rows = new Map();
+    const strip = slotStrip(ARCH_SLOTS.map((slot) => {
+      const card = archCard(slot);
+      cards.set(slot, card);
+      return card;
+    }));
+    const filled = ARCH_SLOTS.filter((slot) => store.build.get(slot)).length;
+    const sum = digest({
+      title: '效果汇总',
+      sub: `主 / 副职业 · 已选 ${filled}/${ARCH_SLOTS.length}`,
+      iconName: 'archetype',
+      rows: ARCH_SLOTS.map((slot) => {
+        const row = archDigestRow(slot);
+        rows.set(slot, row);
+        return row;
+      }),
+      sums: archSums(),
+      foot: filled ? [] : ['选择主 / 副职业后，这里逐条列出定位、防御专长与关联特性。'],
+    });
+    shell.body.append(h('div', { class: 'lab-cat__pad' }, strip, sum));
+    /* 悬停卡片 ↔ 汇总行双向高亮 */
+    for (const slot of ARCH_SLOTS) linkHover(cards.get(slot), rows.get(slot));
     clear(shell.foot);
     shell.foot.append(
       noteLine(`技能不参与防御合计，仅为配装记录。${skills.note}。`),

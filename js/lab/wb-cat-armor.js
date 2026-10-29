@@ -1,7 +1,8 @@
 /* =============================================================================
    遗迹2 · 遗物档案 — lab/wb-cat-armor.js（装配台：护甲四件）
-   4 行：槽位 / 护甲件（图标+名）/ 护甲值·负重·五类抗性 / 套装与获取 / 操作。
-   表尾给合计（护甲值 / 负重 / 负重档位）；右侧推荐 = 当前场景前 3 套四件套（引擎穷举，异步计算）。
+   v5：4 张并排槽位卡（游戏装备栏式）+ 下方「效果汇总」（逐件抗性 / 套装 / 获取难度 + 四件合计）。
+   合计口径：护甲值 / 护甲减伤 / 负重 / 负重档位与闪避惩罚（引擎 comboStats，含场景与职业专长）。
+   右侧推荐 = 当前场景前 3 套四件套（引擎穷举，异步计算）。
    数据：护甲数值以 site_data.pieces 为准（引擎 pieceById）；套装加成未收录处标「待验证」。
    ========================================================================== */
 import { h, clear, fmt } from '../core/dom.js';
@@ -11,14 +12,15 @@ import * as S from './state.js';
 import { SLOT_LABEL } from './model.js';
 import { CLASS_ZH } from './engine.js';
 import {
-  catShell, catBar, crow, slotCell, itemCell, statCell, effectCell, actsCell, emptyCrow,
-  noteLine, recCard, recList, iconAct, tag, U,
+  CAT_BY_ID, catShell, noteLine, recCard, recList, tag,
+  slotCard, slotStrip, linkHover, digest, digestRow,
 } from './wb-parts.js';
 import { ARMOR_SLOTS } from './wb-slots.js';
 
 const RES_ZH = ['流血', '火焰', '电击', '腐蚀', '枯萎'];
 const HARD_WORDS = ['头目掉落', '解谜', '随机', 'Boss'];
 const REC_TOP = 3;
+const CAT = CAT_BY_ID.get('armor') || { zh: '护甲四件', sub: '4 槽 · 护甲值 / 负重 / 抗性计入合计', icon: 'armor' };
 
 /** 获取难度：从 site_data.pieces[].dobtain 里挑「难点」词 */
 function hardOf(p) {
@@ -27,11 +29,8 @@ function hardOf(p) {
 
 export function createArmorTab(ctx) {
   const { model, E, S, store, ui } = ctx;
-  const shell = catShell({
-    title: '护甲四件',
-    sub: '4 槽 · 护甲值 / 负重 / 抗性计入合计',
-    iconName: 'armor',
-  });
+  const shell = catShell({ title: CAT.zh, sub: CAT.sub || '', iconName: CAT.icon });
+  const openDetail = (id) => openItemDetail(id, { from: 'lab' });
   shell.acts.append(
     h('button', {
       class: 'btn btn--quiet btn--sm', type: 'button', text: '清空四件',
@@ -47,74 +46,101 @@ export function createArmorTab(ctx) {
     }),
   );
 
-  /* ------------------------- 行渲染 ------------------------- */
-  /** 抗性不再单独占一行：详情浮层里有逐项；行内只在装info上给 title，保持单行清爽 */
-  function resTitle(p) {
+  /* ------------------------- 数据小件 ------------------------- */
+  /** 单件五类抗性一行（护甲值 / 负重 chips 的 title 与汇总行共用同一口径） */
+  function resLine(p) {
     const res = Array.isArray(p.res) ? p.res : [];
     return RES_ZH.map((zh, i) => `${zh} ${fmt.num(res[i] || 0, 0)}`).join(' · ');
   }
 
-  function armorRow(slot) {
+  /** 套装构成：件数按「当前四槽里是否有该套件」实时算 */
+  function setOf(it) {
+    const parts = it && it.setField && Array.isArray(it.setField.parts) ? it.setField.parts : [];
+    const have = parts.filter((pid) => ARMOR_SLOTS.some((s) => store.build.get(s) === pid)).length;
+    return { parts, have };
+  }
+
+  function setTag(it, p) {
+    const title = p && p.dlc ? `来源：${p.dlc}` : '来源：待验证';
+    return it && it.setName ? tag(`套装 · ${it.setName}`, { title }) : tag('套装 · 未收录', { title });
+  }
+
+  /* ------------------------- 槽位卡（并排 4 格）+ 效果汇总 ------------------------- */
+  function armorCard(slot) {
     const id = store.build.get(slot);
     const label = SLOT_LABEL[slot];
     if (!id) {
-      return emptyCrow({
-        label, iconName: 'armor', hint: `选择${label}`,
-        onPick: () => ctx.pickForSlot(slot),
-      });
+      return slotCard({ label, iconName: 'armor', empty: true, onOpen: () => ctx.pickForSlot(slot) });
     }
     const p = model.pieceById.get(id) || {};
     const it = model.itemsById.get(id) || null;
     const miss = ctx.isMissing(id);
-    const stats = statCell([
-      { k: '护甲值', v: fmt.num(p.armor, 1), iconName: 'armor', title: resTitle(p) },
-      { k: '负重', v: fmt.num(p.weight, 1), iconName: 'weight', title: resTitle(p) },
-    ]);
-
-    const setParts = it && it.setField && Array.isArray(it.setField.parts) ? it.setField.parts : [];
-    const setHave = setParts.filter((pid) => ARMOR_SLOTS.some((s) => store.build.get(s) === pid)).length;
-    const hard = hardOf(p);
-    const effect = h('div', { class: 'lab-armoreff' },
-      h('div', { class: 'lab-armoreff__line' },
-        it && it.setName ? tag(`套装 · ${it.setName}`) : tag('套装 · 未收录'),
-        setParts.length ? tag(`本套 ${setHave}/${setParts.length}`) : '',
-        hard.length ? h('span', { class: 'badge badge--boss', title: `获取难度：${hard.join('、')}` }, icon('boss', { size: 10 }), h('span', { text: hard.join('、') })) : h('span', { class: 'badge badge--easy', text: '易获取' }),
-      ),
-      h('div', { class: 'lab-armoreff__note muted', text: p.dlc ? `来源：${p.dlc}` : '套装加成数据未收录（待验证）' }),
-    );
-
-    return crow([
-      slotCell(label, 'armor', { badge: miss ? h('span', { class: 'badge badge--low', text: '缺件' }) : null }),
-      itemCell({
-        iconUrl: p.iconUrl || ctx.iconOf(id), zh: p.zh || model.nameOf(id), en: p.en || '',
-        sub: it && it.setName ? it.setName : '', onClick: () => openItemDetail(id, { from: 'lab' }),
-      }),
-      stats,
-      effectCell(effect),
-      actsCell([
-        iconAct('eye', '查看详情', () => openItemDetail(id, { from: 'lab' })),
-        iconAct('x-circle', miss ? '取消缺件标记' : '标记为缺件（没有这件）', () => {
-          const on = S.toggleMissing(id);
-          ui.toast(on ? `已标记缺件：${model.nameOf(id)}` : `已取消缺件：${model.nameOf(id)}`, on ? 'warn' : 'ok');
-        }, { on: miss }),
-        iconAct('swap', `更换${label}`, () => ctx.pickForSlot(slot)),
-        iconAct('x', '移除', () => ctx.removeSlot(slot), { danger: true }),
-      ]),
-    ], { cls: miss ? 'is-missing' : '' });
+    const { parts, have } = setOf(it);
+    const zh = p.zh || model.nameOf(id);
+    return slotCard({
+      label,
+      iconName: 'armor',
+      iconUrl: p.iconUrl || ctx.iconOf(id),
+      zh,
+      en: p.en || '',
+      stats: [
+        { k: '护甲值', v: fmt.num(p.armor, 1), iconName: 'armor', title: resLine(p) },
+        { k: '负重', v: fmt.num(p.weight, 1), iconName: 'weight', title: resLine(p) },
+      ],
+      tags: [
+        setTag(it, p),
+        parts.length ? tag(`本套 ${have}/${parts.length}`, { title: `四槽中已放入本套 ${have}/${parts.length} 件` }) : '',
+      ],
+      missing: miss,
+      onOpen: () => ctx.pickForSlot(slot),
+      actions: [
+        { icon: 'eye', title: `查看${label}详情`, onClick: () => openDetail(id) },
+        {
+          icon: 'x-circle', title: miss ? '取消缺件标记' : '标记为缺件（没有这件）', on: miss,
+          onClick: () => {
+            const on = S.toggleMissing(id);
+            ui.toast(on ? `已标记缺件：${model.nameOf(id)}` : `已取消缺件：${model.nameOf(id)}`, on ? 'warn' : 'ok');
+          },
+        },
+        { icon: 'x', title: `移除${label}`, onClick: () => ctx.removeSlot(slot), danger: true },
+      ],
+    });
   }
 
-  function totalLine() {
-    const slots = store.build.slots();
-    const ids = ARMOR_SLOTS.map((s) => slots[s]).filter(Boolean);
-    if (!ids.length) return h('div', { class: 'lab-cat__total muted', text: '尚未放入护甲；放入后此处显示四件合计与实际减伤。' });
+  /** 汇总行：一件一行，槽位 / 图标 / 名称 + 套装、获取难度 + 五类抗性（点行看详情） */
+  function armorDigest(slot) {
+    const id = store.build.get(slot);
+    const label = SLOT_LABEL[slot];
+    if (!id) return digestRow({ label, empty: true });
+    const p = model.pieceById.get(id) || {};
+    const it = model.itemsById.get(id) || null;
+    const hard = hardOf(p);
+    const tags = [
+      setTag(it, p),
+      hard.length ? tag(hard.join('、'), { title: `获取难度：${hard.join('、')}` }) : tag('易获取', { title: '获取难度：无难点词条' }),
+    ];
+    if (ctx.isMissing(id)) tags.push(tag('缺件'));
+    return digestRow({
+      label,
+      iconUrl: p.iconUrl || ctx.iconOf(id),
+      zh: p.zh || model.nameOf(id),
+      tags,
+      lines: [resLine(p)],
+      onClick: () => openDetail(id),
+    });
+  }
+
+  /** 四件合计：护甲值 / 护甲减伤 / 负重 / 负重档位与闪避惩罚（引擎口径） */
+  function armorSums() {
+    const ids = ARMOR_SLOTS.map((s) => store.build.get(s)).filter(Boolean);
+    if (!ids.length) return [];
     const st = S.workbenchSummary(model);
-    return h('div', { class: 'lab-cat__total' },
-      h('span', { class: 'lab-cat__totalitem' }, icon('armor', { size: 12 }), h('b', { text: fmt.num(st.armor, 1) }), h('span', { text: '护甲值' })),
-      h('span', { class: 'lab-cat__totalitem' }, icon('shield', { size: 12 }), h('b', { text: fmt.pct(st.adr, 1) }), h('span', { text: '护甲减伤' })),
-      h('span', { class: 'lab-cat__totalitem' }, icon('weight', { size: 12 }), h('b', { text: fmt.num(st.weight, 1) }), h('span', { text: '负重' })),
-      h('span', { class: 'lab-cat__totalitem' }, icon('dodge', { size: 12 }), h('b', { text: CLASS_ZH[st.cls] || st.cls }), h('span', { text: `负重档位 · 闪避惩罚 ${fmt.pct((E.C.PENALTY[st.cls] || 0), 0)}` })),
-      h('span', { class: 'lab-cat__totalitem muted' }, h('span', { text: `已放入 ${st.filled}/4 件` })),
-    );
+    return [
+      { k: '护甲值', v: fmt.num(st.armor, 1), iconName: 'armor', title: '四件护甲值合计（引擎 comboStats 口径）' },
+      { k: '护甲减伤', v: fmt.pct(st.adr, 1), iconName: 'shield', title: '四件护甲对应的实际减伤（含当前场景与职业专长）' },
+      { k: '负重', v: fmt.num(st.weight, 1), iconName: 'weight', title: '四件负重合计' },
+      { k: `负重档位 · 闪避惩罚 ${fmt.pct(E.C.PENALTY[st.cls] || 0, 0)}`, v: CLASS_ZH[st.cls] || st.cls, iconName: 'dodge', title: '负重档位与对应的闪避惩罚' },
+    ];
   }
 
   /* ------------------------- 推荐（异步枚举 + 缓存） ------------------------- */
@@ -216,15 +242,31 @@ export function createArmorTab(ctx) {
   /* ------------------------- 组装 / 刷新 ------------------------- */
   function render() {
     clear(shell.body);
-    shell.body.append(
-      catBar([
-        { zh: '槽位' }, { zh: '护甲件' }, { zh: '数值（护甲 / 负重）' }, { zh: '套装与获取' }, { zh: '操作' },
-      ]),
-      ...ARMOR_SLOTS.map(armorRow),
-      totalLine(),
-    );
+    const cards = new Map();
+    const rows = new Map();
+    const strip = slotStrip(ARMOR_SLOTS.map((slot) => {
+      const card = armorCard(slot);
+      cards.set(slot, card);
+      return card;
+    }));
+    const filled = ARMOR_SLOTS.filter((slot) => store.build.get(slot)).length;
+    const sum = digest({
+      title: '效果汇总',
+      sub: `4 槽 · 已放入 ${filled}/${ARMOR_SLOTS.length}`,
+      iconName: 'armor',
+      rows: ARMOR_SLOTS.map((slot) => {
+        const row = armorDigest(slot);
+        rows.set(slot, row);
+        return row;
+      }),
+      sums: armorSums(),
+      foot: [`已放入 ${filled}/${ARMOR_SLOTS.length} 件`],
+    });
+    shell.body.append(h('div', { class: 'lab-cat__pad' }, strip, sum));
+    /* 悬停卡片 ↔ 汇总行双向高亮：一眼看清这件护甲的抗性 / 套装落在哪一行 */
+    for (const slot of ARMOR_SLOTS) linkHover(cards.get(slot), rows.get(slot));
     clear(shell.foot);
-    shell.foot.append(noteLine('护甲数值来自 site_data.pieces（引擎口径）；抗性为单件加成，套装加成数据未收录处标「待验证」。护甲效果与负重档位实时计入下方「本套效果」。'));
+    shell.foot.append(noteLine('护甲数值来自 site_data.pieces（引擎口径）；抗性为单件加成，套装加成数据未收录处标「待验证」。护甲值 / 护甲减伤 / 负重档位实时计入上方「效果汇总」合计。'));
   }
 
   render();
