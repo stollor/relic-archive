@@ -978,21 +978,21 @@ const termsRootRule = obj({
 const itemEffectsRootRule = obj({
   meta: obj({
     source: nstr(),
-    counts: obj({ none: int(), official: int(), manual: int() }, {
-      required: [req('none', '无官方效果句的道具数'), req('official', '官方效果句条目数'), req('manual', '人工整理条目数')],
+    counts: obj({ none: int(), official: int(), manual: int(), wiki: int() }, {
+      required: [req('none', '无任何效果句的道具数'), req('official', '官方效果句条目数'), req('manual', '人工整理条目数')],
     }),
     note: str(),
   }, { required: [req('counts', '效果句覆盖统计（与 items 真道具数对账）')] }),
   items: map(obj({
-    zh: nstr(),
+    zh: str(),
     zhTpl: strOrNull(),
     en: strOrNull(),
     key: strOrNull(),
-    src: { type: 'string', enum: ['official', 'manual'] },
+    src: { type: 'string', enum: ['official', 'manual', 'wiki'] },
     confidence: { type: 'string', enum: CONFIDENCE },
-    match: { type: 'string', enum: ['fuzzy', 'exact', 'manual', 'prefix'] },
+    match: { type: 'string', enum: ['fuzzy', 'exact', 'manual', 'prefix', 'wiki-only'] },
     values: { type: ['array', 'null'] },
-  }, { required: [req('zh', '中文效果句（详情页展示）'), req('src', '来源（官方原文/人工整理）'), req('confidence', '可信度')] })),
+  }, { required: [req('src', '来源（官方原文/人工整理/wiki 整理）'), req('confidence', '可信度')] })),
 }, {
   required: [
     req('meta', '效果句统计元信息'),
@@ -1376,21 +1376,36 @@ function itemEffectsCross(doc, ctx) {
   }
   const counts = doc?.meta?.counts || {};
   const entryCount = Object.keys(entries).length;
-  if (typeof counts.official === 'number' && typeof counts.manual === 'number' && counts.official + counts.manual !== entryCount) {
+  const sumCounts = (a, b, c) => [a, b, c].every((n) => typeof n === 'number') ? a + b + c : null;
+  const wikiCount = typeof counts.wiki === 'number' ? counts.wiki : 0;
+  const covered = sumCounts(counts.official, counts.manual, wikiCount);
+  if (covered !== null && covered !== entryCount) {
     ctx.fail(['meta', 'counts'], {
-      expected: `official+manual=${entryCount}`,
-      actual: counts.official + counts.manual,
-      message: `meta.counts.official+manual=${counts.official + counts.manual}，但 items 实际 ${entryCount} 条`,
+      expected: `official+manual+wiki=${entryCount}`,
+      actual: covered,
+      message: `meta.counts.official+manual+wiki=${covered}，但 items 实际 ${entryCount} 条`,
     });
   }
-  if ([counts.none, counts.official, counts.manual].every((n) => typeof n === 'number') && ctx.idx.itemTotal !== undefined) {
-    const sum = counts.none + counts.official + counts.manual;
+  if (counts.none !== undefined && covered !== null && ctx.idx.itemTotal !== undefined) {
+    const sum = counts.none + covered;
     if (sum !== ctx.idx.itemTotal) {
       ctx.fail(['meta', 'counts'], {
-        expected: `none+official+manual=${ctx.idx.itemTotal}（items 中 is_item=true 的数量）`,
+        expected: `none+official+manual+wiki=${ctx.idx.itemTotal}（items 中 is_item=true 的数量）`,
         actual: sum,
         message: `效果句覆盖统计之和 ${sum} 与 items.json 真道具数 ${ctx.idx.itemTotal} 不一致`,
       });
+    }
+  }
+  /* wiki 回退条目的不变量：官方中文为空、英文非空、来源/wiki-only 自洽（不得把英文塞进 zh） */
+  for (const [key, entry] of Object.entries(entries)) {
+    if (!entry || typeof entry !== 'object' || entry.src !== 'wiki') continue;
+    const zh = typeof entry.zh === 'string' ? entry.zh : '';
+    const en = typeof entry.en === 'string' ? entry.en : '';
+    if (zh.trim()) {
+      ctx.fail(['items', key, 'zh'], { expected: 'wiki 回退条目 zh 应为空', actual: zh });
+    }
+    if (!en.trim()) {
+      ctx.fail(['items', key, 'en'], { expected: 'wiki 回退条目必须有英文原文', actual: en });
     }
   }
 }

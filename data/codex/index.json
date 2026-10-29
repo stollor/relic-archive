@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-27",
+  "updated": "2026-10-30",
   "game": {
     "name": "遗迹 2",
     "patch": "453,438",
@@ -41,6 +41,14 @@
       "icon": "info",
       "desc": "触发规则、版本边界与证据分级",
       "order": 3
+    },
+    {
+      "id": "systems",
+      "zh": "系统机制",
+      "en": "Systems",
+      "icon": "perk",
+      "desc": "圣物碎片与棱晶、突变因子、武器改装、特性、饰品组合与数据口径",
+      "order": 4
     }
   ],
   "articles": [
@@ -2200,6 +2208,1266 @@
         {
           "k": "术语 · data/terms.json",
           "v": "DLC 中文名与五个世界的官方译名"
+        }
+      ]
+    },
+    {
+      "id": "relic-fragments",
+      "cat": "systems",
+      "title": "圣物碎片与棱晶",
+      "subtitle": "碎片插圣物、品质分五档；棱晶是另一套系统，别混",
+      "summary": "圣物碎片是插进圣物的属性件：45 种属性（红/黄/蓝各 15 种），品质从「龟裂」到「神话」共五档，掉落品质随所有职业等级总和与探索者被动变化。棱晶是独立于圣物三槽的另一套成长系统——locres 里那句「颜色加成」说的是棱晶内部，不是三槽。",
+      "brief": "碎片插圣物、5 档品质；棱晶是另一套系统",
+      "confidence": "mid",
+      "order": 14,
+      "blocks": [
+        {
+          "t": "h",
+          "level": 3,
+          "text": "先分清两件事"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**圣物碎片**是插进圣物的属性件，插槽行为本身有官方串可证：`在圣物中嵌入碎片可强化圣物属性`。碎片不是独立道具资产，游戏里按表生成，所以本库从 wiki 结构化数据收录 45 条，而不是从 `items.json`。",
+            "**棱晶（Prism）是另一套系统**：locres 里有 `装备棱晶`、`供养棱晶 / Feed to Prism`、`Feed Lvl`、`重置棱晶 / Flush Prism`、`必须选择强化棱晶，才能进一步饲喂棱晶` 这些交互串。它是可以「喂」的成长件，跟圣物的三个碎片槽不是一回事。",
+            "**颜色不是装饰**：45 条按效果实测可以干净地分成输出（红）、生存（蓝）、功能与速度（黄）三组，各 15 条。"
+          ]
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "颜色与条数"
+        },
+        {
+          "t": "p",
+          "text": "碎片按颜色分红、黄、蓝三组各 15 种，合计 45 条。这个数字可以当场复算：`wiki_items.jsonl` 里 `cat=fragment` 正好 45 行，`fields.type` 是 Red / Yellow / Blue 各 15；`lab_gear.json` 的 `gear.fragment` 也是 45 条、红黄蓝各 15。"
+        },
+        {
+          "t": "table",
+          "head": [
+            "颜色",
+            "条数",
+            "实际效果分布",
+            "代表属性"
+          ],
+          "rows": [
+            [
+              "红",
+              "15",
+              "输出向：伤害、暴击率、暴击伤害、弱点伤害、状态伤害、射速",
+              "远程伤害 +10%、近战伤害 +10%、弱点伤害 +15%、暴击伤害 +10%"
+            ],
+            [
+              "黄",
+              "15",
+              "功能与速度：改装能量、装填、持续时间、移动速度、射程、散射",
+              "改装能量获取 +10%、技能冷却 -10%、移动速度 +10%、弹药储备 +25%"
+            ],
+            [
+              "蓝",
+              "15",
+              "生存向：护甲、生命、体力、减伤、护盾、治疗、复活",
+              "护甲效果 +10%、减伤 +5%、生命 +10、体力 +15、护盾效果 +10%"
+            ]
+          ],
+          "num": [
+            1
+          ],
+          "caption": "按 `lab_gear.json` 的 45 条实际效果归类；每组 15 条无一例外落在同一类里，所以「红=输出 / 黄=功能 / 蓝=生存」是可核对的观察，不是传言。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "五档品质：只有名字可证，倍率没有"
+        },
+        {
+          "t": "table",
+          "head": [
+            "档位",
+            "官方中文（locres）",
+            "英文原文",
+            "本库状态"
+          ],
+          "rows": [
+            [
+              "1",
+              "龟裂",
+              "Cracked",
+              "名字确定"
+            ],
+            [
+              "2",
+              "坚实",
+              "Solid",
+              "名字确定"
+            ],
+            [
+              "3",
+              "光亮",
+              "Polished",
+              "名字确定"
+            ],
+            [
+              "4",
+              "无暇",
+              "Flawless",
+              "名字确定"
+            ],
+            [
+              "5",
+              "神话",
+              "Mythic",
+              "名字确定"
+            ]
+          ],
+          "num": [
+            0
+          ],
+          "caption": "locres 里这五个词都是独立单串（品质标签）。档位先后顺序与每档的数值倍率，本库没有任何字段可证 —— 按升级路径排列，标「待验证」。"
+        },
+        {
+          "t": "p",
+          "text": "能确证的只有「谁影响品质」和「五档叫什么」，幅度全部缺失。locres 里关于品质的两句原文是：`所有职业等级的总和。提高掉落圣物碎片的品质。` 与探索者被动 `探索者发现的圣物碎片具有更高的质量。拾取碎片时，探索者有 X% 的几率额外获得一枚相同类型、相同品质的碎片。`"
+        },
+        {
+          "t": "formula",
+          "code": "碎片掉落品质 = f（所有职业等级总和，探索者被动）\n\n能确证的输入项：\n  所有职业等级总和   → 提高掉落品质（locres 原句）\n  探索者被动         → 碎片质量更高 + {DuplicateDropChance}% 几率额外掉落同类型同品质\n  商店奖励           → 获得一个与你角色等级相匹配的红/黄/蓝圣物碎片\n\n本库没有的：\n  五档之间每档的数值倍率 → 待验证\n  各来源（商店 / 拾取 / 头目掉落）的品质权重 → 待验证",
+          "caption": "能证的是「谁影响品质」，不能证的是「影响多少」。看到具体数字的攻略，先问它从哪来。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "棱晶：别把颜色加到三槽上"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**locres 那句颜色加成说的是棱晶**：`根据棱晶内碎片的颜色获得加成。`（Gain Bonuses Based on Color of Fragments within the Prism.）主语是棱晶内部，不是圣物三槽。把这句话当成「三个槽按颜色给隐藏加成」是误读。",
+            "**棱晶要喂、会升级、可以重置**：`Feed to Prism`、`Feed Lvl`、`Flush Prism`、`必须选择强化棱晶，才能进一步饲喂棱晶`。同时 `你确定要喂掉这个碎片吗？它将在此过程中被销毁。此操作不可逆。` —— 说明碎片是棱晶的消耗材料。",
+            "**棱晶也有「石」这一层**：`棱晶石 / Prism Stone`、`给予并装备棱晶石`、`棱晶碎片 / Prism Fragment`，说明它有自己的槽位与材料链，具体槽数与等级上限本库无数据。"
+          ]
+        },
+        {
+          "t": "evidence",
+          "head": [
+            "结论",
+            "可信度",
+            "依据"
+          ],
+          "rows": [
+            [
+              "碎片可插进圣物、可在各领域找到或向叨沃购买",
+              "高可信",
+              "locres 原文：Slotting Fragments into Relics enhances their statistics. These Fragments can be discovered throughout different realms or purchased from Dwell in Ward 13."
+            ],
+            [
+              "45 条 = 红 / 黄 / 蓝各 15",
+              "高可信",
+              "`wiki_items.jsonl` cat=fragment 45 行、fields.type 统计；`lab_gear.json` gear.fragment 45 条，可复算"
+            ],
+            [
+              "五档品质名（龟裂 / 坚实 / 光亮 / 无暇 / 神话）",
+              "中可信",
+              "locres 五个独立单串；档位顺序与倍率无来源"
+            ],
+            [
+              "圣物 3 个碎片槽",
+              "中可信",
+              "本站口径 docs/UX_SPEC.md §11.4、docs/LAB_V2.md §0；locres 只证「能插」，未证槽数"
+            ],
+            [
+              "「颜色加成」属于棱晶而非三槽",
+              "中可信",
+              "locres：Gain Bonuses Based on Color of Fragments within the Prism."
+            ],
+            [
+              "棱晶是独立成长系统（喂碎片 / 升级 / 重置）",
+              "中可信",
+              "locres：Feed to Prism / Feed Lvl / Flush Prism / 强化棱晶前置"
+            ],
+            [
+              "五档数值倍率、棱晶等级曲线与加成幅度",
+              "待验证",
+              "本库无对应字段，数据源里也没有"
+            ]
+          ]
+        },
+        {
+          "t": "note",
+          "kind": "warn",
+          "text": "把「颜色加成」当成圣物三槽的隐藏机制，会推出一个数据里根本不存在的结论。三槽只有「能插」，颜色加成的证据全部落在棱晶身上。"
+        },
+        {
+          "t": "note",
+          "kind": "info",
+          "text": "实验室「圣物碎片」面板按颜色均衡给 3 件推荐；碎片的效果原文与维度分都在 `lab_gear.json` 里，可以直接看它凭什么被选中。"
+        }
+      ],
+      "links": [
+        {
+          "label": "实验室 · 圣物碎片",
+          "href": "#/lab?panel=fragments"
+        },
+        {
+          "label": "圣物 · 龙心",
+          "href": "#/items/Consumable_DragonHeart"
+        },
+        {
+          "label": "数据覆盖与置信度",
+          "href": "#/codex/data-coverage"
+        }
+      ],
+      "related": [
+        "data-coverage",
+        "trinket-combos",
+        "modifier-rules"
+      ],
+      "sources": [
+        {
+          "k": "官方 locres · locres_zh-Hans.json / locres_en.json",
+          "v": "「在圣物中嵌入碎片…找叨沃购买」全句；五档品质名 Cracked/Solid/Polished/Flawless/Mythic；棱晶交互串 Feed to Prism / Feed Lvl / Flush Prism；品质受职业等级总和影响的说明句"
+        },
+        {
+          "k": "数据 · wiki_items.jsonl",
+          "v": "cat=fragment 45 行，fields.type = Red / Yellow / Blue 各 15"
+        },
+        {
+          "k": "数据 · lab_gear.json",
+          "v": "gear.fragment 45 条（红/黄/蓝各 15）的 color / stat / effectZh / dims / effectSrc"
+        },
+        {
+          "k": "产物 · build/ref/fragment.md",
+          "v": "wiki 人工整理的英文效果原文 44 条（比真实数据少 1 条，缺 Ammo Reserves）"
+        },
+        {
+          "k": "规范 · docs/UX_SPEC.md / docs/LAB_V2.md",
+          "v": "圣物 3 碎片槽、颜色加成与棱晶机制出处为 locres（置信 mid）"
+        }
+      ]
+    },
+    {
+      "id": "mutators",
+      "cat": "systems",
+      "title": "突变因子",
+      "subtitle": "一槽一件、按远程/近战分、10 级那条额外效果才是重点",
+      "summary": "突变因子是挂在单把武器上的被动件：分远程与近战两类共 66 条（远程 41 / 近战 25），每条随使用升级，10 级解锁一句额外效果——那一句往往比基础数值更决定它值不值得带。本库用标签与关键词映射到 15 个维度做同口径比较，不还原精确数值。",
+      "brief": "66 条、分远程/近战、10 级效果才是重点",
+      "confidence": "high",
+      "order": 15,
+      "blocks": [
+        {
+          "t": "p",
+          "text": "官方定义把它的定位说得很清楚：`Mutators offer a unique way to modify your weapons, unlocking new mechanics and enhancing their overall performance.`（突变因子为你提供了一种独特的方式来改造武器、解锁新机制并提高它们的整体性能。）注意 `unlocking new mechanics` —— 突变因子的价值大头在 10 级解锁的那条规则，而不是基础加成。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "两类、66 条"
+        },
+        {
+          "t": "table",
+          "head": [
+            "类型",
+            "条数",
+            "判定依据"
+          ],
+          "rows": [
+            [
+              "远程武器",
+              "41",
+              "wiki 资产路径含 /Gems/Ranged/ 或 MetaGem_Ranged"
+            ],
+            [
+              "近战武器",
+              "25",
+              "wiki 资产路径含 /Gems/Melee/ 或 MetaGem_Melee"
+            ],
+            [
+              "合计",
+              "66",
+              "metagem 68 条，减去 MetaGem_Melee / MetaGem_Ranged 两个通用基底"
+            ]
+          ],
+          "num": [
+            1
+          ],
+          "caption": "资产路径比 tags 更稳，所以生成器优先用路径，tags 只做兜底（build/mk_lab_gear.py §mutator）。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "10 级那句额外效果"
+        },
+        {
+          "t": "p",
+          "text": "66 条效果原文里全部带 `Level 10:` 或 `MAX LEVEL:` 段——这一点可以逐条匹配复算。它通常不是加一点数值，而是换一条规则："
+        },
+        {
+          "t": "table",
+          "head": [
+            "突变因子",
+            "10 级效果（原文要点）",
+            "为什么它改变结论"
+          ],
+          "rows": [
+            [
+              "动量 MetaGem_Momentum",
+              "暴击时叠加暴击率与暴击伤害；10 级：暴击额外加 2 层、持续时间 +2 秒",
+              "从「打得出层数」变成「叠得快」，高层数维持成本直接下降"
+            ],
+            [
+              "前锋 MetaGem_Striker",
+              "近战命中 +3%–6% 近战伤害 5 秒 5 层；10 级：每层 +3% 移动速度",
+              "把一件纯输出件变成机动件，近战流派的价值判断会翻面"
+            ],
+            [
+              "千刀万剐 MetaGem_ThousandCuts",
+              "每发 +0.1%–0.5% 暴击率与暴击伤害 0.125 秒、50 层；10 级：每层 +1% 装填速度",
+              "只对高射速武器成立，且 10 级把收益从暴击转成射速"
+            ]
+          ],
+          "caption": "原文来自 build/ref/meta_gem.md；10 级句在原文里是 `Level 10:` 之后的部分。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "本库怎么建模"
+        },
+        {
+          "t": "formula",
+          "code": "维度分 = 标签命中 → 1\n        效果关键词命中 → 0.5\n        都没命中 → 0（并记录 evidence 为空）\n\n映射到固定 15 维：\n  dmg / ranged / melee / crit / status / mod / skill / firerate /\n  explosive / armor / health / heal / stamina / utility / summon\n\n每条保留 evidence：tag:Xxx / kw:xxx，用来回溯它凭什么拿到分",
+          "caption": "口径见 docs/LAB_V2.md §1.2。这不是游戏内数值，只用于同一口径下的排序；「哪件更适合我这套」要靠流派权重，不靠单一分高。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "和武器改装的差别"
+        },
+        {
+          "t": "table",
+          "head": [
+            "",
+            "突变因子",
+            "武器改装"
+          ],
+          "rows": [
+            [
+              "挂在哪",
+              "武器的挂件，长枪 / 手枪 / 近战各一",
+              "只挂远程武器，占改装槽"
+            ],
+            [
+              "怎么生效",
+              "满足武器行为条件后被动生效",
+              "造成伤害攒改装能量，能量满按 AltFire 主动释放"
+            ],
+            [
+              "成长",
+              "随使用升级，10 级给额外效果",
+              "没有等级，效果固定"
+            ],
+            [
+              "本库条数",
+              "66（远程 41 / 近战 25）",
+              "79（远程可换；近战的固有改装无数据）"
+            ]
+          ]
+        },
+        {
+          "t": "evidence",
+          "head": [
+            "结论",
+            "可信度",
+            "依据"
+          ],
+          "rows": [
+            [
+              "官方定位：改造武器、解锁新机制",
+              "高可信",
+              "locres 教程串 EN/ZH 对照（Mutators offer a unique way to modify your weapons…）"
+            ],
+            [
+              "66 条 = metagem 68 − 2 个通用基底",
+              "高可信",
+              "items.json 的 metagem 68 条 + build/mk_lab_gear.py §mutator 排除规则；lab_gear.json counts.mutator=66"
+            ],
+            [
+              "远程 41 / 近战 25",
+              "高可信",
+              "lab_gear.json gear.mutator 的 weapon 字段统计，判定来自 wiki 资产路径"
+            ],
+            [
+              "每条都有 10 级效果",
+              "高可信",
+              "66 条效果原文全文匹配 Level 10 / MAX LEVEL，命中 66/66"
+            ],
+            [
+              "升级曲线（多少伤害涨一级）",
+              "待验证",
+              "本库无经验/等级字段"
+            ],
+            [
+              "触发条件的覆盖率",
+              "待验证",
+              "覆盖率口径见 #/codex/modifier-rules，属本站假设"
+            ]
+          ]
+        },
+        {
+          "t": "note",
+          "kind": "tip",
+          "text": "挑突变因子先读 10 级那句：同一把武器上，10 级换的是规则（层数、触发方式、转成别的属性），基础数值只是入场券。"
+        }
+      ],
+      "links": [
+        {
+          "label": "实验室 · 武器改装面板",
+          "href": "#/lab?panel=weapons"
+        },
+        {
+          "label": "动量（突变因子）",
+          "href": "#/items/MetaGem_Momentum"
+        },
+        {
+          "label": "武器改装",
+          "href": "#/codex/weapon-mods"
+        }
+      ],
+      "related": [
+        "weapon-mods",
+        "data-coverage",
+        "modifier-rules"
+      ],
+      "sources": [
+        {
+          "k": "官方 locres · locres_en.json / locres_zh-Hans.json",
+          "v": "Mutator 定义句、Level 10 效果句的官方中英对照"
+        },
+        {
+          "k": "产物 · build/ref/meta_gem.md",
+          "v": "wiki 人工整理 68 条变异器效果原文（含 Level 10 段）与获取方式"
+        },
+        {
+          "k": "数据 · lab_gear.json",
+          "v": "gear.mutator 66 条：weapon / dims / evidence / effectSrc"
+        },
+        {
+          "k": "生成器 · build/mk_lab_gear.py",
+          "v": "§mutator：按 /Gems/Melee|Ranged/ 路径判武器类型，排除 MetaGem_Melee / MetaGem_Ranged"
+        },
+        {
+          "k": "规范 · docs/LAB_V2.md",
+          "v": "§1.2 维度表、§2.3 fit.recommendMutators 的过滤与契合度口径"
+        }
+      ]
+    },
+    {
+      "id": "weapon-mods",
+      "cat": "systems",
+      "title": "武器改装",
+      "subtitle": "打到能量满、按 AltFire 释放；远程才有槽，近战固有改装本库无映射",
+      "summary": "官方文本把机制说得很干净：改装装到「绝大部分」远程武器上，靠造成伤害攒改装能量，能量槽满按 AltFire 释放。所以改装是主动技能型挂件，跟突变因子的被动成长完全不同。本库收录 79 条，过滤规则与条数都能复算；武器与固有改装的对应关系没有数据，标「待验证」。",
+      "brief": "改装靠伤害攒能量、满槽 AltFire 释放；79 条已收录",
+      "confidence": "mid",
+      "order": 16,
+      "blocks": [
+        {
+          "t": "h",
+          "level": 3,
+          "text": "官方口径：主动释放 + 远程专属"
+        },
+        {
+          "t": "p",
+          "text": "两条教程原文把机制讲完了，不需要猜：`武器改装配件可以用来增强你的远程武器的威力。当装备时，武器可以通过对敌人造成伤害来获得改装威力。当威力槽蓄满时，可以按 AltFire 启动武器改装。` 另一条补槽位：`武器改装配件可以安装于绝大部分远程武器上。`"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**改装能量（Mod Power）靠伤害攒**，不是冷却时间，也不是击杀。所以高射速、高命中率的武器天生攒得快。",
+            "**释放方式是按 AltFire**，属于主动技能型挂件：攒得慢就意味着关键时刻没得放。",
+            "**官方写的是「绝大部分远程武器」**，这句话本身就说明近战不属于可换装改装的范畴。"
+          ]
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "79 条是怎么来的"
+        },
+        {
+          "t": "table",
+          "head": [
+            "步骤",
+            "条数",
+            "说明"
+          ],
+          "rows": [
+            [
+              "items.json 里 cat=mod 的全部行",
+              "93",
+              "81 条真道具 + 12 条资产行（kind≠item）"
+            ],
+            [
+              "去掉 `*_Debuff` 辅助行",
+              "80",
+              "Mod_Fargazer_Debuff 这类不是可装备改装"
+            ],
+            [
+              "同名去重（Fusion Cannon 两行，保留 World_Base）",
+              "79",
+              "同一改装的 /Events 与 /World_Base 两条资产"
+            ],
+            [
+              "进入实验室",
+              "79",
+              "lab_gear.json gear.mod 数组长度"
+            ]
+          ],
+          "num": [
+            1
+          ],
+          "caption": "每一步都能用 items.json 复算。注意 build/ref/mod.md 是 105 条，多出来的是 wiki 独有词条与近战改装，不能直接当改装总数。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "实验室的候选过滤"
+        },
+        {
+          "t": "formula",
+          "code": "recommendMods(weaponType, playstyle):\n  1) 排除资产行：tags 含 MeleeWeaponMod / Notify / SharedPickup\n  2) 远程槽 → 可换装改装候选全量\n     近战槽 → 只显示固有改装；无映射数据时写「待验证」\n  3) 契合度：武器 tags 与候选 dims 每命中 1 维 +0.05（上限 +0.15）\n  4) 按流派 itemScore 排序取前 N，why 里注明「与武器标签契合」",
+          "caption": "口径见 docs/LAB_V2.md §2.3。0.05 / 0.15 是本库排序权重，不是游戏数值。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "本库明确没做的事"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**武器 ↔ 固有改装的映射没有**：`items.json` 的武器条目里没有 mod 字段（122 条真武器逐条检查，无该键），所以「哪把 Boss 武器自带哪个改装」查不到，实验室只能标待验证。",
+            "**近战没有可换改装槽是实验室口径**：官方文本写的是「绝大部分远程武器」；近战改装配件在数据里混在 mod 池中（`MeleeWeaponMod` 标签），本库不把它当可换槽。",
+            "**24 条 wiki 独有近战改装未收录**：容器里找不到对应 BP，见 `completeness_report.md` §5 的诚实清单。",
+            "**改装伤害与能量的具体数值没有**：只有效果原文、标签与维度分。"
+          ]
+        },
+        {
+          "t": "evidence",
+          "head": [
+            "结论",
+            "可信度",
+            "依据"
+          ],
+          "rows": [
+            [
+              "改装靠造成伤害攒能量、满槽按 AltFire 释放",
+              "高可信",
+              "locres 教程串 EN/ZH 对照"
+            ],
+            [
+              "只装远程武器",
+              "高可信",
+              "locres：Weapon mods can be equipped to most ranged weapons from the inventory screen."
+            ],
+            [
+              "本库收录 79 条",
+              "高可信",
+              "93 − 12 资产行 − 1 Debuff − 1 重复，逐条可复算；lab_gear counts.mod=79"
+            ],
+            [
+              "武器与固有改装的对应关系",
+              "待验证",
+              "items.json 武器条目无 mod 字段，本库无映射"
+            ],
+            [
+              "近战改装槽位的游戏规则",
+              "待验证",
+              "只有站点 docs 口径，无官方原文"
+            ],
+            [
+              "24 条近战改装的实际内容",
+              "待验证",
+              "wiki 有词条、容器无 BP，未收录"
+            ]
+          ]
+        },
+        {
+          "t": "note",
+          "kind": "warn",
+          "text": "「79 条」是本库收录数，不是游戏里的改装总数。wiki 侧还有 24 条没有资产 id 的近战改装，以及若干 DLC 命名差异条目。"
+        },
+        {
+          "t": "note",
+          "kind": "info",
+          "text": "在实验室「武器改装」面板切到近战槽时，改装区显示固有改装（无数据时明示待验证），突变因子区仍按近战过滤——两者不要混看。"
+        }
+      ],
+      "links": [
+        {
+          "label": "实验室 · 武器改装面板",
+          "href": "#/lab?panel=weapons"
+        },
+        {
+          "label": "腐蚀弹（武器改装）",
+          "href": "#/items/Mod_CorrosiveRounds"
+        },
+        {
+          "label": "突变因子",
+          "href": "#/codex/mutators"
+        }
+      ],
+      "related": [
+        "mutators",
+        "data-coverage",
+        "damage-buckets"
+      ],
+      "sources": [
+        {
+          "k": "官方 locres · locres_en.json / locres_zh-Hans.json",
+          "v": "两条改装教程原文（攒能量 / AltFire 释放；装于绝大部分远程武器）"
+        },
+        {
+          "k": "数据 · items.json",
+          "v": "cat=mod 93 行（81 真道具 + 12 资产行）、Fusion Cannon 重复行、Mod_Fargazer_Debuff"
+        },
+        {
+          "k": "数据 · lab_gear.json",
+          "v": "gear.mod 79 条及 dims / tags / effectSrc"
+        },
+        {
+          "k": "生成器 · build/mk_lab_gear.py",
+          "v": "§mod：去 _Debuff、按名字去重保留 World_Base 行"
+        },
+        {
+          "k": "规范 · docs/LAB_V2.md",
+          "v": "§2.3 fit.recommendMods 的排除标签与近战口径；§4.2 面板行为"
+        },
+        {
+          "k": "报告 · data/completeness_report.md",
+          "v": "§5「仍缺什么」：武器 Mod wiki 23 条未收录的原因"
+        }
+      ]
+    },
+    {
+      "id": "traits",
+      "cat": "systems",
+      "title": "特性",
+      "subtitle": "43 条真特性、0–10 级、同时只能启用 10 条",
+      "summary": "特性是账号级成长：击败特定敌人或找知识典籍拿特性点，最高 10 级，同时只能启用 10 条；职业特性要先把对应职业练到 10 级才能给别的职业用。数据库里 cat=trait 有 85 行，但真特性只有 43 条——另外 42 行是 *_Stats 数值表分支。",
+      "brief": "43 条真特性、0–10 级、同时上限 10 条",
+      "confidence": "high",
+      "order": 17,
+      "blocks": [
+        {
+          "t": "h",
+          "level": 3,
+          "text": "85 行里只有 43 条是真特性"
+        },
+        {
+          "t": "table",
+          "head": [
+            "层次",
+            "条数",
+            "来源",
+            "说明"
+          ],
+          "rows": [
+            [
+              "items.json 里 cat=trait 的全部行",
+              "85",
+              "items.json",
+              "分类字段被大量数值表分支复用"
+            ],
+            [
+              "kind=item（真特性）",
+              "43",
+              "items.json → lab_gear.json gear.trait",
+              "有名字、有效果、可装备"
+            ],
+            [
+              "kind≠item（`*_Stats`）",
+              "42",
+              "items.json",
+              "Trait_Fortify_Stats 这类每级数值表，不是独立特性"
+            ]
+          ],
+          "num": [
+            1
+          ],
+          "caption": "42 条 _Stats 行的 id 全部以 `_Stats` 结尾，可逐条核对。把 85 当特性数量是常见错法，会把数值表当成可选特性。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "上限从哪来"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**等级 0–10**：`lab_gear.json` 每条特性都带 `maxLevel: 10`；其中 14 条数值特性还带 `perLevel`（每级数值），用于防御合计。",
+            "**同时启用上限 10**：来自本站口径（`docs/UX_SPEC.md` §11.4、`docs/LAB_V2.md` §0）。locres 里没有把这句话写成串，所以这条是「中可信」而不是「高可信」。",
+            "**职业特性要练到 10 级才通用**：wiki 整理原文里有 15 条带 `Other Archetypes can equip this Trait after reaching Level 10 with the …`，涉及 13 个职业（Alchemist / Archon / Challenger / Engineer / Gunslinger / Handler / Hunter / Invader / Invoker / Medic / Ritualist / Summoner / Warden）。",
+            "**特性点从哪来**：locres 教程原句 `角色可以通过击败特定敌人或寻找知识典籍来获得特性点。`"
+          ]
+        },
+        {
+          "t": "formula",
+          "code": "某级效果 = perLevel × 等级（等级 0–10）\n\n14 条数值特性有 perLevel（护甲效果 / 生命 / 体力 / 治疗等）→ 参与结果面板防御合计\n其余 29 条没有 perLevel → 只进维度分与效果原文展示，不折算数值\n\n结果面板防御合计 = 数值特性累加 + 饰品折算 + 碎片 + 消耗品",
+          "caption": "perLevel 取自 site_data.modifiers.traits；条件类效果的覆盖率仍是假设，口径见 #/codex/modifier-rules。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "实验室里怎么联动"
+        },
+        {
+          "t": "p",
+          "text": "特性面板给全量 43 条：中文名、维度标签、官方效果原文、0–10 级步进器，顶栏有「已用 X/10」提示与按流派一键满级前 10。勾选的数值特性立刻进结果面板的防御合计；非数值特性按维度分参与流派排序。资料库详情页的「加入特性」默认 1 级、上限 10 级，写完实验室立即可见并可继续调级。"
+        },
+        {
+          "t": "evidence",
+          "head": [
+            "结论",
+            "可信度",
+            "依据"
+          ],
+          "rows": [
+            [
+              "43 条真特性",
+              "高可信",
+              "items.json cat=trait 85 行里 kind=item 43；lab_gear.json counts.trait=43"
+            ],
+            [
+              "42 行 `*_Stats` 是数值表分支",
+              "高可信",
+              "id 全部以 _Stats 结尾（Trait_Affliction_Stats …），kind≠item"
+            ],
+            [
+              "0–10 级",
+              "高可信",
+              "lab_gear.json 每条 maxLevel=10"
+            ],
+            [
+              "同时启用上限 10",
+              "中可信",
+              "只有站点 docs（UX_SPEC §11.4 / LAB_V2 §0）；locres 无对应串"
+            ],
+            [
+              "职业特性需对应职业 10 级才通用",
+              "高可信",
+              "build/ref/trait.md 中 15 条原文，覆盖 13 个职业"
+            ],
+            [
+              "特性点来自击杀与知识典籍",
+              "高可信",
+              "locres 教程串 EN/ZH 对照"
+            ],
+            [
+              "每级数值曲线的完整表",
+              "待验证",
+              "仅 14 条有 perLevel；其余 29 条无数值口径"
+            ]
+          ]
+        },
+        {
+          "t": "note",
+          "kind": "info",
+          "text": "先用「按流派推荐前 10」一键满级，再逐条降级试收益，比从 43 条里手动挑快得多；上限 10 条是硬约束，面板会挡住第 11 条。"
+        }
+      ],
+      "links": [
+        {
+          "label": "实验室 · 特性面板",
+          "href": "#/lab?panel=traits"
+        },
+        {
+          "label": "坚韧（特性）",
+          "href": "#/items/Trait_Fortify"
+        },
+        {
+          "label": "饰品与特性的触发规则",
+          "href": "#/codex/modifier-rules"
+        }
+      ],
+      "related": [
+        "modifier-rules",
+        "data-coverage",
+        "trinket-combos"
+      ],
+      "sources": [
+        {
+          "k": "数据 · items.json",
+          "v": "cat=trait 85 行：43 条 kind=item、42 条 *_Stats"
+        },
+        {
+          "k": "数据 · lab_gear.json",
+          "v": "gear.trait 43 条：maxLevel / perLevel / dims / effectSrc"
+        },
+        {
+          "k": "产物 · build/ref/trait.md",
+          "v": "44 条特性页原文（含 15 条「对应职业 10 级后通用」说明；另混入 Ammo Reserves 碎片页 1 条）"
+        },
+        {
+          "k": "官方 locres · locres_zh-Hans.json",
+          "v": "特性点来源教程句；各职业特性效果句"
+        },
+        {
+          "k": "规范 · docs/UX_SPEC.md / docs/LAB_V2.md",
+          "v": "§11.4 与 §0：0–10 级、同时启用上限 10、结果面板联动"
+        }
+      ]
+    },
+    {
+      "id": "trinket-combos",
+      "cat": "systems",
+      "title": "饰品组合与乘区",
+      "subtitle": "护甲给数值、饰品给条件；组合分是本站排序口径，不是游戏数值",
+      "summary": "配装的分水岭在饰品：护甲只提供护甲值到减伤这条数值链，项链与 4 个戒指提供的才是条件化、分乘区的加成。所以组合值得算：225 枚戒指 + 104 条项链，本库按 15 个维度、9 个流派给「1 项链 + 4 戒指」打分，公式是 0.7×均分 + 0.3×覆盖，这个分只用于同口径排序。",
+      "brief": "护甲给数值、饰品给条件；组合分是本站排序口径",
+      "confidence": "mid",
+      "order": 18,
+      "blocks": [
+        {
+          "t": "p",
+          "text": "先把结论摆出来：**护甲换的是数值，饰品换的是条件**。护甲值经护甲减伤公式变成减伤率，链路固定、收益可算；戒指与项链给的常是「什么时候生效、叠几层、和谁同乘区」，这类东西单独看数字没意义，必须放进组合里看。所以实验室把 1 项链 + 4 戒指当成一个整体来算，而不是逐件推荐。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "同一乘区加算、不同乘区乘算"
+        },
+        {
+          "t": "formula",
+          "code": "单次伤害 = 基础伤害\n         × (1 + Σ 同区加成)      ← 远程 / 近战 / 改装 / 技能 各自一池\n         × 暴击修正 × 弱点修正\n         × (1 + 易伤加成)\n\n条件类先折算：折算值 = 作用值 × 层数 × 覆盖率\n  满血时远程 +25%（覆盖率≈1）   ≠  低生命时 +40%（覆盖率 0.2–0.4）\n  同区第 4 件同维饰品的边际收益 < 第 1 件异维饰品",
+          "caption": "乘区结构见 #/codex/damage-buckets；覆盖率口径见 #/codex/modifier-rules —— 覆盖率是本站假设，不是游戏数值。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "组合分怎么算"
+        },
+        {
+          "t": "formula",
+          "code": "itemScore   = Σ dims[d]·w[d] / Σ w[d]        （dims 只取 0<v≤1）\navg         = 5 件 itemScore 的平均\ncoverage    = 覆盖「流派权重 ≥ 0.6 的维度」的比例\n组合分       = 0.7 × avg + 0.3 × coverage\n\n候选池：戒指按 itemScore 取前 24、项链取前 12\n遍历规模：12 × C(24,4) = 126,720 组，纯算术、分帧计算（单帧 ≤ 8ms）",
+          "caption": "口径见 docs/LAB_V2.md §2.1–2.2。0.7 / 0.3 与 0.6 阈值都是本库排序权重，换掉它们不改变数据来源。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "9 个流派各自压哪几个维度"
+        },
+        {
+          "t": "table",
+          "head": [
+            "流派",
+            "权重最高的维度",
+            "组合时先看什么"
+          ],
+          "rows": [
+            [
+              "通用 general",
+              "dmg .5 / armor .4 / health .4 / utility .2",
+              "什么都想要时不至于跑偏，但上限也最低"
+            ],
+            [
+              "远程暴击 ranged_crit",
+              "crit .9 / ranged .8 / dmg .6 / firerate .4",
+              "先把暴击率补满，再谈暴击伤害"
+            ],
+            [
+              "远程续航 ranged_sustain",
+              "firerate .8 / ranged .7 / dmg .4 / utility .3",
+              "装填与弹匣优先，输出其次"
+            ],
+            [
+              "近战 melee",
+              "melee .9 / dmg .5 / crit .5 / stamina .3",
+              "近战与体力一起压，闪避才够用"
+            ],
+            [
+              "状态流 status",
+              "status .9 / ranged .4 / dmg .3 / mod .3",
+              "状态伤害与持续时间是主项"
+            ],
+            [
+              "改装技能 caster",
+              "mod .9 / skill .8 / dmg .3 / utility .3",
+              "改装能量与技能冷却同看"
+            ],
+            [
+              "生存坦克 tank",
+              "armor .9 / health .8 / heal .5 / stamina .2",
+              "减伤链优先，治疗其次"
+            ],
+            [
+              "辅助召唤 support",
+              "utility .8 / heal .7 / summon .6 / armor .3",
+              "团队向收益，单人收益打折"
+            ],
+            [
+              "召唤流 summoner",
+              "summon .9 / skill .6 / utility .4 / heal .3",
+              "召唤物加成与技能叠加"
+            ]
+          ],
+          "caption": "完整权重见 `lab_gear.json` 的 `playstyles[].dims`；这里只列权重最高的 3–4 项。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "组合原则"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**先定 2–3 个核心维度**：9 个流派每个只压 3–4 个维度（权重 ≥ 0.6）。维度铺太宽，均分像白开水，覆盖也上不去。",
+            "**别只堆单维**：同区加算是线性的，第 4 件同维饰品的边际收益明显低于第 1 件异维饰品；组合分里 0.3 的覆盖项专门惩罚这种堆法。",
+            "**注意唯一性与冲突**：戒指不可重复（游戏规则）；同一时间只能有 1 瓶药剂（酿酒大师的瓶塞可提到 3 瓶）。固定件不满足唯一性时，组合搜索直接返回空加错误原因，不会给你一个假结果。",
+            "**条件类要看覆盖率**：低生命 / 护盾存在 / 完美闪避这类条件天生覆盖率低，配装时要么给它造触发条件，要么就当它只有 0.2–0.4 的收益。"
+          ]
+        },
+        {
+          "t": "evidence",
+          "head": [
+            "结论",
+            "可信度",
+            "依据"
+          ],
+          "rows": [
+            [
+              "225 枚戒指 / 104 条项链",
+              "高可信",
+              "lab_gear.json counts 与 gear.ring / gear.amulet 数组长度，可复算"
+            ],
+            [
+              "15 维 / 9 流派",
+              "高可信",
+              "lab_gear.json dimensions 15 条、playstyles 9 条，契约在 docs/LAB_V2.md §1.2–1.3"
+            ],
+            [
+              "组合分 0.7×avg + 0.3×coverage",
+              "高可信",
+              "docs/LAB_V2.md §2.1 与 js/lab/score.js 实现一致"
+            ],
+            [
+              "126,720 组遍历",
+              "高可信",
+              "12 × C(24,4)，组合搜索候选池上限口径见 §2.2"
+            ],
+            [
+              "组合分是游戏内精确数值",
+              "待验证（否）",
+              "维度分来自游戏 filter_tags 与关键词映射，只用于同口径排序"
+            ],
+            [
+              "条件类覆盖率",
+              "待验证",
+              "本站假设值，非 wiki 数值"
+            ]
+          ]
+        },
+        {
+          "t": "note",
+          "kind": "tip",
+          "text": "在实验室「饰品组合」里先选流派、把已装备的几件固定住，面板会只对空槽做边际推荐；这比直接抄一套别人的组合更贴合你手上已有的件。"
+        }
+      ],
+      "links": [
+        {
+          "label": "实验室 · 饰品组合",
+          "href": "#/lab?panel=trinkets"
+        },
+        {
+          "label": "饰品与特性的触发规则",
+          "href": "#/codex/modifier-rules"
+        },
+        {
+          "label": "伤害乘区",
+          "href": "#/codex/damage-buckets"
+        }
+      ],
+      "related": [
+        "modifier-rules",
+        "damage-buckets",
+        "relic-fragments"
+      ],
+      "sources": [
+        {
+          "k": "数据 · lab_gear.json",
+          "v": "gear.ring 225 / gear.amulet 104；dimensions 15；playstyles 9（含各自 dims 权重）"
+        },
+        {
+          "k": "规范 · docs/LAB_V2.md",
+          "v": "§1.2 维度、§1.3 流派、§2.1 score 公式、§2.2 组合搜索与候选池、§4.1 面板"
+        },
+        {
+          "k": "代码 · js/lab/score.js / combos.js / fit.js",
+          "v": "公式实现的唯一事实源（纯函数、可 node --test）"
+        },
+        {
+          "k": "策展 · build/armor_tool/data/curation.md",
+          "v": "覆盖率假设清单（48 条非 1.0 条目全为假设）"
+        },
+        {
+          "k": "现有条目 · #/codex/damage-buckets、#/codex/modifier-rules",
+          "v": "乘区结构与条件折算口径"
+        }
+      ]
+    },
+    {
+      "id": "data-coverage",
+      "cat": "systems",
+      "title": "数据覆盖与置信度",
+      "subtitle": "三级来源、589 条装备数据、以及「待验证」到底是什么意思",
+      "summary": "实验室的 589 条装备来自三级来源：官方 locres（370 条效果句可直接用）、wiki 人工整理的英文原文、以及从模板与数值键派生的中文效果。三级来源可信度不同，所以每条都带 confidence 与 evidence。本库写「待验证」的时候是真的没有来源，不是没查到。",
+      "brief": "三级来源、589 条、每条带 confidence 与 evidence",
+      "confidence": "high",
+      "order": 19,
+      "blocks": [
+        {
+          "t": "h",
+          "level": 3,
+          "text": "589 条从哪来"
+        },
+        {
+          "t": "table",
+          "head": [
+            "类别",
+            "条数",
+            "来源",
+            "说明"
+          ],
+          "rows": [
+            [
+              "戒指",
+              "225",
+              "items.json → lab_gear",
+              "真道具，与 wiki 225 条对齐"
+            ],
+            [
+              "项链",
+              "104",
+              "items.json → lab_gear",
+              "wiki 103 条，本库多出的是变体"
+            ],
+            [
+              "突变因子",
+              "66",
+              "items.json metagem",
+              "68 条减 2 个通用基底"
+            ],
+            [
+              "武器改装",
+              "79",
+              "items.json mod",
+              "93 行经去资产行 / 去 Debuff / 去重后"
+            ],
+            [
+              "圣物碎片",
+              "45",
+              "wiki_items.jsonl",
+              "无独立 BP 资产，只能从 wiki 结构化数据收"
+            ],
+            [
+              "特性",
+              "43",
+              "items.json trait",
+              "85 行里 43 条真特性"
+            ],
+            [
+              "圣物",
+              "27",
+              "items.json relic",
+              "排除 Relic_Charge_Pickup"
+            ],
+            [
+              "合计",
+              "589",
+              "lab_gear.json meta.counts",
+              "七个数组长度之和，可复算"
+            ]
+          ],
+          "num": [
+            1
+          ],
+          "caption": "全部数字来自 `lab_gear.json` 的 `meta.counts`，并与 `gear.*` 各数组长度一致；qa 的数据契约会校验这个一致性。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "三级来源"
+        },
+        {
+          "t": "table",
+          "head": [
+            "级别",
+            "是什么",
+            "本库分布",
+            "风险"
+          ],
+          "rows": [
+            [
+              "官方 · official",
+              "游戏 locres 直接反查到的中文效果句",
+              "370 / 589",
+              "最稳；模板变量替换后语义仍需人读一遍"
+            ],
+            [
+              "wiki · wiki",
+              "remnant2.wiki.gg 逐页人工整理的英文原文",
+              "37 / 589",
+              "英文权威，但中文要派生"
+            ],
+            [
+              "派生 · derived",
+              "模板替换 + 数值键拼装出的中文效果句",
+              "104 / 589",
+              "数字对、句子可能不像人话"
+            ],
+            [
+              "派生 · derived-raw",
+              "内部字段名转储，不可直接展示",
+              "77 / 589",
+              "本库置空 effectZh、原文进 effectZhRaw，面板回退英文"
+            ],
+            [
+              "无 · none",
+              "连 wiki 效果句都没有",
+              "1 / 589",
+              "面板显示待验证"
+            ]
+          ],
+          "num": [
+            2
+          ],
+          "caption": "逐条统计 `gear.*` 的 `effectSrc` 字段，合计 370 + 104 + 77 + 37 + 1 = 589。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "已知缺口（诚实清单）"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**24 条 wiki 独有近战改装未收录**：wiki 有词条，容器里找不到对应 BP。",
+            "**2 条通用基底突变因子被排除**：MetaGem_Melee / MetaGem_Ranged 不是可装备件。",
+            "**42 行数值表分支不是特性**：id 全以 `_Stats` 结尾，它们是特性数值表的内部分支，不参与装备。",
+            "**build/ref/fragment.md 只有 44 条**，漏了 Ammo Reserves（那一页被并进 trait.md）；碎片按 `wiki_items.jsonl` 的 45 条收录。",
+            "**武器 ↔ 固有改装没有映射字段**，近战改装槽只有站点口径，标待验证。",
+            "**棱晶的规则没有字段**：槽数、等级、颜色加成倍率都查不到，只有交互串。",
+            "**13 条装备的维度分为空**：tags 与关键词都没命中，evidence 为空数组，排序时按 0 分处理。"
+          ]
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "「待验证」是什么"
+        },
+        {
+          "t": "p",
+          "text": "两种，别混：一是**本库口径但缺游戏原文**（圣物 3 碎片槽、特性同时上限 10）；二是**本站假设**（条件类效果的覆盖率，`modifier-rules` 里 48 条非 1.0 的条目全部属于这一类）。看到「待验证」徽章就说明这条不能当结论用，只能当假设用。反过来，标「高可信」的条目都有可点开的原始依据：locres 原句、wiki 页面、或可复算的资产统计。"
+        },
+        {
+          "t": "h",
+          "level": 3,
+          "text": "怎么反馈才有用"
+        },
+        {
+          "t": "list",
+          "items": [
+            "**带来源的纠错最有用**：locres 串、wiki 页面链接、游戏内截图，任一都能定位；只说「不对」无法查。",
+            "**能复算的优先**：某类到底多少条、某个 id 有没有收录、某条效果的原文是什么——这类问题本库当场能验。",
+            "**缺件走覆盖清单，别直接改数据**：有资产但没收录的（如近战改装、棱晶词条）属于已知缺口，改数据只会让缺口变得看不出来。",
+            "**别把排序权重视为游戏数值**：0.7 / 0.3、0.6 阈值、每命中 1 维 +0.05 都是本库口径，改它们不需要动数据来源。"
+          ]
+        },
+        {
+          "t": "evidence",
+          "head": [
+            "结论",
+            "可信度",
+            "依据"
+          ],
+          "rows": [
+            [
+              "589 条装备数据",
+              "高可信",
+              "`lab_gear.json` 的 `meta.counts` 与 `gear.*` 数组长度一致；qa 数据契约校验该一致性"
+            ],
+            [
+              "effectSrc 分布 370 / 104 / 77 / 37 / 1",
+              "高可信",
+              "逐条统计 effectSrc 字段，合计正好 589"
+            ],
+            [
+              "缺口清单",
+              "高可信",
+              "completeness_report.md §5 + build/mk_lab_gear.py 的排除规则注释"
+            ],
+            [
+              "覆盖率是假设",
+              "高可信",
+              "docs/UX_SPEC.md 与 build/armor_tool/data/curation.md 都明确标注"
+            ],
+            [
+              "难度与掉落率",
+              "高可信",
+              "本库无对应字段，数据源里也没有"
+            ],
+            [
+              "棱晶完整规则",
+              "待验证",
+              "只有 locres 交互串，无槽数 / 等级 / 倍率数据"
+            ]
+          ]
+        },
+        {
+          "t": "note",
+          "kind": "info",
+          "text": "想知道某条结论的可信度，看条目里的 evidence 表：每一行都是「结论 → 可信度 → 具体依据」，依据给到文件或原句，能自己复核。"
+        }
+      ],
+      "links": [
+        {
+          "label": "世界与区域：数据覆盖",
+          "href": "#/codex/world-coverage"
+        },
+        {
+          "label": "饰品与特性的触发规则",
+          "href": "#/codex/modifier-rules"
+        },
+        {
+          "label": "打开资料库",
+          "href": "#/items"
+        }
+      ],
+      "related": [
+        "world-coverage",
+        "weapon-mods",
+        "mutators"
+      ],
+      "sources": [
+        {
+          "k": "数据 · lab_gear.json",
+          "v": "meta.counts（589 条分项）与 meta.notes（每条排除规则与口径说明）"
+        },
+        {
+          "k": "生成器 · build/mk_lab_gear.py",
+          "v": "§make_gear 各 kind 的收录与排除逻辑；effectSrc 三级来源判定"
+        },
+        {
+          "k": "报告 · data/completeness_report.md",
+          "v": "§3 道具级覆盖对照、§5 仍缺什么、§6 解码置信度 high 1151 / medium 268 / low 274"
+        },
+        {
+          "k": "官方 locres · locres_zh-Hans.json",
+          "v": "official 级效果句的来源（370 条）"
+        },
+        {
+          "k": "策展 · build/armor_tool/data/curation.md",
+          "v": "覆盖率假设清单与可信度分级"
         }
       ]
     }
