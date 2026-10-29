@@ -252,14 +252,16 @@ async function loadItems() {
   for (let i = 0; i < rawList.length; i += 1) {
     const rec = normalizeItem(rawList[i], i);
     if (!rec) continue;
-    /* 官方效果原文（游戏内「效果」句，不是风味描述） */
+    /* 官方效果原文（游戏内「效果」句，不是风味描述）；wiki-only 回退只有英文原文 */
     const e = eff[rec.id];
-    if (e && e.zh) {
-      rec.effectZh = stripTags(String(e.zh)).trim();
+    if (e && (e.zh || e.en)) {
+      rec.effectZh = stripTags(String(e.zh || '')).trim();
       rec.effectEn = stripTags(String(e.en || '')).trim();
       rec.effectSrc = str(e.src) || 'official';
       rec.effectMatch = str(e.match);
       if (rec.effectZh) rec.haystack += ' ' + rec.effectZh.toLowerCase();
+      /* wiki 回退条目只有英文：并入检索词，保证英文关键词也能搜到 */
+      else if (rec.effectEn && rec.effectSrc === 'wiki') rec.haystack += ' ' + rec.effectEn.toLowerCase();
     } else {
       rec.effectZh = '';
       rec.effectEn = '';

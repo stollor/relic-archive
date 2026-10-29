@@ -643,6 +643,40 @@ async function main() {
       return 'modal 关闭 + Promise resolve(false)';
     });
 
+    await check('C22', 'item-detail-sections：效果原文回退只在官方中文缺失时出现（wiki 英文独立区块）', async () => {
+      const r = await ev(`(async () => {
+        const m = await window.__qaC.load('js/components/item-detail-sections.js');
+        const T = window.__qaC.txt;
+        const EN = 'Increases All Damage by 10%.';
+        const wiki = m.effectWikiSection({ effectZh: '', effectEn: EN, effectSrc: 'wiki', effectMatch: 'wiki-only' });
+        const official = m.effectWikiSection({ effectZh: '所有伤害提高 10%。', effectEn: EN, effectSrc: 'official', effectMatch: 'exact' });
+        const empty = m.effectWikiSection({ effectZh: '', effectEn: '', effectSrc: '', effectMatch: '' });
+        const em = wiki ? wiki.querySelector('.detail-wiki em') : null;
+        const badge = wiki ? wiki.querySelector('.detail-sec__head .badge') : null;
+        return {
+          wikiTitle: wiki ? T(wiki.querySelector('.detail-sec__title')) : '',
+          enTag: em ? em.tagName : '',
+          enText: em ? T(em) : '',
+          badgeText: badge ? T(badge) : '',
+          badgeClass: badge ? badge.className : '',
+          hasRawEffectCls: wiki ? !!wiki.querySelector('.detail-effect') : true,
+          srcLine: wiki ? T(wiki.querySelector('.detail-src')) : '',
+          official, empty,
+        };
+      })()`, { awaitPromise: true });
+      assert.ok(r, 'effectWikiSection 未返回结果');
+      assert.equal(r.wikiTitle, '效果原文（wiki 整理）', `wiki 回退区块标题异常：「${r.wikiTitle}」`);
+      assert.equal(r.enTag, 'EM', `英文原文应为 <em>（斜体由语义标签给出，不写死样式），实际 ${r.enTag}`);
+      assert.equal(r.enText, 'Increases All Damage by 10%.', `英文原文被改写：「${r.enText}」`);
+      assert.equal(r.badgeText, '来源：wiki', `来源 badge 文本异常：「${r.badgeText}」`);
+      assert.ok(/badge--neutral/.test(r.badgeClass), `badge 应复用既有颜色 token 类：${r.badgeClass}`);
+      assert.equal(r.hasRawEffectCls, false, 'wiki 回退区块不得复用 .detail-effect（官方中文原文契约）');
+      assert.ok(/wiki/.test(r.srcLine), `缺少来源说明行：「${r.srcLine}」`);
+      assert.equal(r.official, null, '有官方中文效果句时不应出现 wiki 英文区块（中文优先）');
+      assert.equal(r.empty, null, '中英文都没有时不应渲染区块');
+      return `wiki 区块「${r.wikiTitle}」+ ${r.badgeText}；官方中文优先 / 空文本不渲染`;
+    });
+
   } catch (err) {
     fatal = err;
     console.error('[components] 致命错误:', err && err.stack ? err.stack : err);

@@ -101,6 +101,25 @@ export function effectTextSection(item) {
   return section('sparkle', '效果', body);
 }
 
+/* ------------------- 效果原文（wiki 整理）：仅官方中文缺失时回退 ------------------- */
+/**
+ * 官方中文效果句缺失、但 wiki 英文原文可用时，单独渲染一块英文回退。
+ * 中文优先：有官方 zh 时永远不出现；英文只作为「原文」展示，不翻译、不改写数字。
+ * 用独立 class（不复用 .detail-effect），与「有中文原文」的契约区分开。
+ */
+export function effectWikiSection(item) {
+  if (effectSentence(item)) return null;                       // 官方中文永远优先
+  const en = String(item.effectEn || '').trim();
+  if (!en) return null;
+  if (item.effectSrc !== 'wiki' && item.effectMatch !== 'wiki-only') return null;
+  const body = h('div', { class: 'stack-3' },
+    h('p', { class: 'lore detail-wiki' }, h('em', { text: en })),
+    h('p', { class: 'detail-src', text: '英文原文（wiki 整理，未经翻译）；官方中文效果句暂未收录。' }),
+  );
+  return section('sparkle', '效果原文（wiki 整理）', body,
+    h('span', { class: 'badge badge--neutral', attrs: { style: 'margin-left:auto' }, text: '来源：wiki' }));
+}
+
 /** 背景：官方描述段落在前，引号短句（flavor）在后 */
 export function backgroundSection(item) {
   const desc = zhDisplay(item.descZh) || String(item.descZh || '').trim();
@@ -262,14 +281,23 @@ export function effectSection(item) {
   }
 
   /* 效果区只放玩家可读的加成/减益；没有就整块不出现（原始数值在「数据来源」里） */
-  if (!rows.length) return null;
-  const body = h('div', { class: 'stack-3' });
-  body.append(h('div', { class: `eff-list eff-list--${CAT_ORDER.find((c) => rows.some((r) => r.dataset.cat === c)) || 'other'}` }, rows));
-  if ((fam === 'perk' || fam === 'trait') && item.maxLevel) {
-    body.append(h('p', { class: 'muted', attrs: { style: 'font-size:11px' }, text: `以上为每级数值；等级上限 ${item.maxLevel} 级。` }));
+  const wikiSec = effectWikiSection(item);
+  let sec = null;
+  if (rows.length) {
+    const body = h('div', { class: 'stack-3' });
+    body.append(h('div', { class: `eff-list eff-list--${CAT_ORDER.find((c) => rows.some((r) => r.dataset.cat === c)) || 'other'}` }, rows));
+    if ((fam === 'perk' || fam === 'trait') && item.maxLevel) {
+      body.append(h('p', { class: 'muted', attrs: { style: 'font-size:11px' }, text: `以上为每级数值；等级上限 ${item.maxLevel} 级。` }));
+    }
+    const title = effectSentence(item) ? '数值明细' : '效果';
+    sec = section('sparkle', title, body);
   }
-  const title = effectSentence(item) ? '数值明细' : '效果';
-  return section('sparkle', title, body);
+  /* 没有中文效果句时，数值块后补「效果原文（wiki 整理）」；两块各自独立成 section */
+  if (!wikiSec) return sec;
+  if (!sec) return wikiSec;
+  const frag = document.createDocumentFragment();
+  frag.append(sec, wikiSec);
+  return frag;
 }
 
 /* ----------------------------- 套装部件 ----------------------------- */
