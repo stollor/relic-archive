@@ -751,16 +751,17 @@ async function runLab() {
     return { detail: `可选 ${n} 个职业；选中「${firstName || archTxt.slice(0, 12)}」` };
   });
 
-  await step(A, 'B8', '特性 stepper：+1 后等级/已用徽章/护甲值变化', async () => {
+  await step(A, 'B8', '特性 stepper：+1 后等级/上限徽章/护甲值变化（v2 特性面板）', async () => {
     await page.ensureClean();
     // 前置：直接写 store 放满四件护甲（v2 结果面板在空槽时只显示「—」）
     await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js');
       store.build.setTraits([]);
       [['head','Armor_Head_Leto1'],['body','Armor_Body_Leto1'],['legs','Armor_Legs_Leto1'],['gloves','Armor_Gloves_Leto1']]
         .forEach(([s, id]) => store.build.set(s, id)); return 1; })()`, { awaitPromise: true });
-    await page.goto('#/lab', { fresh: true });
+    // 特性 UI 已从工作台设置迁到「特性」面板（实验室 v2，九面板 / 两级 tab）
+    await page.goto('#/lab?panel=traits', { fresh: true });
     await page.waitFor(`document.querySelectorAll('.lab-statgrid .statbox .statbox__v').length >= 4`, 15000);
-    await page.waitFor(`document.querySelectorAll('.lab-trait').length >= 15`, 12000);
+    await page.waitFor(`document.querySelectorAll('.lab-tr__row').length >= 20`, 15000);
     await sleep(500);
     const readArmor = async () => page.ev(`(() => {
       const boxes = [...document.querySelectorAll('.lab-statgrid .statbox')];
@@ -775,18 +776,20 @@ async function runLab() {
       return null; })()`);
     const armor0 = await readArmor();
     assert(armor0 != null, '读不到结果面板「护甲值」（.lab-statgrid .statbox）');
-    await page.click(`[...document.querySelectorAll('.lab-stepper button')].find((b) => /坚韧 加一级/.test(b.getAttribute('aria-label') || ''))`, { label: '坚韧 +1' });
+    await page.click(`[...document.querySelectorAll('.lab-tr__stepbtn')].find((b) => /坚韧 加一级/.test(b.getAttribute('aria-label') || ''))`, { label: '坚韧 +1' });
     await sleep(900);
-    const info = await page.ev(`(() => ({ v: (document.querySelector('.lab-trait .lab-stepper__v') || {}).textContent,
-      used: (document.querySelector('.lab-traits__count .badge') || {}).textContent,
-      rows: document.querySelectorAll('.lab-trait').length }))()`);
+    const info = await page.ev(`(() => {
+      const row = document.querySelector('.lab-tr__row[data-id="Trait_Fortify"]');
+      return { v: ((row && row.querySelector('.lab-tr__lv')) || {}).textContent,
+        cap: (document.querySelector('.lab-tr__capv') || {}).textContent,
+        rows: document.querySelectorAll('.lab-tr__row').length }; })()`);
     assert(info.v === '1', `stepper 值 ${info.v} ≠ 1`);
-    assert(/1\/10/.test(info.used), `已用特性徽章 ${info.used} 未更新`);
-    assert(info.rows === 15, `特性行 ${info.rows} ≠ 15`);
+    assert(/1 \/ 10/.test(info.cap), `上限徽章 ${info.cap} 未更新`);
+    assert(info.rows >= 40, `特性行 ${info.rows} < 40（全量特性应 ≥40）`);
     const armor1 = await readArmor();
     assert(armor1 != null && armor0 !== armor1, `护甲值未随特性变化（${armor0} → ${armor1}）`);
     await capture('interact-lab-traits');
-    return { detail: `15 行；坚韧 0→1（${info.used}）；护甲值 ${armor0} → ${armor1}` };
+    return { detail: `${info.rows} 行；坚韧 0→1（${info.cap}）；护甲值 ${armor0} → ${armor1}` };
   });
 
   await step(A, 'B9', '结果面板分防御/生存/机动，生存含「有效生命 EHP」', async () => {

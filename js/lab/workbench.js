@@ -44,7 +44,7 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
 
   const settings = createSettings(ctx);
   const result = createResult(ctx);
-  const { syncSelects, renderTraits, renderPools } = settings;
+  const { syncSelects, renderPools } = settings;
   const { renderResult } = result;
 
   /* --------------------------- 刷新调度 --------------------------- */
@@ -53,7 +53,6 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
     syncSelects();
     renderSlotTools(ctx);
     renderSlots(ctx);
-    renderTraits();
     renderPools();
     renderResult();
   });
@@ -63,7 +62,7 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
   slotsPanel.tools.append(slotsTools);
   slotsPanel.body.append(slotsHost);
 
-  const settingsPanel = panel('配装设置', { iconName: 'trait', sub: '写入存档 meta，随配装一起保存' });
+  const settingsPanel = panel('配装设置', { iconName: 'trait', sub: '场景 / 档位 / 消耗品 · 写入存档 meta' });
   settingsPanel.body.append(...settings.body);
 
   const resultPanel = panel('结果面板', { iconName: 'chart', sub: '防御 / 生存 / 机动' });
@@ -74,7 +73,7 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
   /* --------------------------- 订阅 / 初始渲染 --------------------------- */
   const cleanup = createScope();
   cleanup.add(S.on((reason) => {
-    if (['missing', 'scenario', 'class-target', 'seed'].includes(reason)) refresh.schedule();
+    if (['missing', 'scenario', 'class-target', 'seed', 'playstyle', 'fragment', 'attachment'].includes(reason)) refresh.schedule();
   }));
   cleanup.add(store.on('build', () => refresh.schedule()));
   cleanup.add(store.on('owned', () => refresh.schedule()));
@@ -82,7 +81,6 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
   syncSelects();
   renderSlotTools(ctx);
   renderSlots(ctx);
-  renderTraits();
   renderPools();
   renderResult();
 

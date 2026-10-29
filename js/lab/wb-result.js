@@ -16,7 +16,7 @@ import { ARMOR_SLOTS } from './wb-slots.js';
 import { scaledEffect } from './wb-settings.js';
 
 export function createResult(ctx) {
-  const { model, E, S, store } = ctx;
+  const { model, E, S, store, ui } = ctx;
 
   const resultSeg = h('div', { class: 'seg', attrs: { role: 'group', 'aria-label': '结果分组' } });
   const resultBody = h('div', { class: 'lab-resultbody' });
@@ -119,7 +119,6 @@ export function createResult(ctx) {
         miniPiece(model, id),
         h('span', { class: 'muted', attrs: { style: 'font-size:11px' }, text: p ? `护甲值 ${fmt.num(p.armor, 1)} · 负重 ${fmt.num(p.weight, 1)}` : '' }),
         ctx.isMissing(id) ? h('span', { class: 'badge badge--low', text: '缺件' }) : '',
-        !ctx.isOwned(id) ? h('span', { class: 'badge badge--neutral', text: '未拥有' }) : '',
       );
     });
     const perkRows = [];
@@ -144,7 +143,21 @@ export function createResult(ctx) {
     }
     const traitRows = [];
     const tl = S.traitLevels();
+    const gearTraits = model.gear ? model.gear.all('trait') : [];
+    const seenTrait = new Set();
+    for (const t of gearTraits) {
+      const lv = tl[t.id] || 0;
+      if (!lv) continue;
+      seenTrait.add(t.id);
+      const num = t.numeric;
+      const eff = num ? effectText(scaledEffect(E.traitPerLevel(num), lv)) : '';
+      traitRows.push(h('div', { class: 'lab-brow' },
+        h('span', { class: 'lab-brow__k', text: `${t.zh} ${lv}/${TRAIT_MAX_LEVEL}` }),
+        h('span', { class: 'muted', attrs: { style: 'font-size:11px' }, text: eff || t.effectZh || '效果待验证' }),
+      ));
+    }
     for (const t of E.traits) {
+      if (seenTrait.has(t.id)) continue;
       const lv = tl[t.id] || 0;
       if (!lv) continue;
       traitRows.push(h('div', { class: 'lab-brow' },
@@ -158,12 +171,29 @@ export function createResult(ctx) {
       if (!mm) return;
       modRows.push(h('div', { class: 'lab-brow' },
         h('span', { class: 'lab-brow__k', text: mm.zh }),
-        h('span', { class: 'muted', attrs: { style: 'font-size:11px' }, text: `${effectText(mm.effect) || '无防御词条'}${condShort(mm) ? ` · ${condShort(mm)}` : ''}` }),
-      ));
+        h('span', { class: 'muted', attrs: { style: 'font-size:11px' }, text: `${effectText(mm.effect) || '无防御词条'}${condShort(mm) ? ` · ${condShort(mm)}` : ''}` })),
+      );
     };
-    for (const id of S.fragments()) pushMod(id);
+    for (const id of S.fragmentSlots().filter(Boolean)) {
+      const f = model.gear ? model.gear.of(id) : null;
+      modRows.push(h('div', { class: 'lab-brow' },
+        h('span', { class: 'lab-brow__k', text: f ? `碎片 · ${f.zh}` : `碎片 · ${id}` }),
+        h('span', { class: 'muted', attrs: { style: 'font-size:11px' }, text: (f && (f.effectZh || f.effectEn)) || '效果待验证' }),
+      ));
+    }
     for (const id of S.consumables()) pushMod(id);
     for (const id of ctx.trinketIds()) pushMod(id);
+    /* 武器挂件（突变因子 / 改装）：不参与防御数值，单列供核对与输出 */
+    const attachRows = [];
+    for (const slot of ['longGun', 'handGun', 'melee']) {
+      const wid = slots[slot];
+      if (!wid) continue;
+      const a = S.attachmentOf(slot);
+      attachRows.push(h('div', { class: 'lab-brow' },
+        h('span', { class: 'lab-brow__k', text: SLOT_LABEL[slot] }),
+        h('span', { class: 'muted', attrs: { style: 'font-size:11px' }, text: `突变因子：${a.mutator ? model.nameOf(a.mutator) : '未选'} · 改装：${slot === 'melee' ? '无改装槽' : (a.mod ? model.nameOf(a.mod) : '未选')}` }),
+      ));
+    }
 
     const section = (title, children, emptyText) => h('div', { class: 'lab-bsection' },
       h('div', { class: 'bar-title' }, title),
@@ -175,6 +205,7 @@ export function createResult(ctx) {
       h('summary', {}, icon('listchecks', { size: 14 }), h('span', { text: '构成明细（装备 / 职业 / 特性 / 碎片 / 饰品）' })),
       h('div', { class: 'lab-details__body' },
         section('四件护甲贡献', armorRows, '未放入护甲'),
+        section('武器挂件（突变因子 / 改装）', attachRows, '未选择武器'),
         section('职业专长', perkRows, '未选择职业'),
         section('特性贡献', traitRows, '未启用特性'),
         section('碎片 / 消耗品 / 饰品', modRows, '未启用'),
@@ -197,8 +228,153 @@ export function createResult(ctx) {
           `特性上限：同时启用 ${TRAIT_CAP} 个；每个 ${TRAIT_MAX_LEVEL} 级；推荐枚举 key = 场景分，前 300 名候选内再排序`,
         ].join('\n') }),
         h('div', { class: 'lab-note' }, icon('info', { size: 12 }),
-          h('span', { text: `当前：场景 ${E.scenarioById(S.scenarioId()).zh} · 档位目标 ${S.classTarget() === 'free' ? '不限' : (CLASS_ZH[S.classTarget()] || S.classTarget())} · 缺件 ${S.missingCount()} 件 · 已拥有 ${S.ownedCount()} 件` })),
+          h('span', { text: `当前：流派 ${(model.gear && model.gear.playstyleById.get(S.playstyleId()) || {}).zh || '通用'} · 场景 ${E.scenarioById(S.scenarioId()).zh} · 档位目标 ${S.classTarget() === 'free' ? '不限' : (CLASS_ZH[S.classTarget()] || S.classTarget())} · 缺件 ${S.missingCount()} 件` })),
       ),
+    );
+  }
+
+  /* --------------------- 输出：复制 / 下载 / 打印 --------------------- */
+  const EXPORT_SLOTS = ['longGun', 'handGun', 'melee', 'head', 'body', 'legs', 'gloves', 'amulet', 'ring1', 'ring2', 'ring3', 'ring4', 'relic', 'archetype1', 'archetype2'];
+  const exportBar = h('div', { class: 'lab-resout', attrs: { role: 'group', 'aria-label': '配装输出' } });
+
+  function slotName(slot) {
+    const id = store.build.get(slot);
+    if (!id) return '';
+    if (slot === 'archetype1' || slot === 'archetype2') { const a = model.findArchetype(id); return a ? a.zh : id; }
+    return model.nameOf(id);
+  }
+
+  function buildSnapshot() {
+    const st = S.workbenchSummary(model);
+    const slots = {};
+    for (const s of EXPORT_SLOTS) slots[s] = { id: store.build.get(s), zh: slotName(s) };
+    const attachments = {};
+    for (const s of ['longGun', 'handGun', 'melee']) {
+      const a = S.attachmentOf(s);
+      attachments[s] = {
+        mutator: a.mutator ? { id: a.mutator, zh: model.nameOf(a.mutator) } : null,
+        mod: a.mod ? { id: a.mod, zh: model.nameOf(a.mod) } : null,
+      };
+    }
+    const traits = [];
+    const tl = S.traitLevels();
+    for (const t of (model.gear ? model.gear.all('trait') : [])) {
+      const lv = tl[t.id] || 0;
+      if (lv) traits.push({ id: t.id, zh: t.zh, level: lv });
+    }
+    const fragments = S.fragmentSlots().map((id) => {
+      const f = id && model.gear ? model.gear.of(id) : null;
+      return id ? { id, zh: f ? f.zh : id, color: f ? (f.color || '') : '' } : null;
+    });
+    const ps = (model.gear && model.gear.playstyleById.get(S.playstyleId())) || null;
+    const scenario = E.scenarioById(S.scenarioId());
+    return {
+      schema: 1,
+      generated: new Date().toISOString(),
+      playstyle: { id: S.playstyleId(), zh: ps ? ps.zh : '通用' },
+      scenario: { id: scenario.id, zh: scenario.zh },
+      classTarget: S.classTarget(),
+      missingCount: S.missingCount(),
+      slots,
+      attachments,
+      traits,
+      fragments,
+      stats: {
+        armor: st.armor, armorDR: st.adr, physicalDR: st.totals.physical, worstDR: st.worst,
+        weight: st.weight, weightClass: st.cls, ehp: st.ehp, stamina: st.stam, evade: st.evade,
+        scenarioScore: st.score,
+      },
+    };
+  }
+
+  const DIM_NOTE = '饰品 / 突变因子 / 改装 / 特性 / 碎片的「维度分」来自游戏 filter_tags 与词条关键词映射，用于同一口径下比较，不是游戏内精确数值；防御 / 生存 / 机动数值来自 armor_tool 公式。';
+
+  function buildMarkdown(snap) {
+    const lines = [];
+    lines.push('# 遗迹2 · 配装输出');
+    lines.push('');
+    lines.push(`> 流派 ${snap.playstyle.zh} · 场景 ${snap.scenario.zh} · 档位目标 ${snap.classTarget === 'free' ? '不限' : (CLASS_ZH[snap.classTarget] || snap.classTarget)} · 缺件 ${snap.missingCount}`);
+    lines.push('');
+    lines.push('## 槽位');
+    lines.push('| 槽位 | 装备 |');
+    lines.push('| --- | --- |');
+    for (const s of EXPORT_SLOTS) {
+      const v = snap.slots[s];
+      lines.push(`| ${SLOT_LABEL[s]} | ${v.zh || '—'} |`);
+    }
+    lines.push('');
+    lines.push('## 武器挂件');
+    for (const s of ['longGun', 'handGun', 'melee']) {
+      const a = snap.attachments[s];
+      const mod = s === 'melee' ? '无改装槽' : (a.mod ? a.mod.zh : '未选');
+      lines.push(`- ${SLOT_LABEL[s]}：突变因子 ${a.mutator ? a.mutator.zh : '未选'} · 改装 ${mod}`);
+    }
+    lines.push('');
+    lines.push(`## 特性（${snap.traits.length}/10）`);
+    if (!snap.traits.length) lines.push('- 未启用特性');
+    for (const t of snap.traits) lines.push(`- ${t.zh} ${t.level}/10`);
+    lines.push('');
+    lines.push('## 圣物碎片（3 槽）');
+    const colorZh = { red: '红', yellow: '黄', blue: '蓝' };
+    snap.fragments.forEach((f, i) => {
+      lines.push(`- 槽 ${i + 1}：${f ? `${f.zh}${f.color ? `（${colorZh[f.color] || f.color}）` : ''}` : '空'}`);
+    });
+    lines.push('');
+    lines.push('## 关键数值');
+    lines.push(`- 护甲值 ${st0(snap.stats.armor)} · 护甲减伤 ${st1(snap.stats.armorDR)} · 物理总减伤 ${st1(snap.stats.physicalDR)} · 最坏情况减伤 ${st1(snap.stats.worstDR)}`);
+    lines.push(`- 负重 ${st0(snap.stats.weight)}（${CLASS_ZH[snap.stats.weightClass] || snap.stats.weightClass}）· EHP ${st0(snap.stats.ehp)} · 体力 ${st0(snap.stats.stamina)} · 单闪 ${st0(snap.stats.evade)}`);
+    lines.push('');
+    lines.push('## 口径说明');
+    lines.push(`- ${DIM_NOTE}`);
+    lines.push('- 装备默认全库可用；「缺件」仅表示你标记为没有的装备，推荐会默认排除。');
+    return lines.join('\n');
+  }
+  const st0 = (v) => (typeof v === 'number' && Number.isFinite(v) ? fmt.num(v, 1) : '—');
+  const st1 = (v) => (typeof v === 'number' && Number.isFinite(v) ? fmt.pct(v, 1) : '—');
+
+  async function copyText(text, label) {
+    try {
+      await navigator.clipboard.writeText(text);
+      ui.toast(`${label}已复制到剪贴板`, 'ok');
+    } catch (e) {
+      console.error('[lab:result] 复制失败', e);
+      ui.toast('复制失败：浏览器未授予剪贴板权限', 'warn');
+    }
+  }
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = h('a', { attrs: { href: url, download: filename } });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    ui.toast(`已导出 ${filename}`, 'ok');
+  }
+  function renderExportBar() {
+    clear(exportBar);
+    exportBar.append(
+      h('span', { class: 'lab-resout__label', text: '输出' }),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', title: '复制当前配装 Markdown',
+        on: { click: () => copyText(buildMarkdown(buildSnapshot()), 'Markdown') },
+      }, icon('copy', { size: 13 }), h('span', { text: '复制 Markdown' })),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', title: '复制当前配装 JSON',
+        on: { click: () => copyText(JSON.stringify(buildSnapshot(), null, 2), 'JSON') },
+      }, icon('clipboard', { size: 13 }), h('span', { text: '复制 JSON' })),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', title: '下载 Markdown 文件',
+        on: { click: () => downloadText('relic-archive-build.md', buildMarkdown(buildSnapshot()), 'text/markdown;charset=utf-8') },
+      }, icon('download', { size: 13 }), h('span', { text: '下载 .md' })),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', title: '下载 JSON 文件',
+        on: { click: () => downloadText('relic-archive-build.json', JSON.stringify(buildSnapshot(), null, 2), 'application/json;charset=utf-8') },
+      }, icon('download', { size: 13 }), h('span', { text: '下载 .json' })),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', title: '打印当前配装',
+        on: { click: () => window.print() },
+      }, icon('external', { size: 13 }), h('span', { text: '打印' })),
     );
   }
 
@@ -226,9 +402,11 @@ export function createResult(ctx) {
     renderBreakdown(st);
   }
 
+  renderExportBar();
   const body = [
     resultHead,
     h('div', { class: 'lab-resseg' }, resultSeg),
+    exportBar,
     resultBody,
     breakdownHost,
     renderFormula(),

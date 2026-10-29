@@ -16,6 +16,7 @@ const URLS = {
   archetypes: './data/archetypes.json',
   effects: './data/item_effects.json',
   builds: './data/builds.json',
+  labGear: './data/lab_gear.json',
 };
 
 /* 数据侧 slot → 全站槽位族 */
@@ -234,6 +235,7 @@ const S = {
   site: null, terms: null, acq: null, codex: null, archetypes: null, meta: null,
   effectMeta: null,
   builds: null, buildByKey: new Map(), buildEntityCache: new Map(),
+  labGear: null,
 };
 
 async function loadItems() {
@@ -448,6 +450,23 @@ export const api = {
     if (S.builds) S.buildEntityCache.set(raw, ent);
     return ent;
   },
+
+  /* --- 实验室 v2：装备目录（维度/流派/全量饰品与挂件） --- */
+  /**
+   * data/lab_gear.json（schema 1）：由工作区 build/mk_lab_gear.py 生成。
+   * 结构见 docs/LAB_V2.md §1；失败时抛错，由实验室显示「数据载入失败」可重试态。
+   */
+  async labGear() {
+    if (!S.labGear) {
+      const doc = await loadJSON(URLS.labGear);
+      if (!doc || typeof doc !== 'object' || !doc.gear) throw new Error('data/lab_gear.json 格式不正确');
+      S.labGear = doc;
+    }
+    return S.labGear;
+  },
+
+  /** 同步：已载入的实验室装备目录（未载入返回 null） */
+  labGearSync() { return S.labGear; },
 
   /** 全站计数（顶栏展示） */
   async stats() {

@@ -60,7 +60,6 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
 
   const state = {
     sort: SORT_BY_ID.has(params.sort) ? params.sort : 'score',
-    ownedOnly: params.ownedOnly === '1',
     hideMissing: params.hideMissing !== '0',
     diff: ['easy', 'low1'].includes(params.diff) ? params.diff : '',
     page: Math.max(0, (Number(params.page) || 1) - 1),
@@ -78,7 +77,6 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     if (!setQuery) return;
     setQuery({
       sort: state.sort === 'score' ? '' : state.sort,
-      ownedOnly: state.ownedOnly ? '1' : '',
       hideMissing: state.hideMissing ? '' : '0',
       diff: state.diff,
       page: state.page === 0 ? '' : String(state.page + 1),
@@ -109,7 +107,6 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
       S.scenarioId(),
       S.classTarget(),
       state.hideMissing ? '1' : '0',
-      state.ownedOnly ? '1' : '0',
       traits,
       ids(picks.rings),
       picks.amulet || '',
@@ -118,7 +115,6 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
       ids(picks.perks),
       // 缺件始终进指纹：即使 hideMissing=false，候选行的「含缺件 N」标记也依赖它
       [...S.missingSet()].sort().join(','),
-      state.ownedOnly ? [...S.ownedSet()].sort().join(',') : '',
     ].join('|');
   }
 
@@ -175,7 +171,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
         scenarioId: S.scenarioId(),
         classTarget: S.classTarget(),
         exclude: state.hideMissing ? S.missingSet() : null,
-        owned: state.ownedOnly ? S.ownedSet() : null,
+        owned: null,
         top: TOP,
       });
       t0 = performance.now();
@@ -291,20 +287,15 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
 
   function renderBar() {
     clear(toolbar);
-    const owned = S.ownedCount();
     toolbar.append(
       h('div', { class: 'lab-rec__barrow' },
         sortSelect(),
         diffSeg(),
         h('div', { class: 'grow' }),
-        switchEl('仅用我已拥有', state.ownedOnly, (v) => {
-          state.ownedOnly = v; state.page = 0; syncQuery({ ownedOnly: v ? '1' : '', page: '' });
-          requestRun();
-        }, '可用池只保留已拥有护甲'),
-        switchEl('隐藏含缺件', state.hideMissing, (v) => {
+        switchEl('排除缺件', state.hideMissing, (v) => {
           state.hideMissing = v; state.page = 0; syncQuery({ hideMissing: v ? '' : '0', page: '' });
           requestRun();
-        }, '开启时把缺件从可用池排除；关闭时保留但标记'),
+        }, '装备默认全库可用；开启时把已标记缺件的护甲从可用池排除，关闭时保留但标记'),
         h('button', {
           class: 'btn btn--ghost btn--sm', type: 'button',
           disabled: state.running,
@@ -374,17 +365,14 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
       const r = state.result;
       const emptyPool = r && r.pools && r.pools.some((n) => n === 0);
       if (emptyPool) {
-        listHost.append(emptyState('unowned', state.ownedOnly ? '「仅用我已拥有」池里某个槽位没有护甲' : '可用池里某个槽位没有护甲',
-          state.ownedOnly
-            ? `已拥有 ${S.ownedCount()} 件护甲，不足以凑齐一个槽位；去资料库标记已拥有，或关闭「仅用我已拥有」。`
-            : '缺件太多或档位目标过严，请放宽筛选。',
+        listHost.append(emptyState('unowned', '可用池里某个槽位没有护甲',
+          '缺件太多或档位目标过严：放宽筛选，或清空/减少缺件标记。',
           h('div', { class: 'lab-actions' },
-            h('button', { class: 'btn btn--ghost btn--sm', type: 'button', text: '关闭仅用我已拥有', on: { click: () => { state.ownedOnly = false; syncQuery({ ownedOnly: '' }); start(); } } }),
             h('button', { class: 'btn btn--quiet btn--sm', type: 'button', text: '清空缺件', on: { click: () => { S.clearMissing(); start(); } } }),
           )));
       } else {
         listHost.append(emptyState('filter', '没有符合条件的候选',
-          '试试放宽获取难度筛选、关闭「仅用我已拥有」或清空缺件。'));
+          '试试放宽获取难度筛选或清空缺件。'));
       }
       return;
     }
@@ -416,16 +404,15 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     if (destroyed) return;
     const next = {
       sort: SORT_BY_ID.has(p.sort) ? p.sort : state.sort,
-      ownedOnly: p.ownedOnly === '1',
       hideMissing: p.hideMissing !== '0',
       diff: ['easy', 'low1'].includes(p.diff) ? p.diff : '',
       page: Math.max(0, (Number(p.page) || 1) - 1),
     };
-    const needRerun = next.ownedOnly !== state.ownedOnly || next.hideMissing !== state.hideMissing;
+    const needRerun = next.hideMissing !== state.hideMissing;
     const hadPageParam = p.page != null && p.page !== '';
     // 空更新提前返回：完成回调里的 syncQuery→applyParams 重入、排序/翻页/切面板的
     // 同参数 applyParams 都不需要再渲染一遍（修复前每次完成会多渲染一组 bar/status/list）。
-    const changed = next.sort !== state.sort || next.ownedOnly !== state.ownedOnly
+    const changed = next.sort !== state.sort
       || next.hideMissing !== state.hideMissing || next.diff !== state.diff
       || next.page !== state.page;
     if (!changed) return;
@@ -458,7 +445,7 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
   root.append(shell.el);
 
   cleanup.add(S.on((reason) => {
-    if (!['missing', 'scenario', 'class-target', 'seed'].includes(reason)) return;
+    if (!['missing', 'scenario', 'class-target', 'seed', 'playstyle', 'fragment'].includes(reason)) return;
     requestRun();
   }));
   let timer = 0;
@@ -467,9 +454,8 @@ export function createRecommend(model, { params = {}, setQuery = null, active = 
     clearTimeout(timer);
     timer = setTimeout(requestRun, 220);
   }));
-  cleanup.add(store.on('owned', () => {
-    if (active && state.ownedOnly) requestRun(); else state.dirty = true;
-  }));
+  // 拥有状态不再影响可用池（装备默认全库可用）；保留订阅只为让「已拥有」相关展示刷新
+  cleanup.add(store.on('owned', () => { state.dirty = true; }));
 
   renderBar();
   renderStatus();

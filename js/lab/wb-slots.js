@@ -132,10 +132,11 @@ function slotStatText(ctx, slot, id) {
 }
 
 export function buildSlot(ctx, slot) {
-  const { model, store, nameOf, iconOf, archOf, isOwned, isMissing, openDetail, E } = ctx;
+  const { model, store, nameOf, iconOf, archOf, isMissing, openDetail, E, S, ui } = ctx;
   const id = store.build.get(slot);
   const label = SLOT_LABEL[slot];
   const isArch = slot === 'archetype1' || slot === 'archetype2';
+  const isWeapon = slot === 'longGun' || slot === 'handGun' || slot === 'melee';
   if (!id) {
     const emptyHint = isArch ? (model.archetypesEmpty ? '职业数据载入中' : '点击选择职业') : '点击选择装备';
     return h('div', { class: 'slot slot--empty', dataset: { slot } },
@@ -150,7 +151,6 @@ export function buildSlot(ctx, slot) {
       }),
     );
   }
-  const owned = isOwned(id);
   const miss = isMissing(id);
   const arch = isArch ? archOf(id) : null;
   const nm = arch ? arch.zh : nameOf(id);
@@ -162,6 +162,15 @@ export function buildSlot(ctx, slot) {
       return `${role}${perks.length ? `防御专长：${perks.join('、')}` : '防御专长：未收录'}${tr}`;
     })()
     : slotStatText(ctx, slot, id);
+  /* 武器槽：显示已选突变因子 / 改装（实验室 v2；空则提示去「武器改装」面板） */
+  const attach = isWeapon
+    ? (() => {
+      const a = S.attachmentOf(slot);
+      const mut = a.mutator ? `突变 ${nameOf(a.mutator)}` : '';
+      const mod = slot !== 'melee' && a.mod ? `改装 ${nameOf(a.mod)}` : '';
+      return [mut, mod].filter(Boolean).join(' · ');
+    })()
+    : '';
   const media = h('div', {
     class: 'slot__media',
     attrs: { role: 'button', tabindex: '0', title: isArch ? `更换${label}` : `查看 ${nm} 详情`, 'aria-label': isArch ? `更换${label}` : `查看 ${nm} 详情` },
@@ -179,14 +188,34 @@ export function buildSlot(ctx, slot) {
   },
     h('div', { class: 'slot__label' },
       h('span', { text: label }),
-      !isArch && !owned ? h('span', { class: 'badge badge--neutral', text: '未拥有' }) : '',
       miss ? h('span', { class: 'badge badge--low', text: '缺件' }) : '',
     ),
     h('div', { class: 'slot__name', text: nm }),
     h('div', { class: 'slot__meta' }, h('span', { class: 'muted', attrs: { style: 'font-size:10.5px' }, text: metaText })),
+    isWeapon
+      ? h('div', { class: 'slot__meta' },
+        h('span', { class: 'muted', attrs: { style: 'font-size:10.5px' }, text: attach ? `挂件：${attach}` : '挂件：未选（去「武器改装」面板）' }))
+      : '',
     isArch && slot === 'archetype1' ? h('div', { class: 'lab-slotnote', text: '主要专长（Prime Perk）不在防御口径' }) : '',
   );
   const acts = h('div', { class: 'slot__acts' },
+    h('button', {
+      class: `iconbtn iconbtn--sm${miss ? ' is-on' : ''}`, type: 'button',
+      title: miss ? '取消缺件标记' : '标记为缺件（没有这件装备）', 'aria-label': miss ? '取消缺件标记' : `标记${label}为缺件`,
+      on: {
+        click: (e) => {
+          e.stopPropagation();
+          const on = S.toggleMissing(id);
+          ui.toast(on ? `已标记缺件：${nm}` : `已取消缺件：${nm}`, on ? 'warn' : 'ok');
+        },
+      },
+    }, icon('x-circle', { size: 14 })),
+    isWeapon
+      ? h('button', {
+        class: 'iconbtn iconbtn--sm', type: 'button', title: '打开武器改装面板', 'aria-label': '打开武器改装面板',
+        on: { click: (e) => { e.stopPropagation(); ctx.onOpenPanel?.('weapons'); } },
+      }, icon('metagem', { size: 14 }))
+      : '',
     h('button', {
       class: 'iconbtn iconbtn--sm', type: 'button', title: '更换', 'aria-label': `更换${label}`,
       on: { click: (e) => { e.stopPropagation(); pickForSlot(ctx, slot); } },
@@ -221,17 +250,23 @@ export function renderSlots(ctx) {
   }
 }
 
-/** 槽位工具栏：缺件摘要 + 清空 + 「按缺件重算最优」 */
+/** 槽位工具栏：可用说明 + 缺件摘要 + 清空 + 快捷入口 */
 export function renderSlotTools(ctx) {
   const { S, ui, onOpenPanel } = ctx;
   const host = ctx.slotsTools;
   clear(host);
+  host.append(h('span', { class: 'chip chip--sm', title: '实验室默认全库可用；没有的装备标为缺件即可' },
+    icon('check-circle', { size: 12 }), h('span', { text: '全库可用' })));
   if (S.missingCount()) {
-    host.append(h('span', { class: 'chip chip--sm is-on', title: '缺件独立于拥有状态' }, icon('x-circle', { size: 12 }), h('span', { text: `缺件 ${S.missingCount()}` })));
-    host.append(h('button', { class: 'btn btn--quiet btn--sm', type: 'button', text: '清空', on: { click: () => { S.clearMissing(); ui.toast('已清空缺件标记', 'ok'); } } }));
+    host.append(h('span', { class: 'chip chip--sm is-on', title: '缺件 = 你没有的装备，推荐/组合/替换都会排除它' }, icon('x-circle', { size: 12 }), h('span', { text: `缺件 ${S.missingCount()}` })));
+    host.append(h('button', { class: 'btn btn--quiet btn--sm', type: 'button', text: '清空缺件', on: { click: () => { S.clearMissing(); ui.toast('已清空缺件标记', 'ok'); } } }));
   }
   host.append(h('button', {
     class: 'btn btn--ghost btn--sm', type: 'button',
+    on: { click: () => onOpenPanel?.('trinkets') },
+  }, icon('gem', { size: 13 }), h('span', { text: '按流派配饰品' })));
+  host.append(h('button', {
+    class: 'btn btn--ghost btn--sm', type: 'button',
     on: { click: () => onOpenPanel?.('recommend') },
-  }, icon('listchecks', { size: 13 }), h('span', { text: '按缺件重算最优' })));
+  }, icon('listchecks', { size: 13 }), h('span', { text: '重算推荐' })));
 }

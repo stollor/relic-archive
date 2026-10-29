@@ -48,7 +48,7 @@ const asObjSet = (list) => {
   for (const id of list) if (typeof id === 'string' && id) o[id] = true;
   return o;
 };
-const STRING_META_KEYS = new Set(['scenario', 'classTarget', 'seedProfile', 'seedProfileZh', 'profile']);
+const STRING_META_KEYS = new Set(['scenario', 'classTarget', 'seedProfile', 'seedProfileZh', 'profile', 'playstyle']);
 
 /** 脏 meta → 合法结构：traitLevels 数值并 clamp[0,TRAIT_MAX_LEVEL]，列表只留字符串，单值键只留字符串 */
 function sanitizeMeta(raw) {
@@ -133,6 +133,97 @@ export function toggleConsumable(id) {
   return set.has(id);
 }
 export function clearFragmentsConsumables() { store.build.setMeta({ fragments: [], consumables: [] }); }
+
+/* ----------------------------- 流派（实验室 v2） ----------------------------- */
+/** 当前流派维度（meta.playstyle）；非法/缺失回退 general */
+export function playstyleId() {
+  const v = meta().playstyle;
+  return typeof v === 'string' && v ? v : 'general';
+}
+export function setPlaystyle(id) {
+  const v = typeof id === 'string' && id ? id : 'general';
+  if (v === playstyleId()) return v;
+  store.build.setMeta({ playstyle: v });
+  emit('playstyle', { playstyle: v });
+  return v;
+}
+
+/* ----------------------------- 圣物碎片槽（3 槽） ----------------------------- */
+export const FRAGMENT_SLOTS = 3;
+/** 碎片槽：返回长度为 3 的数组（空槽 = null）；旧 meta.fragments 只读派生，不写回 */
+export function fragmentSlots() {
+  const raw = meta().fragmentSlots;
+  const out = new Array(FRAGMENT_SLOTS).fill(null);
+  if (Array.isArray(raw)) {
+    for (let i = 0; i < FRAGMENT_SLOTS; i += 1) {
+      const v = raw[i];
+      out[i] = typeof v === 'string' && v ? v : null;
+    }
+    return out;
+  }
+  const legacy = asArr(meta().fragments);
+  for (let i = 0; i < FRAGMENT_SLOTS && i < legacy.length; i += 1) out[i] = legacy[i];
+  return out;
+}
+/** 写入第 i 槽（id 为空 = 清空；同 id 已占其它槽时先清旧位，保证不重复） */
+export function setFragmentSlot(index, id) {
+  const i = Number(index);
+  if (!Number.isInteger(i) || i < 0 || i >= FRAGMENT_SLOTS) return false;
+  const next = fragmentSlots();
+  const value = typeof id === 'string' && id ? id : null;
+  if (value) {
+    for (let k = 0; k < FRAGMENT_SLOTS; k += 1) if (next[k] === value) next[k] = null;
+  }
+  next[i] = value;
+  store.build.setMeta({ fragmentSlots: next, fragments: [] });
+  emit('fragment', { index: i, id: value });
+  return true;
+}
+export function clearFragmentSlot(index) { return setFragmentSlot(index, null); }
+/** 旧 meta.fragments（数组）→ 三槽迁移；只在 fragmentSlots 缺失且旧数据非空时跑一次 */
+export function migrateFragments() {
+  const m = meta();
+  if (Array.isArray(m.fragmentSlots)) return false;
+  const legacy = asArr(m.fragments);
+  if (!legacy.length) return false;
+  store.build.setMeta({ fragmentSlots: legacy.slice(0, FRAGMENT_SLOTS), fragments: [] });
+  return true;
+}
+
+/* ----------------------------- 武器挂件（突变因子 / 改装） ----------------------------- */
+/** 可变异的武器槽：长枪 / 手枪 / 近战（近战只有突变因子，无改装槽） */
+export const ATTACH_SLOTS = ['longGun', 'handGun', 'melee'];
+const MOD_SLOTS = new Set(['longGun', 'handGun']);
+function attachmentsMeta() {
+  const raw = meta().mutators;
+  const out = {};
+  for (const slot of ATTACH_SLOTS) {
+    const v = isPlainObject(raw) ? raw[slot] : null;
+    out[slot] = typeof v === 'string' && v ? v : null;
+  }
+  return out;
+}
+export function mutatorOf(slot) { return attachmentsMeta()[slot] || null; }
+export function setMutator(slot, id) {
+  if (!ATTACH_SLOTS.includes(slot)) return null;
+  const next = attachmentsMeta();
+  next[slot] = typeof id === 'string' && id ? id : null;
+  store.build.setMeta({ mutators: next });
+  emit('attachment', { slot, kind: 'mutator', id: next[slot] });
+  return next[slot];
+}
+/** 改装：复用 store.build.mods（longGun/handGun）；近战武器无改装槽，返回 null */
+export function modOf(slot) { return MOD_SLOTS.has(slot) ? (store.build.mods()[slot] || null) : null; }
+export function setModOf(slot, id) {
+  if (!MOD_SLOTS.has(slot)) return null;
+  store.build.setMod(slot, typeof id === 'string' && id ? id : null);
+  emit('attachment', { slot, kind: 'mod', id: id || null });
+  return id || null;
+}
+/** 某武器槽的挂件摘要 { mutator, mod } */
+export function attachmentOf(slot) {
+  return { mutator: mutatorOf(slot), mod: modOf(slot) };
+}
 
 /* ----------------------------- 场景 / 档位目标 ----------------------------- */
 export function scenarioId() {
@@ -275,9 +366,12 @@ export function workbenchPicks(model) {
     for (const pid of model.perksOf(aid)) perks[pid] = true;
   }
   for (const pid of asArr(m.seedPerks)) perks[pid] = true;
+  // 圣物碎片：三槽派生（非空槽 → picks 需要的 {id:true} 映射）
+  const fragments = {};
+  for (const id of fragmentSlots()) if (id) fragments[id] = true;
   return {
     traits: { ...(m.traitLevels || {}) },
-    fragments: asObjSet(m.fragments),
+    fragments,
     consumables: asObjSet(m.consumables),
     perks,
     rings: gear.rings,
@@ -311,6 +405,9 @@ export default {
   on, off, meta,
   traitLevels, traitUsed, setTraitLevel, incTrait, fillTraits, clearTraits,
   fragments, consumables, toggleFragment, toggleConsumable, clearFragmentsConsumables,
+  playstyleId, setPlaystyle,
+  FRAGMENT_SLOTS, fragmentSlots, setFragmentSlot, clearFragmentSlot, migrateFragments,
+  ATTACH_SLOTS, mutatorOf, setMutator, modOf, setModOf, attachmentOf,
   scenarioId, setScenario, classTarget, setClassTarget,
   seedProfile, seedPerks, applyProfileSeed, clearSeed, migrateLegacyMeta,
   isMissing, missingCount, missingIds, toggleMissing, clearMissing, missingSet,

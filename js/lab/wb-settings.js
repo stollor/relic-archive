@@ -1,12 +1,12 @@
 /* =============================================================================
-   遗迹2 · 遗物档案 — lab/wb-settings.js
-   工作台的「配装设置」模块：场景 / 档位目标 / 特性等级 / 圣物碎片 / 消耗品 /
-   预设增益档种子。设置全部写进 store.build.meta（随具名存档一起走）。
-   共享状态从显式上下文 ctx 读取（由 workbench.js 的 createContext 装配）。
+   遗迹2 · 遗物档案 — lab/wb-settings.js（v2）
+   工作台的「配装设置」模块：场景 / 档位目标 / 消耗品 / 预设增益档种子。
+   特性等级在「特性」面板维护、圣物碎片在「圣物碎片」面板维护（实验室 v2 拆面板，
+   避免同一状态出现两套 UI）；设置仍全部写进 store.build.meta（随具名存档一起走）。
+   共享状态从显式上下文 ctx 读取（由 workbench.js 装配）。
    ========================================================================== */
 import { h, clear } from '../core/dom.js';
 import { icon } from '../core/icons.js';
-import { TRAIT_CAP, TRAIT_MAX_LEVEL } from './state.js';
 import { chipGroup, fold } from './parts.js';
 import { CLASS_ZH } from './engine.js';
 import { effectText } from './text.js';
@@ -43,52 +43,11 @@ export function createSettings(ctx) {
   classSel.addEventListener('change', () => S.setClassTarget(classSel.value));
   function syncSelects() { scenarioSel.value = S.scenarioId(); classSel.value = S.classTarget(); }
 
-  /* ----------------------------- 特性等级 ----------------------------- */
-  const traitsHost = h('div', { class: 'lab-traits' });
-  const traitCountEl = h('span', { class: 'lab-traits__count' });
-
-  function traitRow(t) {
-    const lv = (S.traitLevels()[t.id] || 0);
-    const eff = lv > 0 ? effectText(scaledEffect(E.traitPerLevel(t), lv)) : '';
-    const dec = h('button', {
-      class: 'iconbtn iconbtn--sm', type: 'button', title: `${t.zh} −1`, 'aria-label': `${t.zh} 减一级`,
-      disabled: lv <= 0, on: { click: () => S.incTrait(t.id, -1) },
-    }, icon('minus', { size: 13 }));
-    const inc = h('button', {
-      class: 'iconbtn iconbtn--sm', type: 'button', title: `${t.zh} +1`, 'aria-label': `${t.zh} 加一级`,
-      disabled: lv >= TRAIT_MAX_LEVEL,
-      on: { click: () => { const r = S.incTrait(t.id, 1); if (!r.ok && r.reason === 'cap') ui.toast(`特性最多同时启用 ${TRAIT_CAP} 个（游戏上限）`, 'warn'); } },
-    }, icon('plus', { size: 13 }));
-    return h('div', { class: `lab-trait${lv > 0 ? ' is-on' : ''}` },
-      h('div', { class: 'lab-trait__main' },
-        h('div', { class: 'lab-trait__name', text: t.zh }),
-        h('div', { class: `lab-trait__eff${lv > 0 ? '' : ' muted'}`, title: eff || '未启用', text: lv > 0 ? eff : '未启用' }),
-      ),
-      h('div', { class: 'lab-stepper' }, dec, h('span', { class: 'lab-stepper__v', text: `${lv}` }), inc),
-    );
-  }
-
-  function renderTraits() {
-    clear(traitsHost);
-    const used = S.traitUsed();
-    clear(traitCountEl);
-    traitCountEl.append(h('span', { class: `badge ${used >= TRAIT_CAP ? 'badge--mid' : 'badge--neutral'}`, text: `已用特性 ${used}/${TRAIT_CAP}` }));
-    for (const t of E.traits) traitsHost.append(traitRow(t));
-  }
-
-  /* ----------------------- 碎片 / 消耗品 / 预设种子 ----------------------- */
-  const fragHost = h('div');
+  /* ----------------------- 消耗品 / 预设种子 ----------------------- */
   const consHost = h('div');
   const seedHost = h('div');
 
   function renderPools() {
-    clear(fragHost);
-    fragHost.append(chipGroup(
-      E.fragments.map((m) => ({ id: m.id, zh: m.zh, title: effectText(m.effect) || '无防御词条' })),
-      new Set(S.fragments()),
-      (it) => { S.toggleFragment(it.id); ui.toast(S.fragments().includes(it.id) ? `已启用碎片：${it.zh}` : `已取消碎片：${it.zh}`, 'ok'); },
-      { emptyText: '碎片数据未收录' },
-    ));
     clear(consHost);
     consHost.append(chipGroup(
       E.consumables.map((m) => ({ id: m.id, zh: m.zh, title: effectText(m.effect) || '无防御词条' })),
@@ -125,21 +84,13 @@ export function createSettings(ctx) {
       h('div', { class: 'field' }, h('label', { class: 'field__label', text: '场景' }), scenarioSel),
       h('div', { class: 'field' }, h('label', { class: 'field__label', text: '档位目标（推荐 / 重算用）' }), classSel),
     ),
-    h('div', { class: 'lab-traitshead' },
-      h('div', { class: 'bar-title' }, '特性等级', traitCountEl),
-      h('div', { class: 'row', attrs: { style: 'gap:4px' } },
-        h('button', {
-          class: 'btn btn--quiet btn--sm', type: 'button', text: '全满',
-          on: { click: () => { S.fillTraits(E.traits); ui.toast(`已将前 ${TRAIT_CAP} 个防御特性设为满级（游戏上限 ${TRAIT_CAP} 个）`, 'ok'); } },
-        }),
-        h('button', { class: 'btn btn--quiet btn--sm', type: 'button', text: '清空', on: { click: () => { S.clearTraits(); ui.toast('已清空特性', 'ok'); } } }),
-      ),
+    h('div', { class: 'lab-note' },
+      icon('info', { size: 12 }),
+      h('span', { text: '特性等级在「特性」面板调整，圣物碎片在「圣物碎片」面板放入 3 个槽；两者都实时计入结果面板。' }),
     ),
-    traitsHost,
-    fold('圣物碎片', fragHost, { sub: '勾选参与合计' }),
     fold('消耗品', consHost, { sub: '勾选参与合计' }),
     fold('从预设增益档载入', seedHost, { sub: '仅作起点' }),
   ];
 
-  return { body, syncSelects, renderTraits, renderPools };
+  return { body, syncSelects, renderPools };
 }

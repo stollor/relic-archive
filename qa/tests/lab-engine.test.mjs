@@ -141,7 +141,8 @@ test('多次调用不累积状态（同一实例重复计算结果稳定）', ()
 
   const e1 = E.enumerateTop({ picks: {}, scenarioId: 'general', owned: new Set(E.presetIds(p0.best)), top: 2 });
   const e2 = E.enumerateTop({ picks: {}, scenarioId: 'general', owned: new Set(E.presetIds(p0.best)), top: 2 });
-  assert.deepEqual(e2, e1, '重复枚举结果应一致');
+  // elapsedMs 是真实耗时（同一实例连续两次也可能差 0/1ms），与上一个用例一致：去掉耗时字段再比确定性
+  assert.deepEqual(withoutTiming(e2), withoutTiming(e1), '重复枚举结果应一致（忽略真实耗时）');
 });
 
 test('计算不污染输入：site_data 深拷贝快照在全部计算后不变', () => {

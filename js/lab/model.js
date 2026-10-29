@@ -58,15 +58,78 @@ function normPerkIds(perks) {
   return [...new Set(ids)];
 }
 
+/* ------------------------- 实验室 v2：装备目录 ------------------------- */
+/** gearDoc（data/lab_gear.json）→ 可直接消费的索引；字段契约见 docs/LAB_V2.md §1 */
+function buildGear(gearDoc, itemsById, engine) {
+  const doc = gearDoc || {};
+  const bySort = (a, b) => (Number(a.order) || 0) - (Number(b.order) || 0);
+  const dimensions = Array.isArray(doc.dimensions) ? doc.dimensions.slice().sort(bySort) : [];
+  const playstyles = Array.isArray(doc.playstyles) ? doc.playstyles.slice().sort(bySort) : [];
+  const raw = doc.gear || {};
+  const KINDS = ['ring', 'amulet', 'mutator', 'mod', 'fragment', 'trait', 'relic'];
+  const lists = {};
+  const byId = new Map();
+  for (const kind of KINDS) {
+    const arr = Array.isArray(raw[kind]) ? raw[kind] : [];
+    lists[kind] = arr.map((it) => {
+      const base = it && typeof it === 'object' ? it : { id: String(it || '') };
+      const item = itemsById.get(base.id) || null;
+      const numeric = engine.modById.get(base.id) || null;
+      const rec = {
+        ...base,
+        kind,
+        zh: String(base.zh || (item && item.zh) || base.id || '待验证'),
+        en: String(base.en || (item && item.en) || ''),
+        tags: Array.isArray(base.tags) ? base.tags : [],
+        dims: base.dims && typeof base.dims === 'object' ? base.dims : {},
+        effectZh: String(base.effectZh || (item && (item.effectZh || item.summaryZh)) || ''),
+        effectEn: String(base.effectEn || (item && (item.effectEn || item.summaryEn)) || ''),
+        effectSrc: String(base.effectSrc || (item && item.effectSrc) || ''),
+        confidence: String(base.confidence || 'low'),
+        evidence: Array.isArray(base.evidence) ? base.evidence : [],
+        hard: base.hard === true,
+        numeric: numeric || null,
+        item,
+      };
+      if (kind === 'trait' && numeric) {
+        rec.maxLevel = Number(rec.maxLevel || numeric.max_level || 10) || 10;
+        if (!rec.perLevel && numeric.effect_per_level) rec.perLevel = numeric.effect_per_level;
+      }
+      if (byId.has(rec.id)) return rec;
+      byId.set(rec.id, rec);
+      return rec;
+    });
+  }
+  const dimensionById = new Map(dimensions.map((d) => [d.id, d]));
+  const playstyleById = new Map(playstyles.map((p) => [p.id, p]));
+  return {
+    doc,
+    dimensions,
+    dimensionById,
+    playstyles,
+    playstyleById,
+    ...lists,
+    lists,
+    byId,
+    kinds: KINDS,
+    dimensionZh: (id) => (dimensionById.get(id) || {}).zh || String(id || ''),
+    of(id) { return byId.get(id) || null; },
+    kindOf(id) { const g = byId.get(id); return g ? g.kind : null; },
+    /** 指定类型的全部条目（空类型返回 []） */
+    all(kind) { return lists[kind] || []; },
+  };
+}
+
 /**
  * 载入实验室模型。
- * @returns {Promise<{engine, itemsById, slotPools, archetypes, archetypeById, perksOf}>}
+ * @returns {Promise<{engine, itemsById, slotPools, archetypes, archetypeById, perksOf, gear}>}
  */
 export async function loadLabModel() {
-  const [site, itemList, archDoc] = await Promise.all([
+  const [site, itemList, archDoc, gearDoc] = await Promise.all([
     api.site(),
     api.itemList(),
     api.archetypes ? api.archetypes().catch(() => ({ archetypes: [] })) : Promise.resolve({ archetypes: [] }),
+    api.labGear(),
   ]);
   await api.icons().catch(() => null);
   const engine = engineFor(site);
@@ -85,6 +148,9 @@ export async function loadLabModel() {
     p.hard = (p.dobt || []).some((x) => x === '头目掉落' || x === 'Boss' || x === '解谜' || x === '随机');
     pieceById.set(p.id, p);
   }
+
+  /* 实验室 v2 装备目录：维度/流派/全量饰品与挂件/碎片/特性 */
+  const gear = buildGear(gearDoc, itemsById, engine);
 
   /* 职业表：文件缺失/未产出时为空数组，视图显示「职业数据载入中 / 待验证」 */
   const DLC_ZH = { base: '本体', dlc1: '真皇的苏醒', dlc2: '失落的王国', dlc3: '暗黑地平线', dlc4: 'DLC4' };
@@ -159,6 +225,7 @@ export async function loadLabModel() {
   return {
     engine,
     site,
+    gear,
     meta: site.meta || {},
     itemsById,
     itemIcon,

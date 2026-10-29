@@ -241,14 +241,14 @@ test('deriveRoutes：ESM 可 import，纯数据推导（注入 fetch，不联网
     const mod = await import(pathToFileURL(path.join(REPO, 'qa/lib/routes.mjs')).href);
     assert.equal(typeof mod.deriveRoutes, 'function', 'routes.mjs 应导出 deriveRoutes');
     const routes = await mod.deriveRoutes('http://example.test/relic-archive/');
-    // 14 条固定路由 + codex 深链 + 2 条详情深链 + owned + builds + 2 套详情 + 404 = 22
-    assert.equal(routes.length, 22, `路由数=${routes.length}`);
+    // 18 条固定路由（14 + 实验室 v2 的 4 个新面板）+ codex 深链 + 2 条详情深链 + owned + builds + 2 套详情 + 404 = 26
+    assert.equal(routes.length, 26, `路由数=${routes.length}`);
     assert.deepEqual(routes[0], { name: 'items', path: '#/items' });
     assert.deepEqual(routes[1], { name: 'items-sets', path: '#/items/sets' });
     assert.ok(requested.every((u) => u.startsWith('http://example.test/relic-archive/data/')), `数据请求应带部署前缀：${requested.join(',')}`);
     assert.ok(requested.every((u) => !u.includes('relic-archive//data')), '不应出现双斜杠');
     const names = routes.map((r) => r.name);
-    for (const want of ['lab-recommend', 'lab-legacy-calc', 'codex-article', 'item-detail', 'item-detail-2', 'items-owned', 'builds', 'builds-k1', 'builds-k2', 'builds-404']) {
+    for (const want of ['lab-recommend', 'lab-trinkets', 'lab-weapons', 'lab-traits', 'lab-fragments', 'lab-legacy-calc', 'codex-article', 'item-detail', 'item-detail-2', 'items-owned', 'builds', 'builds-k1', 'builds-k2', 'builds-404']) {
       assert.ok(names.includes(want), `缺少路由：${want}`);
     }
     const codexRoute = routes.find((r) => r.name === 'codex-article');
