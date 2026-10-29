@@ -153,7 +153,7 @@ export function createTraitsTab(ctx) {
   });
   const countEl = h('span', { class: 'muted' });
   const filtersBar = h('div', { class: 'lab-catsub__head' }, chipsHost, searchInput, countEl);
-  const listHost = h('div');
+  const listHost = h('div', { class: 'lab-cat__scroll' });
   const defCount = () => allTraits().filter((t) => Object.keys(t.dims || {}).some((k) => DEF_DIMS.has(k) && Number(t.dims[k]) > 0)).length;
   const counts = () => ({ all: allTraits().length, on: S.traitUsed(), def: defCount() });
 

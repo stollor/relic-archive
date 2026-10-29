@@ -17,7 +17,6 @@ import {
 import { ARMOR_SLOTS } from './wb-slots.js';
 
 const RES_ZH = ['流血', '火焰', '电击', '腐蚀', '枯萎'];
-const RES_ICON = ['bleed', 'fire', 'shock', 'corrode', 'blight'];
 const HARD_WORDS = ['头目掉落', '解谜', '随机', 'Boss'];
 const REC_TOP = 3;
 
@@ -49,14 +48,10 @@ export function createArmorTab(ctx) {
   );
 
   /* ------------------------- 行渲染 ------------------------- */
-  function resLine(p) {
+  /** 抗性不再单独占一行：详情浮层里有逐项；行内只在装info上给 title，保持单行清爽 */
+  function resTitle(p) {
     const res = Array.isArray(p.res) ? p.res : [];
-    return h('div', { class: 'lab-resmini' },
-      RES_ZH.map((zh, i) => h('span', { class: 'lab-resmini__i', title: `${zh}抗性` },
-        icon(RES_ICON[i], { size: 10 }),
-        h('span', { text: `${fmt.num(res[i] || 0, 0)}` }),
-      )),
-    );
+    return RES_ZH.map((zh, i) => `${zh} ${fmt.num(res[i] || 0, 0)}`).join(' · ');
   }
 
   function armorRow(slot) {
@@ -72,10 +67,9 @@ export function createArmorTab(ctx) {
     const it = model.itemsById.get(id) || null;
     const miss = ctx.isMissing(id);
     const stats = statCell([
-      { k: '护甲值', v: fmt.num(p.armor, 1), iconName: 'armor' },
-      { k: '负重', v: fmt.num(p.weight, 1), iconName: 'weight' },
+      { k: '护甲值', v: fmt.num(p.armor, 1), iconName: 'armor', title: resTitle(p) },
+      { k: '负重', v: fmt.num(p.weight, 1), iconName: 'weight', title: resTitle(p) },
     ]);
-    stats.append(resLine(p));
 
     const setParts = it && it.setField && Array.isArray(it.setField.parts) ? it.setField.parts : [];
     const setHave = setParts.filter((pid) => ARMOR_SLOTS.some((s) => store.build.get(s) === pid)).length;
@@ -224,7 +218,7 @@ export function createArmorTab(ctx) {
     clear(shell.body);
     shell.body.append(
       catBar([
-        { zh: '槽位' }, { zh: '护甲件' }, { zh: '数值（护甲 / 负重 / 抗性）' }, { zh: '套装与获取' }, { zh: '操作' },
+        { zh: '槽位' }, { zh: '护甲件' }, { zh: '数值（护甲 / 负重）' }, { zh: '套装与获取' }, { zh: '操作' },
       ]),
       ...ARMOR_SLOTS.map(armorRow),
       totalLine(),

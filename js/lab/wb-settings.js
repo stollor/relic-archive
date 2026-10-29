@@ -71,7 +71,7 @@ export function createSettings(ctx) {
   const body = [
     h('div', { class: 'lab-note' },
       icon('info', { size: 12 }),
-      h('span', { text: '场景 / 档位 / 流派在装配台工具栏切换；特性等级在「特性」页，圣物碎片在「圣物与碎片」页，均实时计入下方本套效果。' }),
+      h('span', { text: '这里的选项立即生效并写入当前具名存档；特性等级在「特性」页、圣物碎片在「圣物与碎片」页，均实时计入下方本套效果。' }),
     ),
     fold('消耗品', consHost, { sub: '勾选参与合计' }),
     fold('从预设增益档载入', seedHost, { sub: '仅作起点' }),

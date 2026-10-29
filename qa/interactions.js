@@ -807,6 +807,9 @@ async function runLab() {
   });
 
   await step(A, 'B9', '结果面板分防御/生存/机动，生存含「有效生命 EHP」', async () => {
+    // v4：完整结果默认折叠，先展开「完整数值 / 构成明细 / 输出」
+    await page.ev(`(() => { const d = document.querySelector('.lab-wb__side .lab-expand'); if (d) d.open = true; return 1; })()`);
+    await sleep(300);
     const segs = await page.ev(`[...document.querySelectorAll('.lab-wb__side .seg__btn, .lab-wb__side button')]
       .map((b) => b.textContent.trim()).filter(Boolean)`);
     assert(segs.includes('防御') && segs.includes('生存') && segs.includes('机动'), `结果分组缺项：${JSON.stringify(segs)}`);
@@ -836,17 +839,23 @@ async function runLab() {
   });
 
   await step(A, 'B11', '推荐面板：切换场景后重算（结果行变化）', async () => {
-    const rowsA = await page.ev(`[...document.querySelectorAll('.lab-rec__row')].slice(0, 2).map((r) => r.textContent.replace(/\s+/g, ' ').trim().slice(0, 60))`);
+    const rowsA = await page.ev(`[...document.querySelectorAll('.lab-rec__row')].slice(0, 2).map((r) => r.textContent.replace(/\\s+/g, ' ').trim().slice(0, 60))`);
+    // v4：场景 / 流派 / 档位收进装配台「设置」抽屉（唯一入口）
+    await page.click(`document.querySelector('.lab-asm__settings')`, { label: '装配台设置' });
+    const opened = await page.waitFor(`!!document.querySelector('#drawer select[aria-label="场景"]')`, 5000);
+    assert(opened, '设置抽屉里找不到场景 select');
     const changed = await page.ev(`(() => {
-      const sel = [...document.querySelectorAll('select')].find((s) => /场景/.test(s.getAttribute('aria-label') || ''));
+      const sel = document.querySelector('#drawer select[aria-label="场景"]');
       if (!sel) return false;
       const opt = [...sel.options].find((o) => o.value && o.value !== sel.value);
       if (!opt) return false;
       sel.value = opt.value; sel.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
     assert(changed, '找不到场景 select 或无可切换项');
+    await page.key('Escape');
+    await sleep(500);
     const got = await page.waitFor(`(() => { const rows = [...document.querySelectorAll('.lab-rec__row')].slice(0, 2);
-      return rows.length > 0 && rows[0].textContent.replace(/\s+/g, ' ').trim().slice(0, 60) !== ${JSON.stringify(rowsA[0] || '')}; })()`, 15000);
-    const rowsB = await page.ev(`[...document.querySelectorAll('.lab-rec__row')].slice(0, 2).map((r) => r.textContent.replace(/\s+/g, ' ').trim().slice(0, 60))`);
+      return rows.length > 0 && rows[0].textContent.replace(/\\s+/g, ' ').trim().slice(0, 60) !== ${JSON.stringify(rowsA[0] || '')}; })()`, 15000);
+    const rowsB = await page.ev(`[...document.querySelectorAll('.lab-rec__row')].slice(0, 2).map((r) => r.textContent.replace(/\\s+/g, ' ').trim().slice(0, 60))`);
     assert(got, `切换场景后推荐未重算：${JSON.stringify(rowsA)} → ${JSON.stringify(rowsB)}`);
     return { detail: `#1「${rowsA[0] || ''}」→「${rowsB[0] || ''}」` };
   });

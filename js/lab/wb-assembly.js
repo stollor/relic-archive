@@ -116,13 +116,35 @@ export function createAssembly(ctx, { recHost, onCategoryChange = null } = {}) {
     on: { click: () => runOneclick() },
   }, icon('sparkle', { size: 13 }), h('span', { text: '按流派配齐' }));
 
-  const tools = h('div', { class: 'lab-asm__tools' },
-    h('label', { class: 'lab-asm__field' }, h('span', { text: '流派' }), playstyleSel),
-    h('label', { class: 'lab-asm__field' }, h('span', { text: '场景' }), scenarioSel),
-    h('label', { class: 'lab-asm__field' }, h('span', { text: '档位' }), classSel),
-    missingBtn,
-    oneclickBtn,
-  );
+  /* 工具栏只留两个动作：设置（抽屉承载全部选项）+ 主动作「按流派配齐」 */
+  const settingsBtn = h('button', {
+    class: 'btn btn--quiet btn--sm lab-asm__settings', type: 'button',
+    attrs: { 'aria-label': '配装设置', title: '流派 / 场景 / 档位 / 缺件 / 消耗品 / 预设种子' },
+    on: { click: () => openSettings() },
+  }, icon('filter', { size: 13 }), h('span', { class: 'lab-asm__settings-txt' }));
+  const tools = h('div', { class: 'lab-asm__tools' }, settingsBtn, oneclickBtn);
+
+  /* ----------------------------- 设置抽屉 ----------------------------- */
+  function openSettings() {
+    syncToolbar();
+    const n = S.missingCount();
+    ui.openDrawer({
+      title: '配装设置', subtitle: '流派 / 场景 / 档位 / 缺件 / 消耗品 · 立即生效', iconName: 'filter',
+      body: h('div', { class: 'stack-3 lab-settings' },
+        h('div', { class: 'lab-fieldrow' },
+          h('div', { class: 'field' }, h('label', { class: 'field__label', text: '流派（推荐权重）' }), playstyleSel),
+          h('div', { class: 'field' }, h('label', { class: 'field__label', text: '场景（减伤权重）' }), scenarioSel),
+          h('div', { class: 'field' }, h('label', { class: 'field__label', text: '档位目标（推荐 / 重算用）' }), classSel),
+          h('div', { class: 'field' }, h('label', { class: 'field__label', text: '缺件（推荐默认排除）' }), missingBtn),
+        ),
+        ...(Array.isArray(ctx.settingsBody) ? ctx.settingsBody : []),
+      ),
+      foot: h('div', { class: 'row row--spread grow' },
+        h('span', { class: 'muted', attrs: { style: 'font-size:11.5px' }, text: '设置写入当前具名存档的 meta；「按流派配齐」会按这里的选择计算。' }),
+        h('button', { class: 'btn btn--primary btn--sm', type: 'button', text: '完成', on: { click: () => ui.closeDrawer() } }),
+      ),
+    });
+  }
 
   /* ----------------------------- 分类 tab ----------------------------- */
   const tabBar = h('div', { class: 'lab-asm__tabs', attrs: { role: 'tablist', 'aria-label': '装配分类' } });
@@ -162,8 +184,14 @@ export function createAssembly(ctx, { recHost, onCategoryChange = null } = {}) {
     const n = S.missingCount();
     clear(missingBtn);
     missingBtn.classList.toggle('is-on', n > 0);
-    missingBtn.append(icon('x-circle', { size: 12 }), h('span', { text: n ? `缺件 ${n}` : '全库可用' }));
+    missingBtn.append(icon('x-circle', { size: 12 }), h('span', { text: n ? `缺件 ${n} 件` : '无缺件' }));
     missingBtn.title = n ? `已标记 ${n} 件缺件（推荐默认排除）；点击查看` : '全库可用：推荐不排除任何装备；缺件在道具行标记';
+    const ps = (model.gear.playstyleById.get(S.playstyleId()) || {}).zh || '通用';
+    const sc = E.scenarioById(S.scenarioId()).zh;
+    const cls = S.classTarget() === 'free' ? '档位不限' : `目标 ${CLASS_ZH[S.classTarget()] || S.classTarget()}`;
+    const txt = settingsBtn.querySelector('.lab-asm__settings-txt');
+    if (txt) txt.textContent = `${ps} · ${sc} · ${cls}`;
+    settingsBtn.title = `当前：${ps} · ${sc} · ${cls}；点击修改流派 / 场景 / 档位 / 缺件 / 消耗品`;
   }
 
   function syncTabCounts() {

@@ -31,13 +31,6 @@ function weaponEffect(item) {
   return effectText(item.effect) || item.summaryZh || '';
 }
 
-/** 近战固有改装：items.json 目前无 attached_mod 字段，缺数据一律「待验证」 */
-function intrinsicModId(item) {
-  const raw = item && item.raw;
-  const id = raw && (raw.attached_mod || raw.attachedMod || raw.default_mod);
-  return typeof id === 'string' && id ? id : '';
-}
-
 export function createWeaponsTab(ctx) {
   const { model } = ctx;
   const { store, ui, S } = ctx;
@@ -158,50 +151,33 @@ export function createWeaponsTab(ctx) {
     if (kind === 'mod') S.setModOf(slot, null); else S.setMutator(slot, null);
     ui.toast(`已清除${kind === 'mod' ? '改装' : '突变因子'}`, 'ok');
   }
-  function attachValue(kind, slot) {
-    const id = kind === 'mod' ? S.modOf(slot) : S.mutatorOf(slot);
-    const info = attachInfo(kind, id);
-    if (!info) return h('span', { class: 'muted', text: '未选择' });
-    return h('div', {},
-      h('div', { class: 'row' },
-        h('b', { text: info.zh }),
-        info.en ? h('span', { class: 'lab-crow__en', text: info.en }) : ''),
-      h('div', {
-        class: 'muted',
-        text: info.effect || '效果原文待验证',
-        attrs: info.effect ? { title: info.effect } : undefined,
-      }),
-    );
-  }
-  function attachRow(kind, slot) {
+  /* ----------------------------- 挂件子行（单行紧凑） ----------------------------- */
+  function attachInline(kind, slot) {
     const isMod = kind === 'mod';
     const label = isMod ? '改装' : '突变因子';
     const currentId = isMod ? S.modOf(slot) : S.mutatorOf(slot);
-    return h('div', { class: 'lab-attachrow' },
-      h('span', { class: 'lab-attachrow__k', text: label }),
-      h('span', { class: 'lab-attachrow__v' },
-        isMod && slot === 'melee'
-          ? h('span', { class: 'muted', text: intrinsicModId(model.itemsById.get(weaponId(slot)))
-            ? '固有改装见详情（数据待验证）'
-            : '近战无改装槽 · 固有改装见详情（数据待验证）' })
-          : attachValue(kind, slot)),
-      h('span', { class: 'lab-attachrow__acts' },
-        h('button', {
-          class: 'btn btn--ghost btn--sm', type: 'button',
-          attrs: { title: `为${slotZh(slot)}选择${label}（按当前流派推荐）` },
-          disabled: isMod && slot === 'melee',
-          on: { click: () => openAttachPicker(slot, kind) },
-        }, icon(isMod ? 'mod' : 'metagem', { size: 12 }), h('span', { text: `选择${label}` })),
-        currentId ? iconAct('rotate-ccw', `清除${label}`, () => clearAttach(kind, slot), { size: 13 }) : '',
-      ),
+    const meleeMod = isMod && slot === 'melee';
+    const info = currentId ? attachInfo(kind, currentId) : null;
+    const disabled = meleeMod;
+    return h('div', { class: 'lab-attachline__item' },
+      h('span', { class: 'lab-attachline__k', text: label }),
+      meleeMod
+        ? h('span', { class: 'muted', text: '近战无改装槽' })
+        : (info
+          ? h('span', { class: 'lab-attachline__v' },
+            h('b', { text: info.zh, attrs: info.effect ? { title: info.effect } : undefined }))
+          : h('span', { class: 'muted', text: '未选择' })),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', disabled,
+        attrs: { title: disabled ? '近战武器没有改装槽' : `为${slotZh(slot)}选择${label}（按当前流派推荐）` },
+        on: { click: (e) => { e.stopPropagation(); openAttachPicker(slot, kind); } },
+      }, h('span', { text: info ? '更换' : '选择' })),
+      currentId && !disabled ? iconAct('rotate-ccw', `清除${label}`, () => clearAttach(kind, slot), { size: 12 }) : '',
     );
   }
+  /** 挂件行：跟随武器行下方，单行显示「突变因子 / 改装」，不再单独占一个带标题的区块 */
   function attachSection(slot) {
-    const count = (S.mutatorOf(slot) ? 1 : 0) + (slot !== 'melee' && S.modOf(slot) ? 1 : 0);
-    return catSection('挂件', [attachRow('mutator', slot), attachRow('mod', slot)], {
-      sub: slot === 'melee' ? '突变因子 · 近战无改装槽' : '突变因子 / 改装',
-      tools: [tag(`已选 ${count}/${slot === 'melee' ? 1 : 2}`)],
-    });
+    return h('div', { class: 'lab-attachline' }, icon('metagem', { size: 11 }), attachInline('mutator', slot), attachInline('mod', slot));
   }
 
   /* ----------------------------- 候选抽屉 ----------------------------- */

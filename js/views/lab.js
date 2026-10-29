@@ -145,15 +145,25 @@ export function mount(rootEl, ctx) {
     h('div', { class: 'lab-panels__head' }, tabBar),
     panelHost,
   );
+  /** 进阶面板默认折叠：主界面只留装配台 + 本套效果/推荐，减少首屏信息密度 */
+  const advanced = h('details', { class: 'lab-advanced' },
+    h('summary', { class: 'lab-advanced__sum' },
+      icon('layers', { size: 14 }),
+      h('span', { class: 'lab-advanced__title', text: '高级工具' }),
+      h('span', { class: 'lab-advanced__sub', text: '推荐方案 · 饰品组合 · 武器改装 · 特性 · 圣物碎片 · 逐槽替换 · 档位对照 · 计算器 · 存档导出' }),
+    ),
+    panelSection,
+  );
   wrap.append(
     h('div', { class: 'subnav' },
       h('h1', { class: 'subnav__title', text: '实验室' }),
       subTools,
     ),
     workbenchHost,
-    panelSection,
+    advanced,
   );
   rootEl.append(wrap);
+  if (pendingPanelScroll) advanced.open = true;   // 深链进面板：高级工具自动展开
 
   let model = null;
   let workbench = null;
@@ -286,14 +296,8 @@ export function mount(rootEl, ctx) {
   }
 
   function syncSubTools() {
+    // v4：标题行不再堆徽章（特性 / 缺件 / 流派都在装配台「设置」里）；保留空容器给未来入口
     clear(subTools);
-    const used = S.traitUsed();
-    const ps = model && model.gear ? model.gear.playstyleById.get(S.playstyleId()) : null;
-    subTools.append(
-      h('span', { class: `tag${used >= 10 ? ' lab-tag--warn' : ''}`, title: '游戏特性装备上限 10 个' }, icon('trait', { size: 11 }), h('span', { text: `特性 ${used}/10` })),
-      h('span', { class: 'tag', title: '装备默认全部可用；没有的标记为缺件' }, icon('x-circle', { size: 11 }), h('span', { text: `缺件 ${S.missingCount()}` })),
-      h('span', { class: 'tag', title: '当前流派：推荐 / 组合评分口径' }, icon('gem', { size: 11 }), h('span', { text: `流派 ${ps ? ps.zh : '通用'}` })),
-    );
   }
 
   /* ----------------------------- 路由 ----------------------------- */
@@ -326,6 +330,7 @@ export function mount(rootEl, ctx) {
     if (redirectLegacy(c)) return;
     if (!model) return;
     const params = paramsOf(c);
+    if (params.panel && PANEL_BY_ID.has(params.panel)) advanced.open = true;   // 面板深链：展开高级工具
     const id = panelFromCtx(c);
     // 直接打开/重定向时也清掉不属于该面板的 query（可分享、可复现）
     const foreign = foreignPanelParams(id, params);

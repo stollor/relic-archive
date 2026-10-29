@@ -119,19 +119,13 @@ export function createTrinketsTab(ctx) {
 
   /* ------------------------- 标题栏：流派 / 按流派补空槽 ------------------------- */
   const shell = catShell({ title: CAT.zh, sub: CAT.sub || '1 项链 + 4 戒指', iconName: CAT.icon });
-  /* 流派切换的唯一入口在装配台工具栏（上方）；这里只回显当前流派，避免两套下拉各写一遍状态 */
-  const psTag = h('span', { class: 'lab-tag', attrs: { title: '流派决定维度权重与「契合」小分；在装配台工具栏切换' } });
+  /* 流派切换的唯一入口在装配台「设置」抽屉；这里只留补空槽动作 */
   shell.acts.append(
-    psTag,
     h('button', {
       class: BTN, type: 'button', attrs: { title: '按当前流派给每个空槽挑边际增益最高的一件' }, on: { click: () => fillEmptySlots() },
     }, icon('sparkle', { size: 13 }), h('span', { text: '按流派补空槽' })),
   );
 
-  function syncPlaystyleSelect() {
-    clear(psTag);
-    psTag.append(h('span', { text: `契合流派 · ${psZh(S.playstyleId())}` }));
-  }
 
   function fillEmptySlots() {
     if (!gearReady()) { ui.toast('饰品数据尚未载入，暂不能补齐', 'warn'); return; }
@@ -303,7 +297,6 @@ export function createTrinketsTab(ctx) {
   function render() {
     if (destroyed) return;
     ensureEngines();
-    syncPlaystyleSelect();
     clear(shell.body);
     shell.body.append(
       catBar([{ zh: '槽位' }, { zh: '饰品' }, { zh: '维度 · 契合' }, { zh: '效果' }, { zh: '操作' }]),

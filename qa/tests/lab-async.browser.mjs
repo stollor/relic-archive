@@ -120,13 +120,15 @@ class Page {
 
   async labState() {
     return this.ev(`(() => {
-      const sel = document.querySelector('select[aria-label="场景"]');
       const btn = [...document.querySelectorAll('.lab-rec__bar button')].find((b) => b.textContent.includes('重新穷举'));
+      // v4：场景选择在装配台「设置」抽屉里，不常驻 DOM → 状态以 store.build.meta 为准
+      let scenario = 'general';
+      try { scenario = (JSON.parse(localStorage.getItem('r2.v2.build') || '{}').meta || {}).scenario || 'general'; } catch (e) { scenario = 'general'; }
       return {
         hash: location.hash,
         status: (document.querySelector('.lab-rec__status') || {}).textContent || '',
         rows: document.querySelectorAll('.lab-rec__row').length,
-        scenario: sel ? sel.value : null,
+        scenario,
         reshead: (document.querySelector('.lab-reshead') || {}).textContent || '',
         button: btn ? { disabled: btn.disabled, text: btn.textContent.trim() } : null,
         recVisible: document.querySelectorAll('#view-root .lab-rec').length,
@@ -135,13 +137,12 @@ class Page {
   }
 
   async setScenario(id) {
-    return this.ev(`(() => {
-      const s = document.querySelector('select[aria-label="场景"]');
-      if (!s) return null;
-      s.value = ${JSON.stringify(id)};
-      s.dispatchEvent(new Event('change', { bubbles: true }));
-      return s.value;
-    })()`);
+    // v4：设置收进抽屉。测试直接调用与下拉 onChange 同一条 state 路径（S.setScenario → 'scenario' 事件）
+    return this.ev(`(async () => {
+      const S = await import('/js/lab/state.js');
+      S.setScenario(${JSON.stringify(id)});
+      return S.scenarioId();
+    })()`, { awaitPromise: true });
   }
 
   async clickRerun() {
@@ -261,15 +262,15 @@ async function main() {
       assert(await page.labState().then((s) => s.scenario) === 'general', '起始场景不是 general');
       // 慢设备等效：4× CPU 降速把 100ms 级穷举拉长到 ~1s，稳定命中「运行中改条件」窗口
       await root.send('Emulation.setCPUThrottlingRate', { rate: 4 }, sessionId);
-      const race = await page.ev(`(() => {
-        const sel = document.querySelector('select[aria-label="场景"]');
+      const race = await page.ev(`(async () => {
+        const S = await import('/js/lab/state.js');
         const btn = [...document.querySelectorAll('.lab-rec__bar button')].find((b) => b.textContent.includes('重新穷举'));
-        if (!btn || !sel) return { error: 'missing ui' };
+        if (!btn) return { error: 'missing ui' };
         btn.click(); // 同步进入穷举中
-        sel.value = 'losomn'; sel.dispatchEvent(new Event('change', { bubbles: true }));
-        sel.value = 'nerud'; sel.dispatchEvent(new Event('change', { bubbles: true }));
-        return { running: (document.querySelector('.lab-rec__status') || {}).textContent || '', scenario: sel.value };
-      })()`);
+        S.setScenario('losomn');
+        S.setScenario('nerud');
+        return { running: (document.querySelector('.lab-rec__status') || {}).textContent || '', scenario: S.scenarioId() };
+      })()`, { awaitPromise: true });
       assert(race && !race.error, `页面竞态脚本失败：${JSON.stringify(race)}`);
       assert(/穷举中/.test(race.running), `点击「重新穷举」后未进入穷举中：${race.running}`);
       assert(race.scenario === 'nerud', `两次场景切换后 select 应为 nerud，实际 ${race.scenario}`);

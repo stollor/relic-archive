@@ -1,17 +1,14 @@
 /* =============================================================================
-   遗迹2 · 遗物档案 — lab/workbench.js（v3 装配台）
-   实验台主区：装配台（6 分类页）+ 本套效果（防御/生存/机动 + 构成明细 + 输出）
-   + 本类推荐（随分类 / 配装实时更新）+ 配装设置（消耗品 / 预设种子）。
-
-   布局：
-     .lab-wb
-       ├─ 装配台 panel（wb-assembly）
-       ├─ .lab-wb__bottom：本套效果（wb-result）+ 推荐（分类模块 renderRec）
-       └─ 配装设置 panel（wb-settings：只留消耗品 / 种子；场景/档位/流派在装配台工具栏）
-
-   订阅与刷新调度在本文件；模块之间只通过显式 ctx 取共享状态，不靠闭包互访。
+   遗迹2 · 遗物档案 — lab/workbench.js（v4 静默版）
+   实验台主区只保留三层信息：
+     ① 装配台（6 分类页，行内只显示关键属性，详情在统一详情浮层）
+     ② 本套效果（一行关键数值 + 可展开的完整数值/构成明细/输出）
+     ③ 本类推荐（分类模块的 renderRec，压缩高度、内部滚动）
+   配装设置（流派 / 场景 / 档位 / 缺件 / 消耗品 / 预设种子）收进装配台的「设置」抽屉；
+   九个进阶面板由视图层的「高级工具」折叠区承载（本文件不再渲染它们）。
    ========================================================================== */
-import { h } from '../core/dom.js';
+import { h, clear, fmt } from '../core/dom.js';
+import { icon } from '../core/icons.js';
 import { store } from '../core/store.js';
 import { ui } from '../core/ui.js';
 import { openItemDetail } from '../components/item-detail.js';
@@ -23,15 +20,14 @@ import { SLOT_LABEL } from './model.js';
 import { createAssembly } from './wb-assembly.js';
 import { createSettings } from './wb-settings.js';
 import { createResult } from './wb-result.js';
+import { CLASS_ZH } from './engine.js';
 
-/** 面板实例契约（views/lab.js 与各模块共用）：{ el, refresh?, destroy? }；本工作台公开 { el, refresh, destroy }。 */
 export function createWorkbench(model, { onOpenPanel = null } = {}) {
   const E = model.engine;
   const root = h('div', { class: 'lab-wb' });
   const recHost = h('div', { class: 'lab-wb__rechost' });
-  const bottom = h('div', { class: 'lab-wb__bottom' });
+  const summaryHost = h('div', { class: 'lab-summary' });
   let destroyed = false;
-  /** 刷新器在 ctx / settings / result 之后才创建；这里先给一个惰性入口，避免初始化期 TDZ */
   let refresh = null;
   const scheduleRefresh = () => refresh?.schedule();
 
@@ -50,11 +46,13 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
     onOpenPanel,
     openPanel: onOpenPanel,
     slotLabel: SLOT_LABEL,
+    settingsBody: [],                 // 由装配台的「设置」抽屉渲染（消耗品 / 预设种子）
     refresh: scheduleRefresh,
   };
 
   const settings = createSettings(ctx);
   const result = createResult(ctx);
+  ctx.settingsBody = settings.body;
   const { renderPools } = settings;
   const { renderResult } = result;
 
@@ -67,26 +65,55 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
     assembly.refresh();
     renderPools();
     renderResult();
+    renderSummary();
   });
 
-  /* --------------------------- 组装 --------------------------- */
-  const assemblyPanel = panel('装配台', { iconName: 'grid', sub: '6 类装备 · 点行装 / 换 / 卸 · 实时合计', flush: true });
-  assemblyPanel.body.append(assembly.el);
+  /* --------------------------- 本套效果（一行关键数值 + 展开） --------------------------- */
+  function renderSummary() {
+    clear(summaryHost);
+    const st = S.workbenchSummary(model);
+    const scenario = E.scenarioById(S.scenarioId());
+    if (st.filled === 0) {
+      summaryHost.append(
+        h('span', { class: 'lab-summary__hint', text: '放入护甲后显示实时合计（职业 / 特性 / 饰品 / 碎片已计入）。' }),
+      );
+      return;
+    }
+    const items = [
+      { k: '场景分', v: fmt.pct(st.score, 1), cls: 'is-gold' },
+      { k: '护甲值', v: fmt.num(st.armor, 1) },
+      { k: '护甲减伤', v: fmt.pct(st.adr, 1) },
+      { k: '物理总减伤', v: fmt.pct(st.totals.physical, 1) },
+      { k: '负重', v: `${fmt.num(st.weight, 1)} · ${CLASS_ZH[st.cls] || st.cls}` },
+      { k: '有效生命', v: fmt.num(st.ehp, 0) },
+    ];
+    summaryHost.append(
+      h('div', { class: 'lab-summary__grid' },
+        items.map((it) => h('div', { class: `lab-summary__item${it.cls ? ` ${it.cls}` : ''}` },
+          h('b', { text: it.v }),
+          h('span', { text: it.k }),
+        )),
+      ),
+      h('span', { class: 'lab-summary__scene', text: scenario.zh }),
+    );
+  }
 
-  const resultPanel = panel('本套效果', { iconName: 'chart', sub: '防御 / 生存 / 机动 · 当前整套实时合计' });
-  resultPanel.el.classList.add('lab-wb__side');
-  resultPanel.body.append(...result.body);
+  /* --------------------------- 组装（只三层） --------------------------- */
+  const assemblyCard = h('div', { class: 'lab-asm-card' }, assembly.el);
+
+  const summaryPanel = panel('本套效果', { iconName: 'chart', sub: '当前整套实时合计' });
+  summaryPanel.el.classList.add('lab-wb__side');
+  const expand = h('details', { class: 'lab-expand' },
+    h('summary', {}, icon('listchecks', { size: 13 }), h('span', { text: '完整数值 / 构成明细 / 输出' })),
+    h('div', { class: 'lab-expand__body' }, ...result.body),
+  );
+  summaryPanel.body.append(summaryHost, expand);
 
   const recPanel = panel('本类推荐', { iconName: 'sparkle', sub: '随分类与配装实时更新' });
   recPanel.el.classList.add('lab-wb__rec');
   recPanel.body.append(recHost);
 
-  bottom.append(resultPanel.el, recPanel.el);
-
-  const settingsPanel = panel('配装设置', { iconName: 'trait', sub: '消耗品 / 预设种子 · 写入存档 meta' });
-  settingsPanel.body.append(...settings.body);
-
-  root.append(assemblyPanel.el, bottom, settingsPanel.el);
+  root.append(assemblyCard, summaryPanel.el, recPanel.el);
 
   /* --------------------------- 订阅 / 初始渲染 --------------------------- */
   const cleanup = createScope();
@@ -98,6 +125,7 @@ export function createWorkbench(model, { onOpenPanel = null } = {}) {
 
   renderPools();
   renderResult();
+  renderSummary();
 
   return {
     el: root,

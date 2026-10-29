@@ -13,12 +13,11 @@ import { effectText, condShort } from './text.js';
 import { deriveSkills } from './skills.js';
 import {
   CAT_BY_ID, catShell, catBar, crow, emptyCrow, slotCell, itemCell, effectCell, actsCell,
-  catSection, noteLine, recCard, recList, tag, iconAct, emptyTab,
+  noteLine, recCard, recList, tag, iconAct, emptyTab,
 } from './wb-parts.js';
 
 const REC_TOP = 4;
 const MAX_REC_PERKS = 3;
-const SKILL_TITLE = '技能 · 3 选 1';
 const ARCH_SLOTS = ['archetype1', 'archetype2'];
 
 /** 防御贡献分（透明权重，只用于本页排序；不是游戏内精确数值） */
@@ -128,7 +127,7 @@ export function createArchetypeTab(ctx) {
       on: { error: (e) => { e.currentTarget.style.visibility = 'hidden'; } },
     });
   }
-  function skillCard(slot, skill, list) {
+  function skillCard(slot, skill, list, { inDrawer = false } = {}) {
     const on = markedId(slot, list) === skill.id;
     const segments = summarySegments(skill);
     const junk = segments === null;
@@ -163,30 +162,57 @@ export function createArchetypeTab(ctx) {
         : null,
     );
     // 原生 button 自带键盘激活；只排除折叠区点击，避免展开英文原文时误改选择
-    card.addEventListener('click', (e) => { if (e.target.closest('details')) return; toggleSkill(slot, skill, list); });
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('details')) return;
+      toggleSkill(slot, skill, list);
+      if (inDrawer) ui.closeDrawer();
+    });
     return card;
   }
 
-  /** 某一职业槽下方的「技能 · 3 选 1」子区块 */
-  function skillSection(slot, a) {
-    const label = SLOT_LABEL[slot] || slot;
-    const sub = `${label} · 卷轴记录 · 不参与防御合计`;
+  /** 技能抽屉：3 选 1 的完整信息（行内只显示已记录的那一条，避免技能卡占半屏） */
+  function openSkillDrawer(slot, a) {
     const list = skillMap.get(a.id) || [];
-    if (!list.length) {
-      const hint = a.status === 'unreleased' ? `${a.zh} 未实装，暂无技能数据（待验证）` : `${a.zh} 的技能数据未收录（待验证）`;
-      return catSection(SKILL_TITLE, [emptyTab(hint)], { sub: `${sub} · 待验证` });
-    }
+    const selId = markedId(slot, list);
+    const body = h('div', { class: 'lab-skillgrid lab-skillgrid--drawer' },
+      list.map((skill) => skillCard(slot, skill, list, { inDrawer: true })));
+    ui.openDrawer({
+      title: `技能 · ${a.zh}`, subtitle: '3 选 1 · 卷轴记录，不参与防御合计', iconName: 'skill',
+      body: list.length ? body : emptyTab('该职业技能数据未收录（待验证）'),
+      foot: h('div', { class: 'row row--spread grow' },
+        h('span', { class: 'muted', text: '点击卡片记录 / 再点取消；技能不影响下方数值合计。' }),
+        selId ? h('button', {
+          class: 'btn btn--quiet btn--sm', type: 'button', text: '清除记录',
+          on: { click: () => { toggleSkill(slot, list.find((s) => s.id === selId), list); ui.closeDrawer(); } },
+        }) : ''),
+    });
+  }
+
+  /** 职业行下的单行技能条：图标 + 已记录技能（或「未记录」）+ [选择/更换] */
+  function skillLine(slot, a) {
+    const list = skillMap.get(a.id) || [];
     const selId = markedId(slot, list);
     const sel = selId ? list.find((skill) => skill.id === selId) : null;
-    return catSection(SKILL_TITLE, [
-      h('div', { class: 'lab-skillgrid' }, list.map((skill) => skillCard(slot, skill, list))),
-    ], {
-      sub: `${sub} · ${sel ? `已记录「${sel.zh}」` : '未记录（可选）'}`,
-      tools: sel ? [h('button', {
-        class: 'btn btn--quiet btn--sm', type: 'button', text: '清除记录',
-        on: { click: () => toggleSkill(slot, sel, list) },
-      })] : [],
-    });
+    if (!list.length) {
+      return h('div', { class: 'lab-attachline' }, icon('skill', { size: 11 }),
+        h('span', { class: 'lab-attachline__k', text: '技能' }),
+        h('span', { class: 'muted', text: a.status === 'unreleased' ? '未实装 · 技能数据待验证' : '技能数据未收录（待验证）' }));
+    }
+    return h('div', { class: 'lab-attachline' },
+      icon('skill', { size: 11 }),
+      h('span', { class: 'lab-attachline__k', text: '技能' }),
+      sel
+        ? h('span', { class: 'lab-attachline__v' },
+          h('b', { text: sel.zh }),
+          h('span', { class: 'lab-attachline__eff', text: sel.summary || sel.nums.map((n) => `${n.label} ${n.value}`).join(' · '), attrs: { title: sel.summary || '' } }))
+        : h('span', { class: 'muted', text: '未记录（可选）' }),
+      h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button',
+        attrs: { title: `查看${a.zh}的 3 个技能并记录一个` },
+        on: { click: (e) => { e.stopPropagation(); openSkillDrawer(slot, a); } },
+      }, h('span', { text: sel ? '更换' : '选择' })),
+      sel ? iconAct('rotate-ccw', '清除技能记录', () => toggleSkill(slot, sel, list), { size: 12 }) : '',
+    );
   }
 
   /* ----------------------------- 职业行 ----------------------------- */
@@ -303,7 +329,7 @@ export function createArchetypeTab(ctx) {
       rows.push(archetypeRow(slot));
       const id = store.build.get(slot);
       const a = id ? model.findArchetype(id) : null;
-      if (a) rows.push(skillSection(slot, a));
+      if (a) rows.push(skillLine(slot, a));
     }
     shell.body.append(...rows);
     clear(shell.foot);
