@@ -37,6 +37,7 @@
 | `data/items.json` | 7.0 MB | 主数据集，schema v1.4，**1894 条**（其中 `is_item=true` 的 1126 件真道具） | `js/core/api.js`、`serve.py` |
 | `data/builds.json` | 291 KB | **流派** 7 套：评分 / 伤害链条 / 槽位 / 循环 / 替换 / 清群 / 难点 / 饰品乘区 + 200 条道具 UI 摘要 + 护甲套装混搭 + 规则口径 + i18n 文本实体 | `api.js`（`#/builds`） |
 | `data/site_data.json` | 730 KB | 实验室数据：护甲 121 件、饰品效果 141 条、6 场景、11 增益档、330 组预设、缺件替代 | `js/lab/*` |
+| `data/lab_gear.json` | 434 KB | **装备目录 v1（实验室 v2）**：15 维标签 + 9 流派 + 戒指 225 / 项链 104 / 突变因子 66 / 改装 79 / 圣物碎片 45 / 特性 43 / 圣物 27；每条含 tags/dims/effectZh/effectEn/evidence/confidence；由工作区 `build/mk_lab_gear.py` 生成 | `js/lab/model.js`、`score/combos/fit` |
 | `data/archetypes.json` | 30 KB | 16 个职业（14 实装 + DLC4 未实装 2 个），官方译名 | `js/lab/*` |
 | `data/terms.json` | 17 KB | 术语、伤害类型、槽位、获取难度、23 个游戏标签、7 类效果分类 | 全站文案 |
 | `data/acq.json` | 52 KB | 获取途径文本 + 难度标签 + DLC；未收录留空，不编造 | 资料库详情 |
@@ -127,7 +128,7 @@ node qa/gate.mjs data      # Schema/引用/工作区漂移 + 数据脚本单测�
 node qa/gate.mjs full      # 提交前完整回归
 ```
 
-数据结构契约在 `qa/lib/data-schema.mjs`（9 个运行时 JSON 的字段/类型/唯一性/跨文件引用/版本兼容），
+数据结构契约在 `qa/lib/data-schema.mjs`（10 个运行时 JSON 的字段/类型/唯一性/跨文件引用/版本兼容），
 由 `qa/tests/data-schema.test.mjs` 验证；真实数据当前 **0 error / 3 类已知 warning**（见 `qa/REPORT.md` §12.4）。
 `sync-data.py` 只做语法层校验（损坏即退出码 2、零写入），语义契约由 data-schema 负责。
 

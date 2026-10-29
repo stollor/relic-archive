@@ -32,7 +32,7 @@ SCRIPT = REPO_ROOT / "pipeline" / "sync-data.py"
 # 与 pipeline/sync-data.py 的清单保持一致的「同步契约」（重复声明是为了让测试能独立断言）
 DATA_FILES = [
     "items.json", "icon_index.json", "site_data.json", "terms.json",
-    "acq.json", "archetypes.json", "item_effects.json",
+    "acq.json", "archetypes.json", "item_effects.json", "lab_gear.json",
 ]
 CODEX_REL = "data/codex/index.json"
 SOURCE_FILES = ["build/ui_data.json", "build/loadouts.json", "build/builds.json"]

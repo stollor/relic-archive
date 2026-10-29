@@ -31,7 +31,7 @@ import {
 /** 仓库根（qa/lib → ../../） */
 export const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
-/** 被校验的 9 个运行时数据文件（key → 仓库相对路径） */
+/** 被校验的 10 个运行时数据文件（key → 仓库相对路径） */
 export const DATA_FILES = Object.freeze({
   items: 'data/items.json',
   builds: 'data/builds.json',
@@ -42,6 +42,7 @@ export const DATA_FILES = Object.freeze({
   itemEffects: 'data/item_effects.json',
   iconIndex: 'data/icon_index.json',
   acq: 'data/acq.json',
+  labGear: 'data/lab_gear.json',
 });
 /** 配装源快照只读引用：纯文本实体（碎片/传奇词条）的合法登记处 */
 const SOURCE_BUILDS_FILE = 'pipeline/_source/builds.json';
@@ -57,6 +58,7 @@ export const SUPPORTED_VERSIONS = Object.freeze({
   itemEffects: null, // meta 里没有 version/schema 字段，不做版本门
   iconIndex: { file: 'iconIndex', kind: 'number', supported: [1], maxKnown: 1, field: ['version'] },
   acq: { file: 'acq', kind: 'prefixed', prefix: 'acq/', supported: ['acq/1'], maxKnown: 1, field: ['schema'] },
+  labGear: { file: 'labGear', kind: 'number', supported: [1], maxKnown: 1, field: ['meta', 'schema'] },
 });
 
 /**
@@ -110,7 +112,7 @@ export function readJsonFile(root, relPath) {
 }
 
 /**
- * 读取全部 9 个数据文件 + 配装源快照（只读，module 级缓存）。
+ * 读取全部 10 个数据文件 + 配装源快照（只读，module 级缓存）。
  * items.json 7.3MB：整个测试进程只 parse 一次。
  */
 export function loadData(root = REPO_ROOT) {
@@ -1052,6 +1054,142 @@ const acqRootRule = obj({
   ],
 });
 
+/* -------------------------------- lab_gear -------------------------------- */
+
+/** 实验室 v2 的 15 个维度 id（契约 LAB_V2.md §1.2，id 不可改；顺序即展示顺序） */
+export const LAB_GEAR_DIMENSIONS = Object.freeze([
+  'dmg', 'ranged', 'melee', 'crit', 'status', 'mod', 'skill', 'firerate',
+  'explosive', 'armor', 'health', 'heal', 'stamina', 'utility', 'summon',
+]);
+/** 实验室 gear 的 7 个 kind（契约 §1.1） */
+export const LAB_GEAR_KINDS = Object.freeze(['ring', 'amulet', 'mutator', 'mod', 'fragment', 'trait', 'relic']);
+
+const labGearDimensionRule = obj({
+  id: { type: 'string', enum: LAB_GEAR_DIMENSIONS },
+  zh: nstr(),
+  order: int(),
+}, {
+  required: [
+    req('id', '维度 id（dims 的键与 playstyles 权重的键，契约固定 15 个）'),
+    req('zh', '维度中文名（面板文案）'),
+    req('order', '展示顺序'),
+  ],
+});
+
+const labGearPlaystyleRule = obj({
+  id: nstr(),
+  zh: nstr(),
+  en: nstr(),
+  desc: str(),
+  dims: map(num({ minimum: 0, maximum: 1 })),
+  order: int(),
+}, {
+  required: [
+    req('id', '流派 id（面板选择器与评分输入）'),
+    req('zh', '流派中文名'),
+    req('dims', '流派维度权重（0–1，键必须是 dimensions[].id）'),
+    req('order', '展示顺序'),
+  ],
+});
+
+const labGearItemRule = obj({
+  id: nstr(),
+  zh: nstr(),
+  en: nstr(),
+  dlc: { type: 'string', enum: DLC_IDS },
+  tags: arr(str()),
+  dims: map(num({ enum: [0.5, 1] })),
+  effectZh: nstr(),
+  effectZhRaw: nstr(),
+  effectEn: nstr(),
+  effectSrc: { type: 'string', enum: ['official', 'derived', 'wiki', 'none', 'derived-raw'] },
+  effectKeys: arr(nstr()),
+  hard: bool(),
+  confidence: { type: 'string', enum: CODEX_CONFIDENCE },
+  evidence: arr(str()),
+  note: str(),
+}, {
+  required: [
+    req('id', '全局唯一主键：实验室按 id 建索引、与 items.json / site_data.modifiers 对齐'),
+    req('zh', '中文名（无官方译名时用英文名并标 confidence=low）'),
+    req('confidence', '数据可信度（high/mid/low，面板据此标注）'),
+  ],
+});
+
+const labGearMutatorRule = obj({
+  ...labGearItemRule.properties,
+  weapon: { type: 'string', enum: ['ranged', 'melee', 'any'] },
+}, {
+  required: [...labGearItemRule.required, req('weapon', '变异器适配武器类型（fit.recommendMutators 的筛选键）')],
+});
+
+const labGearFragmentRule = obj({
+  ...labGearItemRule.properties,
+  color: { type: 'string', enum: ['red', 'yellow', 'blue'] },
+  stat: nstr(),
+}, {
+  required: [...labGearItemRule.required, req('color', '碎片颜色（红/黄/蓝；面板按颜色分组与均衡提示）')],
+});
+
+const labGearTraitRule = obj({
+  ...labGearItemRule.properties,
+  maxLevel: int({ minimum: 1 }),
+  perLevel: map(num()),
+}, {
+  required: [...labGearItemRule.required, req('maxLevel', '特性等级上限（等级步进器 0–maxLevel）')],
+});
+
+const labGearCountsRule = obj({
+  dimensions: int(),
+  playstyles: int(),
+  ring: int(),
+  amulet: int(),
+  mutator: int(),
+  mod: int(),
+  fragment: int(),
+  trait: int(),
+  relic: int(),
+}, {
+  required: [
+    req('dimensions', '维度数与 dimensions.length 对账'),
+    req('playstyles', '流派数与 playstyles.length 对账'),
+    ...LAB_GEAR_KINDS.map((kind) => req(kind, `gear.${kind}.length 对账（防生成链漏项）`)),
+  ],
+});
+
+const labGearRootRule = obj({
+  meta: obj({
+    schema: int(),
+    generated: str(),
+    generator: nstr(),
+    sources: arr(nstr(), { minItems: 1 }),
+    notes: arr(str()),
+    counts: labGearCountsRule,
+  }, {
+    required: [req('schema', 'lab_gear 数据格式版本'), req('counts', '条目数自检（与 gear.* 长度对账）')],
+  }),
+  dimensions: arr(labGearDimensionRule, { minItems: 1, uniqueBy: 'id' }),
+  playstyles: arr(labGearPlaystyleRule, { minItems: 1, uniqueBy: 'id' }),
+  gear: obj({
+    ring: arr(labGearItemRule, { uniqueBy: 'id' }),
+    amulet: arr(labGearItemRule, { uniqueBy: 'id' }),
+    mutator: arr(labGearMutatorRule, { uniqueBy: 'id' }),
+    mod: arr(labGearItemRule, { uniqueBy: 'id' }),
+    fragment: arr(labGearFragmentRule, { uniqueBy: 'id' }),
+    trait: arr(labGearTraitRule, { uniqueBy: 'id' }),
+    relic: arr(labGearItemRule, { uniqueBy: 'id' }),
+  }, {
+    required: LAB_GEAR_KINDS.map((kind) => req(kind, `gear.${kind} 数组（实验室对应面板的数据源）`)),
+  }),
+}, {
+  required: [
+    req('meta', '元信息（版本/来源/计数）'),
+    req('dimensions', '维度表（dims 键与流派权重的引用域）'),
+    req('playstyles', '流派表（评分权重）'),
+    req('gear', '7 类装备目录（面板数据源）'),
+  ],
+});
+
 /* ------------------------------ 版本 / 计数工具 ------------------------------ */
 
 function getPath(doc, tokens) {
@@ -1547,6 +1685,96 @@ function acqCross(doc, ctx) {
   failIf(Object.values(entries).filter((entry) => entry && typeof entry.dlc === 'number' && entry.dlc > 0).length, counts.with_dlc, ['counts', 'with_dlc'], 'with_dlc 计数与 items[*].dlc>0 的数量不一致');
 }
 
+function labGearCountsCheck(doc, ctx) {
+  const counts = doc?.meta?.counts || {};
+  const failIf = (expected, actual, tokens, message) => {
+    if (expected !== actual) ctx.fail(tokens, { expected: `count=${expected}`, actual, message });
+  };
+  failIf(Array.isArray(doc?.dimensions) ? doc.dimensions.length : 0, counts.dimensions, ['meta', 'counts', 'dimensions'], 'dimensions.length 与 meta.counts.dimensions 不一致');
+  failIf(Array.isArray(doc?.playstyles) ? doc.playstyles.length : 0, counts.playstyles, ['meta', 'counts', 'playstyles'], 'playstyles.length 与 meta.counts.playstyles 不一致');
+  for (const kind of LAB_GEAR_KINDS) {
+    const rows = Array.isArray(doc?.gear?.[kind]) ? doc.gear[kind] : [];
+    failIf(rows.length, counts[kind], ['meta', 'counts', kind], `gear.${kind}.length 与 meta.counts.${kind} 不一致`);
+  }
+}
+
+function labGearCross(doc, ctx) {
+  labGearCountsCheck(doc, ctx);
+  const dimensions = Array.isArray(doc?.dimensions) ? doc.dimensions : [];
+  const dimIds = new Set(dimensions.map((dimension) => dimension?.id).filter(Boolean));
+  const gear = doc?.gear && typeof doc.gear === 'object' ? doc.gear : {};
+  const seen = new Map();
+  for (const kind of LAB_GEAR_KINDS) {
+    const rows = Array.isArray(gear[kind]) ? gear[kind] : [];
+    rows.forEach((row, index) => {
+      if (!row || typeof row !== 'object') return;
+      if (typeof row.id === 'string' && row.id) {
+        if (seen.has(row.id)) {
+          ctx.fail(['gear', kind, index, 'id'], {
+            expected: '全局唯一的道具 id（跨 kind 不重复）',
+            actual: row.id,
+            message: `id ${row.id} 与 ${seen.get(row.id)} 重复：实验室按 id 建单一索引`,
+          });
+        } else {
+          seen.set(row.id, `gear.${kind}[${index}]`);
+        }
+        if (kind !== 'fragment' && !ctx.idx.itemIds.has(row.id)) {
+          ctx.fail(['gear', kind, index, 'id'], {
+            expected: 'items.json 中存在的道具 id（fragment 例外：碎片不是 items 条目）',
+            actual: row.id,
+          });
+        }
+      }
+      if (row.dims && typeof row.dims === 'object' && !Array.isArray(row.dims)) {
+        const keys = Object.keys(row.dims);
+        for (const key of keys) {
+          if (!dimIds.has(key)) {
+            ctx.fail(['gear', kind, index, 'dims', key], {
+              expected: 'dimensions[].id（15 维词表）',
+              actual: key,
+              message: `维度键 ${key} 不在 dimensions 表内：不能自创维度 id（契约 LAB_V2 §1.2）`,
+            });
+          }
+        }
+        if (keys.length && !(Array.isArray(row.evidence) && row.evidence.length > 0)) {
+          ctx.fail(['gear', kind, index, 'evidence'], {
+            expected: '非空 evidence（tag:/kw:/mod: 前缀，维度分必须可回溯）',
+            actual: row.evidence,
+            message: '有 dims 却没有 evidence：维度分必须能回溯到 tags 或效果关键词（契约 §1.1）',
+          });
+        }
+      }
+      // 键名转储清洗契约：derived-raw = 原文进 effectZhRaw、effectZh 置空（面板回退英文原文）
+      if (row.effectSrc === 'derived-raw') {
+        if (typeof row.effectZhRaw !== 'string' || row.effectZhRaw.length === 0) {
+          ctx.fail(['gear', kind, index, 'effectZhRaw'], {
+            expected: '非空 effectZhRaw（被清洗掉的原始派生句）',
+            actual: row.effectZhRaw,
+            message: 'effectSrc=derived-raw 时原文必须保留到 effectZhRaw，否则清洗后的句子无法追溯',
+          });
+        }
+        if (row.effectZh !== undefined && row.effectZh !== null) {
+          ctx.fail(['gear', kind, index, 'effectZh'], {
+            expected: '缺省（由 effectEn 回退展示）',
+            actual: row.effectZh,
+            message: 'effectSrc=derived-raw 时不得再提供 effectZh（内部键名转储会直接显示成乱码）',
+          });
+        }
+      }
+    });
+  }
+  const playstyles = Array.isArray(doc?.playstyles) ? doc.playstyles : [];
+  playstyles.forEach((playstyle, index) => {
+    if (!playstyle || typeof playstyle !== 'object') return;
+    const dims = playstyle.dims && typeof playstyle.dims === 'object' ? playstyle.dims : {};
+    for (const key of Object.keys(dims)) {
+      if (!dimIds.has(key)) {
+        ctx.fail(['playstyles', index, 'dims', key], { expected: 'dimensions[].id', actual: key });
+      }
+    }
+  });
+}
+
 /** 每文件对应的跨文件检查（规则校验之后执行） */
 const FILE_CHECKS = {
   items: [itemsCross],
@@ -1557,6 +1785,7 @@ const FILE_CHECKS = {
   itemEffects: [itemEffectsCross],
   iconIndex: [iconIndexCross],
   acq: [acqCross],
+  labGear: [labGearCross],
 };
 
 /** 文件规则表 */
@@ -1570,6 +1799,7 @@ const RULES = {
   itemEffects: itemEffectsRootRule,
   iconIndex: iconIndexRootRule,
   acq: acqRootRule,
+  labGear: labGearRootRule,
 };
 
 const ROOT_CHECKS = {
@@ -1581,6 +1811,7 @@ const ROOT_CHECKS = {
   terms: [versionCheck('terms')],
   iconIndex: [versionCheck('iconIndex')],
   acq: [versionCheck('acq')],
+  labGear: [versionCheck('labGear')],
 };
 
 /* --------------------------------- 索引 ---------------------------------- */

@@ -51,7 +51,7 @@ function assertNoErrors(result, label = '') {
 
 /* ------------------------------ 真实数据（只读） ------------------------------ */
 
-test('真实数据：9 个运行时文件的结构/引用/版本契约 errors === 0', () => {
+test('真实数据：10 个运行时文件的结构/引用/版本契约 errors === 0', () => {
   const result = validateAll(loadData());
   assert.equal(
     result.errors.length,
@@ -282,6 +282,85 @@ test('acq：未知实体 key → /items/UnknownEntity', () => {
   assertFinding(result, 'error', 'acq', '/items/UnknownEntity', /items\.json id/);
 });
 
+/* ------------------------------- lab_gear.json --------------------------- */
+
+test('lab_gear：缺必填字段 → /gear/ring/0/id', () => {
+  const result = mutate('labGear', (doc) => { delete doc.gear.ring[0].id; });
+  const hit = assertFinding(result, 'error', 'labGear', '/gear/ring/0/id', /缺少必填字段 id/);
+  assert.match(hit.message, /全局唯一主键/, '必填原因要写进错误信息');
+});
+
+test('lab_gear：dims 自创维度 → /gear/ring/0/dims/nope', () => {
+  const result = mutate('labGear', (doc) => {
+    doc.gear.ring[0].dims = { ...doc.gear.ring[0].dims, nope: 1 };
+    doc.gear.ring[0].evidence = ['tag:fixture'];
+  });
+  assertFinding(result, 'error', 'labGear', '/gear/ring/0/dims/nope', /不能自创维度 id/);
+});
+
+test('lab_gear：有 dims 却没有 evidence → /gear/ring/0/evidence', () => {
+  const result = mutate('labGear', (doc) => {
+    const ring = doc.gear.ring.find((entry) => entry.dims && Object.keys(entry.dims).length > 0);
+    assert.ok(ring, '真实数据应有带 dims 的戒指');
+    ring.evidence = [];
+  });
+  const hit = result.errors.find((diag) => diag.file === DATA_FILES.labGear && /\/evidence$/.test(diag.pointer) && /维度分必须能回溯/.test(diag.message));
+  assert.ok(hit, `应报告「有 dims 无 evidence」：\n${formatDiagnostics(result.errors, 20)}`);
+});
+
+test('lab_gear：fragment 缺 color → /gear/fragment/0/color', () => {
+  const result = mutate('labGear', (doc) => { delete doc.gear.fragment[0].color; });
+  assertFinding(result, 'error', 'labGear', '/gear/fragment/0/color', /缺少必填字段 color/);
+});
+
+test('lab_gear：mutator.weapon 非法枚举 → /gear/mutator/0/weapon', () => {
+  const result = mutate('labGear', (doc) => { doc.gear.mutator[0].weapon = 'longGun'; });
+  assertFinding(result, 'error', 'labGear', '/gear/mutator/0/weapon', /枚举值/);
+});
+
+test('lab_gear：trait 缺 maxLevel → /gear/trait/0/maxLevel', () => {
+  const result = mutate('labGear', (doc) => { delete doc.gear.trait[0].maxLevel; });
+  assertFinding(result, 'error', 'labGear', '/gear/trait/0/maxLevel', /缺少必填字段 maxLevel/);
+});
+
+test('lab_gear：meta.counts.ring 与实际不一致 → /meta/counts/ring', () => {
+  const result = mutate('labGear', (doc) => { doc.meta.counts.ring = 1; });
+  assertFinding(result, 'error', 'labGear', '/meta/counts/ring', /gear\.ring\.length/);
+});
+
+test('lab_gear：非 fragment 的 id 不在 items.json → /gear/ring/0/id', () => {
+  const result = mutate('labGear', (doc) => { doc.gear.ring[0].id = 'Ring_DoesNotExist'; });
+  assertFinding(result, 'error', 'labGear', '/gear/ring/0/id', /items\.json 中存在的道具 id/);
+});
+
+test('lab_gear：跨 kind id 重复 → /gear/amulet/0/id', () => {
+  const result = mutate('labGear', (doc) => { doc.gear.amulet[0].id = doc.gear.ring[0].id; });
+  assertFinding(result, 'error', 'labGear', '/gear/amulet/0/id', /重复/);
+});
+
+test('lab_gear：更高 schema → /meta/schema，并提示先更新校验器', () => {
+  const result = mutate('labGear', (doc) => { doc.meta.schema = 2; });
+  assertFinding(result, 'error', 'labGear', '/meta/schema', /数据版本比校验器新.*先更新 qa\/lib\/data-schema\.mjs/);
+});
+
+test('lab_gear：derived-raw 必须把原文放 effectZhRaw 且不提供 effectZh → /gear/ring/N/effectZh', () => {
+  const result = mutate('labGear', (doc) => {
+    const target = doc.gear.ring.find((entry) => entry.effectSrc === 'derived-raw');
+    assert.ok(target, '真实数据应存在 derived-raw 条目（内部键名转储清洗）');
+    target.effectZh = target.effectZhRaw;
+  });
+  const hit = result.errors.find((diag) => diag.file === DATA_FILES.labGear && /\/effectZh$/.test(diag.pointer) && /derived-raw/.test(diag.message));
+  assert.ok(hit, `应报告 derived-raw 不得再提供 effectZh：\n${formatDiagnostics(result.errors, 20)}`);
+});
+
+test('lab_gear：未知额外字段不报错（向后兼容）', () => {
+  const result = mutate('labGear', (doc) => {
+    doc.gear.ring[0].__future_field = { any: 'shape' };
+    doc.meta.__future_meta = 1;
+  });
+  assertNoErrors(result, 'lab_gear 未知额外字段应被忽略');
+});
+
 /* ------------------------------- icon_index ------------------------------ */
 
 test('icon_index：count 与 icons 数量不一致 → /count', () => {
@@ -306,6 +385,7 @@ test('SUPPORTED_VERSIONS 覆盖关键版本字段（items/codex/acq/terms）', (
   assert.deepEqual(SUPPORTED_VERSIONS.codex.supported, [1]);
   assert.deepEqual(SUPPORTED_VERSIONS.acq.supported, ['acq/1']);
   assert.deepEqual(SUPPORTED_VERSIONS.terms.supported, [2]);
+  assert.deepEqual(SUPPORTED_VERSIONS.labGear.supported, [1]);
 });
 
 /* ------------------------------ 诊断结构统一 ------------------------------ */

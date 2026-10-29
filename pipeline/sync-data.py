@@ -10,7 +10,7 @@
     python pipeline/sync-data.py --no-icons # 只同步 data/（图标没变时更快）
 
 数据流向：
-    .mimocode/data/*.json          → data/*.json            （7 个运行时文件 + codex/index.json）
+    .mimocode/data/*.json          → data/*.json            （8 个运行时文件 + codex/index.json + lab_gear.json）
     .mimocode/assets/icons/*.png   → assets/icons/*.png     （1004 张，仅复制有变化的）
     .mimocode/build/ui_data.json 等 → pipeline/_source/     （配装源快照，供 mk_builds_json.py）
 
@@ -61,7 +61,7 @@ EXIT_SYNC_FAILED = 3
 # （python pipeline/mk_builds_json.py），上游工作区不再保留副本。
 DATA_FILES = [
     "items.json", "icon_index.json", "site_data.json", "terms.json",
-    "acq.json", "archetypes.json", "item_effects.json",
+    "acq.json", "archetypes.json", "item_effects.json", "lab_gear.json",
 ]
 CODEX_FILES = [("data/codex/index.json", "data/codex/index.json")]
 # 配装源快照（mk_builds_json.py 的输入）
