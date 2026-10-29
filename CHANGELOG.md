@@ -3,6 +3,24 @@
 > 只记「形态/能力」级变更与关键数字；细枝末节的改动见 `git log`。
 > 早期里程碑来自 `.mimocode` 工作区历史（站点曾是工作区内的 `web/`）。
 
+## v3.8 — 2026-10-30 · 知识站数据补全（系统机制 6 篇 + 效果句覆盖 28.7% → 59.8%）
+
+- **知识库新增「系统机制」分类 + 6 篇来源可追溯文章**（`data/codex/index.json` 13→19 篇 / 4 分类）：
+  圣物碎片与棱晶 / 突变因子 / 武器改装 / 特性 / 饰品组合与乘区 / 数据覆盖与置信度。
+  每篇带 `confidence` 与「证据表」，数字尽量追溯到 locres 原文或工作区 ref；无法确证的（五档品质倍率、
+  圣物碎片槽数为 3、特性上限 10、棱晶槽数/加成幅度、突变因子升级曲线、武器↔固有改装映射）明确标「待验证」。
+  澄清一个常见误读：locres「根据棱晶内碎片的颜色获得加成」的主语是**棱晶**，不是圣物三碎片槽。
+- **道具效果句覆盖 323 → 673（1126 真道具的 59.8%，+31.1pt）**：`build/mk_item_effects.py` 新增 wiki 英文回退
+  （官方中文句未命中、但 wiki 有 effect 时输出 `{zh:'', en, src:'wiki', confidence:'medium', match:'wiki-only'}`；
+  清洗 tooltip 注入/`[sic]`/重复词；已有 304 official + 19 manual 逐字段零改动）。结构性缺口如实保留：
+  护甲 130 件 wiki 无 effect、武器 122 件 wiki 只有风味描述，**不拿风味冒充机制**。
+- **详情页**：无中文效果句时追加「效果原文（wiki 整理）」区块（斜体英文 + `来源：wiki` badge + 「未经翻译」说明，
+  独立 `.detail-wiki` class，不复用 `.detail-effect`）；`effectEn` 并入搜索 haystack。组件契约新增 C22 守卫。
+- 数据契约：`item_effects` 允许 `zh` 为空、`src=wiki`、`match=wiki-only`、`counts.wiki`；新增不变量
+  「wiki 回退条目 zh 必空、en 必非空」；`data-schema` 50 项全绿。
+- 文档：`docs/DATA.md` 更新效果句/知识库条目；`docs/UX_SPEC.md` §12 补 wiki 回退口径、§7 术语表纠正为
+  locres 官方「突变因子 / 棱晶」（社区「变异器 / 棱镜」只作 alias）。
+
 ## v3.7 — 2026-10-30 · 实验室 v2：从「防御计算器」到「配装规划器」
 
 - **新数据文件 `data/lab_gear.json`（434 KB，schema 1）**：由工作区 `build/mk_lab_gear.py` 从

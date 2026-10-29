@@ -41,8 +41,8 @@
 | `data/archetypes.json` | 30 KB | 16 个职业（14 实装 + DLC4 未实装 2 个），官方译名 | `js/lab/*` |
 | `data/terms.json` | 17 KB | 术语、伤害类型、槽位、获取难度、23 个游戏标签、7 类效果分类 | 全站文案 |
 | `data/acq.json` | 52 KB | 获取途径文本 + 难度标签 + DLC；未收录留空，不编造 | 资料库详情 |
-| `data/item_effects.json` | 151 KB | **官方效果句** 323 条（游戏内 tooltip 的机制原文，不是风味描述） | 资料库详情/列表/搜索 |
-| `data/codex/index.json` | 77 KB | 知识库 13 篇（分类/结论/公式/表格/证据/来源） | `#/codex` |
+| `data/item_effects.json` | 249 KB | **效果句** 673 条 / 1126 真道具（59.8%）：官方 304 + 人工 19 + wiki 英文回退 350（`src=wiki`、`zh` 为空，详情单独渲染「效果原文（wiki 整理）」；不翻译、不改数字） | 资料库详情/列表/搜索 |
+| `data/codex/index.json` | 127 KB | 知识库 **19 篇 / 4 分类**（防御/伤害/规则 + 系统机制：圣物碎片与棱晶/突变因子/武器改装/特性/饰品组合与乘区/数据覆盖与置信度） | `#/codex` |
 | `data/icon_index.json` | 554 KB | 道具资产 → PNG 相对路径（含 w/h/png_bytes） | `api.js` |
 | `assets/icons/*.png` | 24 MB / 1004 张 | 148px RGBA 图标（长边，2× 74px 显示） | 全站 |
 

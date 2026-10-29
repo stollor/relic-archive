@@ -36,7 +36,7 @@ js/main.js + js/domains.js        应用层：可依赖任意层
 | `js/components/item-card.js` / `picker.js` | 道具卡与图标元素 / 全站唯一装备选择器 | core/*、labels、item-detail | `related`（interactions） |
 | `js/views/library.js` + `js/library/*` | 资料库装配 + 纯函数 `query`（状态/序列化/过滤排序）/`present`（展示规格）/`export`（CLI 导出） | core/*、components/*、library/* | `related`（library + nav） |
 | `js/views/builds.js` + `js/builds/*` | 流派装配 + `ui`（共用小件）/`list`/`detail` | core/*、components/*、builds/* | `related`（builds + data-builds） |
-| `js/views/lab.js` + `js/lab/*` | 实验室装配（`PANELS` 注册表）/ `engine`（纯计算，口径冻结）/ `model`/`state`/`parts`/`workbench`/`wb-*`/五个面板 | core/*、components/item-detail、picker、lab/* | `related`（lab-async + lab-engine 单测） |
+| `js/views/lab.js` + `js/lab/*` | 实验室装配（`PANELS` 注册表 + `group` 两级 tab）/ `engine`（防御口径冻结）/ `model`（含 `gear` 目录）/ `state`/`parts`/`workbench`/`wb-*`/九个面板（recommend·trinkets·weapons·traits·fragments·replace·tiers·calc·saved）/ 纯计算 `score`·`combos`·`fit` | core/*、components/item-detail、picker、lab/* | `related`（lab-async + lab-engine + lab-score 单测） |
 | `js/views/codex.js` | 知识库装配：目录/条目/块渲染（`blocks[].t` 分支） | core/*、components/states、panel | `related`（interactions-codex） |
 | `css/*` | `tokens.css` 唯一色值；`base/components/view-*` 分层；视图样式按领域懒注入 | 无 | `related`（audit + contrast + 截图） |
 | `data/*` + `qa/lib/data-schema.mjs` | 10 个运行时 JSON（items/builds/site_data/archetypes/codex/terms/item_effects/icon_index/acq/lab_gear）的结构与跨文件引用契约 | `qa/lib/schema.mjs` | `data`（data-schema/data-builds/data-sync） |

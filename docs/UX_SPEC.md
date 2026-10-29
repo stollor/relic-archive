@@ -255,9 +255,9 @@ openPicker({title, slotId?, filter?, currentId?, onPick(item)})  // 全站唯一
 | Weakspot | 弱点 | 弱点伤害 |
 | Status Effect | 状态效果 | 官方用词；社区常说「异常状态」，仅可作为说明 alias |
 | Mod | 武器改装 | 固有改装 / 可换装改装 |
-| Mutator | 变异器 | |
+| Mutator | 突变因子 | 官方 locres 用词；社区旧称「变异器」仅可作 alias 说明 |
 | Relic / Relic Fragment | 圣物 / 圣物碎片 | 官方 locres 用词；社区旧称「遗物 / 遗物碎片」仅可作 alias 说明 |
-| Prism | 棱镜 | |
+| Prism | 棱晶 | 官方 locres 用词；「棱镜」仅可作 alias 说明 |
 | Trait | 特性 | |
 | Archetype / Perk / Skill | 职业 / 职业专长 / 技能 | |
 | Challenger / Medic / Hunter / Gunslinger / Engineer / Invader / Explorer / Handler / Alchemist / Summoner / Ritualist / Invoker / Warden / Archon | 挑战者 / 医务兵 / 猎人 / 枪手 / 工程师 / 入侵者 / 探索者 / 驯兽师 / 炼金术师 / 召唤师 / 祭祀者 / 祈求者 / 护卫者 / 执政官 | 以 `data/archetypes.json` 为准（locres 官方译名）；「守望者」是 Watcher（敌人），不是 Warden |
@@ -469,7 +469,9 @@ GAME_TAGS: [{id,zh,group,icon,desc}] ; GAME_TAG_BY_ID ; GAME_TAGS_BY_GROUP ; TAG
 4. 正则/格式不合格（残留 `{}`、成串英文）的丢弃，绝不显示半句；
 5. `src=manual` 只用于 `ring/amulet/relic`（`build/zh_effect.json` 旧人工句），UI 标注「人工整理，非游戏原文」。
 
-覆盖（当前）：官方 304 + 人工 19 = 323 件；饰品类（ring/amulet/relic）≈81%，消耗品≈44%，改装/材料较低（游戏文本拆成多段或缺失）。fuzzy 只在原文与原句 ≥0.95 一致时才按位置填值，其余只认同名数值键；低置信度清单见 `build/effect_review.json`。武器**不生成**（wiki 的 weapon `effect` 是风味描述，机制只有数值）。其余道具走降级路径，不编造。
+覆盖（2026-10-30 更新）：官方 304 + 人工 19 + **wiki 英文回退 350 = 673 件 / 1126 真道具（59.8%）**；饰品类（ring/amulet/relic）≈81%，消耗品≈44%，改装/材料较低（游戏文本拆成多段或缺失）。fuzzy 只在原文与原句 ≥0.95 一致时才按位置填值，其余只认同名数值键；低置信度清单见 `build/effect_review.json`。武器**不生成**（wiki 的 weapon `effect` 是风味描述，机制只有数值）；护甲 130 件 wiki 无 `effect`，这两类是覆盖率的**结构性缺口**，不拿风味描述冒充机制句。其余道具走降级路径，不编造。
+
+**wiki 英文回退（`src=wiki` / `match=wiki-only`）**：官方中文句缺失、但 `wiki_items.jsonl` 有英文 `effect` 时，输出 `{zh:'', en:<清洗英文>, src:'wiki', confidence:'medium', match:'wiki-only'}`。详情页在**无中文句**时额外渲染「效果原文（wiki 整理）」区块：`<em>` 斜体英文 + `来源：wiki` badge + 「未经翻译」说明行（独立 class `.detail-wiki`，不复用 `.detail-effect`；中文优先，无英文不出现）。`effectEn` 同时并入搜索 haystack（可搜英文关键词）。英文不翻译、不改数字；tooltip 注入残留（`BLEEDINGBLEEDING`、`[sic]` 等）在生成器清理。
 
 ### 12.3 详情信息顺序（唯一）
 
@@ -480,6 +482,8 @@ GAME_TAGS: [{id,zh,group,icon,desc}] ; GAME_TAG_BY_ID ; GAME_TAGS_BY_GROUP ; TAG
 | 无 `effectZh` 且非 `EFFECT_CATS` | 旧行为：描述 → 效果 → 属性 → 套装 → 获取 → 背景故事（flavor）→ 数据来源 |
 
 `EFFECT_CATS = ['ring','amulet','relic','consumable','mod','metagem','gem','material']`（判定用 `item.cat`，不是 `family`）。武器/护甲/特性/技能等在游戏内 tooltip 本就是「属性 + 风味」，保持描述在前。
+
+> 2026-10-30 追加：`src=wiki` 的道具（中文句缺失、有英文原文）在「效果 / 数值明细」之后追加「效果原文（wiki 整理）」区块；它不改变上面的信息顺序，只是把原文补在数值之后。
 
 ### 12.4 资料库列表行
 
