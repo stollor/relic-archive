@@ -641,15 +641,27 @@ async function runItems() {
 
 async function runLab() {
   const A = 'lab';
-  await step(A, 'B1', '#/lab 工作台 15 槽（含主/副职业）', async () => {
+  await step(A, 'B1', '#/lab 装配台 6 分类页 + 槽位分页呈现', async () => {
     await page.ensureClean();
     await page.goto('#/lab', { fresh: true });
-    await page.waitCount('.slot', 15);
-    const st = await page.state();
-    const ids = await page.ev(`[...document.querySelectorAll('.slot')].map((s) => s.dataset.slot)`);
-    assert(st.counts.slots === 15, `槽位数 ${st.counts.slots} ≠ 15`);
-    assert(ids.includes('archetype1') && ids.includes('archetype2'), `缺职业槽：${ids.join(',')}`);
-    return { detail: `15 槽：${ids.join(' / ')}` };
+    await page.waitCount('.lab-atab', 6);
+    const tabs = await page.ev(`[...document.querySelectorAll('.lab-atab')].map((b) => b.dataset.cat)`);
+    assert(tabs.length === 6 && tabs[0] === 'armor', `分类页 ${JSON.stringify(tabs)}`);
+    await page.waitCount('.lab-asm__host .lab-crow', 4);
+    const armorSlots = await page.ev(`[...document.querySelectorAll('.lab-asm__host .lab-crow__slotk')].map((e) => e.textContent.trim())`);
+    assert(/头盔/.test(armorSlots.join('|')) && /手甲/.test(armorSlots.join('|')), `护甲页槽位：${armorSlots.join('/')}`);
+    const rowsByCat = {};
+    for (const cat of ['weapons', 'archetype', 'trinkets', 'traits', 'relic']) {
+      await page.click(`document.querySelector('.lab-atab[data-cat="${cat}"]')`, { label: `分类 ${cat}` });
+      const ok = await page.waitFor(`document.querySelector('.lab-atab.is-on[data-cat="${cat}"]')`, 8000);
+      assert(ok, `分类 ${cat} 未切换`);
+      await sleep(500);
+      rowsByCat[cat] = await page.count('.lab-asm__host .lab-crow, .lab-asm__host .lab-trrow, .lab-asm__host .lab-relicslot');
+      assert(rowsByCat[cat] > 0, `分类 ${cat} 无内容行`);
+    }
+    await page.click(`document.querySelector('.lab-atab[data-cat="armor"]')`, { label: '回到护甲页' });
+    await sleep(300);
+    return { detail: `6 分类 ${tabs.join('/')}；护甲页 4 槽；各页行数 ${JSON.stringify(rowsByCat)}` };
   });
 
   await step(A, 'B2', '五面板 seg 齐全（推荐/逐槽替换/档位对照/计算器/存档）', async () => {
@@ -660,7 +672,9 @@ async function runLab() {
   });
 
   await step(A, 'B3', '空槽 → 选择器 → 点行装备进槽', async () => {
-    await page.click(`document.querySelector('.slot--empty[data-slot="longGun"] .slot__pick') || document.querySelector('.slot--empty[data-slot="longGun"]')`, { label: '空槽 longGun' });
+    await page.goto('#/lab?tab=weapons', { fresh: true });
+    await page.waitCount('.lab-asm__host .lab-crow--empty', 1);
+    await page.click(`document.querySelector('.lab-asm__host .lab-crow--empty')`, { label: '武器空槽' });
     const opened = await page.waitFor(`document.querySelectorAll('#drawer .picker-row').length > 0`, 6000);
     const st1 = await page.state();
     assert(opened, '选择器抽屉未出现');
@@ -679,7 +693,8 @@ async function runLab() {
   await step(A, 'B4', '选择器「详情」ⓘ → 桌面弹窗打开且不装备', async () => {
     await page.ensureClean();
     const before = (await page.state()).build;
-    await page.click(`document.querySelector('.slot--empty[data-slot="handGun"] .slot__pick') || document.querySelector('.slot--empty[data-slot="handGun"]')`, { label: '空槽 handGun' });
+    await page.waitFor(`document.querySelectorAll('.lab-asm__host .lab-crow--empty').length > 0`, 6000);
+    await page.click(`document.querySelector('.lab-asm__host .lab-crow--empty')`, { label: '武器空槽（手枪）' });
     const opened = await page.waitFor(`document.querySelectorAll('#drawer .picker-row').length > 0`, 6000);
     assert(opened, '选择器未打开');
     await page.click(`document.querySelector('#drawer .picker-row__acts .iconbtn')`, { label: '行内详情 ⓘ' });
@@ -694,15 +709,14 @@ async function runLab() {
 
   await step(A, 'B5', '× 移除 → 槽清空但 owned 不变 + Toast', async () => {
     await page.ensureClean();
-    await page.goto('#/lab', { fresh: true });
-    await page.waitCount('.slot:not(.slot--empty)', 1);
+    await page.goto('#/lab?tab=weapons', { fresh: true });
+    await page.waitCount('.lab-asm__host .lab-crow:not(.lab-crow--empty)', 1);
     const before = await page.state();
-    await page.click(`document.querySelector('.slot:not(.slot--empty) .slot__acts .iconbtn--danger')
-      || document.querySelector('.slot:not(.slot--empty) .iconbtn--danger')`, { label: '移除 ×' });
+    await page.click(`document.querySelector('.lab-asm__host .lab-crow:not(.lab-crow--empty) .lab-crow__acts .iconbtn--danger')`, { label: '移除 ×' });
     await page.waitFor(`(() => { const t = document.querySelector('#toasts'); return t && /已移除/.test(t.textContent || ''); })()`, 3000);
     const after = await page.state();
     assert(JSON.stringify(before.owned) === JSON.stringify(after.owned), 'owned 被移除操作改变');
-    assert(after.counts.slots === 15, `槽位总数被改变：${after.counts.slots}`);
+    assert(before.build.slots.longGun && !after.build.slots.longGun, `长枪槽未被清空：${JSON.stringify(after.build.slots)}`);
     return { detail: `已移除；owned ${after.owned.length} 未变` };
   });
 
@@ -730,11 +744,11 @@ async function runLab() {
     return { detail: `确认框「${st.modal.title}」；取消后未改动` };
   });
 
-  await step(A, 'B7', '职业槽：点主职业 → 职业选择器（≥14）→ 选中写入槽位', async () => {
+  await step(A, 'B7', '职业页：点主职业 → 职业选择器（≥14）→ 选中写入槽位', async () => {
     await page.ensureClean();
-    await page.goto('#/lab', { fresh: true });
-    await page.waitCount('.slot', 15);
-    await page.click(`document.querySelector('.slot--empty[data-slot="archetype1"] .slot__pick') || document.querySelector('.slot--empty[data-slot="archetype1"]')`, { label: '主职业空槽' });
+    await page.goto('#/lab?tab=archetype', { fresh: true });
+    await page.waitCount('.lab-asm__host .lab-crow--empty', 1);
+    await page.click(`document.querySelector('.lab-asm__host .lab-crow--empty')`, { label: '主职业空槽' });
     const opened = await page.waitFor(`document.querySelectorAll('#drawer .lab-archrow').length >= 10`, 6000);
     const n = await page.count('#drawer .lab-archrow');
     assert(opened, `职业选择器未出现（行数 ${n}）`);
@@ -742,13 +756,13 @@ async function runLab() {
     const firstName = await page.ev(`(() => { const r = document.querySelector('#drawer .lab-archrow .lab-archrow__name');
       return r ? r.textContent.trim() : ''; })()`);
     await page.click(`document.querySelector('#drawer .lab-archrow')`, { label: '第一个职业' });
-    await sleep(800);
+    await sleep(900);
     const st = await page.state();
-    const archTxt = await page.text('.slot[data-slot="archetype1"]');
+    const empties = await page.count('.lab-asm__host .lab-crow--empty');
     assert(st.build.slots.archetype1, 'store.build.slots.archetype1 未写入');
-    assert(!/点击选择职业/.test(archTxt), `主职业槽未更新：${archTxt}`);
+    assert(empties === 1, `主职业行未更新（空行 ${empties} 个，应剩副职业 1 个）`);
     await capture('interact-lab-archetype');
-    return { detail: `可选 ${n} 个职业；选中「${firstName || archTxt.slice(0, 12)}」` };
+    return { detail: `可选 ${n} 个职业；选中「${firstName.slice(0, 12)}」→ archetype1` };
   });
 
   await step(A, 'B8', '特性 stepper：+1 后等级/上限徽章/护甲值变化（v2 特性面板）', async () => {
@@ -909,10 +923,10 @@ async function runLab() {
   await step(A, 'B18', '选择器筛选：标签多选 + 按槽位动态排序，点行仍装备', async () => {
     await page.ensureClean();
     await page.ev(`(async () => { const { store } = await import('${PFX}/js/core/store.js'); store.build.clear(); return 0; })()`, { awaitPromise: true });
-    await page.goto('#/lab', { fresh: true });
+    await page.goto('#/lab?tab=trinkets', { fresh: true });
     // 饰品槽：标签候选最多（23 个 GAME_TAGS）
-    await page.waitFor(`!!document.querySelector('.slot--empty[data-slot="amulet"]')`, 12000);
-    await page.click(`document.querySelector('.slot--empty[data-slot="amulet"] .slot__pick') || document.querySelector('.slot--empty[data-slot="amulet"]')`, { label: '项链空槽' });
+    await page.waitFor(`document.querySelectorAll('.lab-asm__host .lab-crow--empty').length > 0`, 12000);
+    await page.click(`document.querySelector('.lab-asm__host .lab-crow--empty')`, { label: '项链空槽' });
     await page.waitFor(`document.querySelectorAll('#drawer .picker-row').length > 0`, 8000);
     const info = await page.ev(`(() => { const d = document.querySelector('#drawer');
       const sort = d.querySelector('select[aria-label="排序方式"]');
@@ -935,8 +949,9 @@ async function runLab() {
     assert(!st.drawer.open, '点行后抽屉未关闭');
     assert(st.build.slots.amulet, '筛选后点行未装备到 amulet');
     // 护甲槽：排序项应含「护甲值 / 负重」（按槽位动态）
-    await page.waitFor(`!!document.querySelector('.slot--empty[data-slot="head"]')`, 8000);
-    await page.click(`document.querySelector('.slot--empty[data-slot="head"] .slot__pick') || document.querySelector('.slot--empty[data-slot="head"]')`, { label: '头盔空槽' });
+    await page.ev(`(async () => { const b = document.querySelector('.lab-atab[data-cat="armor"]'); if (b) b.click(); return 1; })()`, { awaitPromise: true });
+    await page.waitFor(`document.querySelectorAll('.lab-asm__host .lab-crow--empty').length > 0`, 8000);
+    await page.click(`document.querySelector('.lab-asm__host .lab-crow--empty')`, { label: '头盔空槽' });
     await page.waitFor(`document.querySelectorAll('#drawer .picker-row').length > 0`, 8000);
     const armorSort = await page.ev(`(() => { const s2 = document.querySelector('#drawer select[aria-label="排序方式"]');
       return s2 ? [...s2.options].map((o) => o.value) : []; })()`);

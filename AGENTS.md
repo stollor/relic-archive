@@ -94,7 +94,7 @@
 | `js/components/*` | 唯一共享 UI：`item-detail(+sections)` `picker` `item-card` `states` `panel` |
 | `js/views/*.js` | 四个领域视图的**装配**（业务逻辑在领域目录） |
 | `js/library/*` `js/builds/*` | 领域模块（纯函数优先，可直接 `node --test`） |
-| `js/lab/*` | 实验室引擎/状态/工作台（`wb-*`）/九个面板（推荐/饰品组合/武器改装/特性/圣物碎片/逐槽替换/档位对照/计算器/存档导出）+ 纯计算 `score/combos/fit` |
+| `js/lab/*` | 实验室引擎/状态/工作台（`wb-*`）/ **装配台 v3 六分类页**（`wb-assembly` + `wb-cat-*` + `wb-parts` + `wb-oneclick`，见 `docs/ASSEMBLY_V3.md`）/ 九个进阶面板（推荐/饰品组合/武器改装/特性/圣物碎片/逐槽替换/档位对照/计算器/存档导出）+ 纯计算 `score/combos/fit` + 技能推导 `skills` |
 | `css/*` | `css/tokens.css` 唯一色值来源；`css/base.css`/`css/components.css`/`css/view-*.css` 分层 |
 | `data/*` + `assets/icons/*` | 运行时数据与图标（结构契约 `qa/lib/data-schema.mjs`） |
 | `pipeline/*` | `pipeline/sync-data.py` 快照同步、`pipeline/mk_builds_json.py` 流派生成、`pipeline/deploy.py` 一键发布 |

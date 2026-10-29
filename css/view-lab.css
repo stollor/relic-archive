@@ -642,3 +642,311 @@ button.lab-tr__name:hover { color: var(--gold-2); }
   .lab-tr__row,
   .lab-fg__row { break-inside: avoid; }
 }
+
+/* =============================================================================
+   装配台 v3（2026-10-30）：6 分类页 + 本套效果 + 本类推荐
+   - .lab-wb 改为纵向流：装配台 → 本套效果 / 本类推荐 → 配装设置
+   - 行是 grid（桌面 5 列），移动端折成纵向卡片；颜色只来自 tokens
+   ============================================================================= */
+
+/* 工作台纵向布局（覆盖 v2 的左右分栏；stretch 覆盖旧 align-items:start） */
+.lab-wb { display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+.lab-wb__bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+}
+.lab-wb__side { position: static; top: auto; display: flex; flex-direction: column; min-width: 0; }
+.lab-wb__rec { min-width: 0; }
+.lab-wb__rechost { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+
+/* 装配台外壳 */
+.lab-asm { display: flex; flex-direction: column; min-width: 0; }
+.lab-asm__bar {
+  display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.lab-asm__tabs {
+  display: flex; align-items: center; gap: 2px; flex: 1 1 520px; min-width: 0;
+  overflow-x: auto; scrollbar-width: thin;
+}
+.lab-atab {
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border: 1px solid transparent; border-radius: var(--r-md);
+  background: transparent; color: var(--t2); font-size: 12.5px; white-space: nowrap;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.lab-atab svg { color: var(--t3); transition: color var(--t-fast); }
+.lab-atab:hover { background: var(--bg-3); color: var(--t1); }
+.lab-atab.is-on { background: var(--gold-dim); border-color: var(--gold-line); color: var(--gold-2); }
+.lab-atab.is-on svg { color: var(--gold-2); }
+.lab-atab.is-on::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px;
+  background: var(--gold); border-radius: 2px;
+}
+.lab-atab__count {
+  font-size: 10px; color: var(--t3); background: var(--bg-3);
+  border-radius: var(--r-full); padding: 1px 6px; font-variant-numeric: tabular-nums;
+}
+.lab-atab.is-on .lab-atab__count { color: var(--gold-2); background: var(--gold-dim-2); }
+.lab-asm__tools { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-left: auto; }
+.lab-asm__field { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--t3); letter-spacing: .02em; }
+.lab-asm__field .select {
+  height: 28px; font-size: 11.5px; padding: 0 24px 0 8px; width: auto;
+  background-position: calc(100% - 12px) 11px, calc(100% - 8px) 11px;
+}
+.lab-asm__field .select:focus { border-color: var(--gold-line); }
+.lab-asm__host { padding: var(--sp-3); min-height: 180px; }
+.lab-asm__loading {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 200px; color: var(--t3); font-size: 12px;
+}
+.lab-asm__loading svg { animation: labSpin 1.1s linear infinite; }
+@keyframes labSpin { to { transform: rotate(360deg); } }
+
+/* 分类页骨架 */
+.lab-cat { display: flex; flex-direction: column; min-width: 0; }
+.lab-cat__head { display: flex; align-items: center; gap: var(--sp-2); padding-bottom: var(--sp-2); flex-wrap: wrap; }
+.lab-cat__title { display: flex; align-items: baseline; gap: 8px; font-size: var(--fs-title); font-weight: 600; color: var(--t1); }
+.lab-cat__title .lab-cat__ico { align-self: center; display: inline-flex; color: var(--gold); }
+.lab-cat__sub { font-size: 10.5px; color: var(--t3); font-weight: 400; letter-spacing: .02em; }
+.lab-cat__acts { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lab-cat__foot { padding-top: var(--sp-2); }
+.lab-cat__body {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--bg-1); overflow: hidden;
+}
+.lab-cat__bar {
+  --lab-cols: 104px minmax(0, 1.25fr) minmax(0, 1.05fr) minmax(0, 1.2fr) auto;
+  display: grid; grid-template-columns: var(--lab-cols); gap: var(--sp-3);
+  padding: 7px 12px; background: var(--bg-2); border-bottom: 1px solid var(--line);
+  font-size: 10px; color: var(--t3); letter-spacing: .05em;
+}
+/* 行 */
+.lab-crow {
+  --lab-cols: 104px minmax(0, 1.25fr) minmax(0, 1.05fr) minmax(0, 1.2fr) auto;
+  display: grid; grid-template-columns: var(--lab-cols); gap: var(--sp-3);
+  align-items: center; padding: 9px 12px; border-top: 1px solid var(--line);
+  transition: background var(--t-fast);
+}
+.lab-cat__bar + .lab-crow { border-top: 0; }
+.lab-crow:hover { background: var(--bg-2); }
+.lab-crow.is-missing { background: var(--red-dim); }
+.lab-crow.is-missing:hover { background: var(--red-dim-2); }
+.lab-crow--empty { cursor: pointer; }
+.lab-crow--empty:hover { background: var(--gold-a04); }
+.lab-crow--empty .lab-crow__emptyhint {
+  grid-column: 2 / -1;
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 12px; border: 1px dashed var(--line-2); border-radius: var(--r-sm);
+  color: var(--t3); font-size: 12px;
+}
+.lab-crow--empty:hover .lab-crow__emptyhint { border-color: var(--gold-line); color: var(--gold-2); }
+/* 列内小件 */
+.lab-crow__slot { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 11px; color: var(--t3); }
+.lab-crow__slotico { display: inline-flex; color: var(--t4); }
+.lab-crow__slotk { color: var(--t2); font-weight: 500; white-space: nowrap; }
+.lab-crow__item {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  border-radius: var(--r-sm);
+}
+.lab-crow__item.is-click { cursor: pointer; }
+.lab-crow__item.is-click:hover .lab-crow__name > span:first-child { color: var(--gold-2); }
+.lab-crow__media {
+  width: 38px; height: 38px; flex: none; display: grid; place-items: center;
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.lab-crow__body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lab-crow__name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--t1); }
+.lab-crow__en { font-size: 10.5px; color: var(--t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-crow__sub { font-size: 10.5px; color: var(--t4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-crow__stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.lab-stat { display: inline-flex; align-items: baseline; gap: 3px; font-size: 10.5px; color: var(--t3); white-space: nowrap; }
+.lab-stat svg { color: var(--t4); align-self: center; }
+.lab-stat__v { color: var(--t1); font-weight: 600; font-variant-numeric: tabular-nums; font-size: 12px; }
+.lab-stat__u { color: var(--t3); font-size: 10px; }
+.lab-stat__k { color: var(--t4); font-size: 10px; }
+.lab-crow__effect { min-width: 0; font-size: 11.5px; color: var(--t2); line-height: 1.5; }
+.lab-crow__effect > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lab-crow__acts { display: flex; align-items: center; gap: 3px; justify-content: flex-end; }
+.lab-crow__acts .iconbtn { opacity: .72; transition: opacity var(--t-fast), border-color var(--t-fast); }
+.lab-crow:hover .lab-crow__acts .iconbtn,
+.lab-crow:focus-within .lab-crow__acts .iconbtn { opacity: 1; }
+
+/* 列宽变体（按分类页使用） */
+.lab-cat--c4 .lab-cat__bar, .lab-cat--c4 .lab-crow { --lab-cols: 118px minmax(0, 1.5fr) minmax(0, 1fr) auto; }
+.lab-cat--c4b .lab-cat__bar, .lab-cat--c4b .lab-crow { --lab-cols: 30px minmax(0, 1.35fr) minmax(0, .95fr) minmax(0, 1.2fr) auto; }
+.lab-cat--c5n .lab-cat__bar, .lab-cat--c5n .lab-crow { --lab-cols: 96px minmax(0, 1.2fr) minmax(0, .8fr) minmax(0, 1.3fr) auto; }
+
+/* 表尾合计 */
+.lab-cat__total {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4);
+  padding: 9px 12px; border-top: 1px solid var(--line); background: var(--bg-2);
+  font-size: 11px; color: var(--t3);
+}
+.lab-cat__totalitem { display: inline-flex; align-items: center; gap: 5px; }
+.lab-cat__totalitem svg { color: var(--t4); }
+.lab-cat__totalitem b { color: var(--t1); font-size: 13px; font-variant-numeric: tabular-nums; }
+.lab-cat__totalitem.muted { margin-left: auto; }
+
+/* 子区块（武器挂件 / 职业技能 / 碎片槽） */
+.lab-catsub { border-top: 1px solid var(--line); }
+.lab-catsub:first-child { border-top: 0; }
+.lab-catsub__head {
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  padding: 6px 12px; background: var(--bg-2);
+}
+.lab-catsub__title { font-size: 11.5px; font-weight: 600; color: var(--t2); letter-spacing: .02em; }
+.lab-catsub__sub { font-size: 10px; color: var(--t4); }
+.lab-catsub__tools { margin-left: auto; display: flex; gap: 4px; }
+.lab-catsub__body { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
+/* 长列表（碎片全表等）：内部滚动，不把页面拉得过长 */
+.lab-cat__scroll { max-height: 560px; overflow-y: auto; margin-top: var(--sp-2); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-1); }
+.lab-cat__scroll > :first-child { border-top: 0; }
+.lab-cat__scroll .lab-crow { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+
+/* 挂件子行 */
+.lab-attachrow {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: var(--sp-2);
+  align-items: center; padding: 5px 0; font-size: 11.5px;
+}
+.lab-attachrow + .lab-attachrow { border-top: 1px dashed var(--line); }
+.lab-attachrow__k { color: var(--t3); font-size: 10.5px; }
+.lab-attachrow__v { min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--t2); }
+.lab-attachrow__acts { display: flex; gap: 4px; }
+
+/* 小标签 / 碎片色标 */
+.lab-tag {
+  display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px;
+  border-radius: var(--r-full); background: var(--bg-3); border: 1px solid var(--line);
+  font-size: 10px; color: var(--t2); white-space: nowrap;
+}
+.lab-fragcolor {
+  display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none;
+  border-radius: 50%; border: 1px solid var(--line-2); background: var(--bg-3);
+  font-size: 9.5px; font-weight: 600; color: var(--t3);
+}
+.lab-fragcolor--red { color: var(--red); border-color: var(--red-line); background: var(--red-dim); }
+.lab-fragcolor--yellow { color: var(--amber); border-color: var(--amber-line); background: var(--amber-dim); }
+.lab-fragcolor--blue { color: var(--cyan); border-color: var(--line-2); background: var(--cyan-dim); }
+
+/* 护甲行补充 */
+.lab-resmini { display: flex; flex-wrap: wrap; gap: 3px 8px; width: 100%; margin-top: 1px; }
+.lab-resmini__i { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; color: var(--t3); font-variant-numeric: tabular-nums; }
+.lab-resmini__i svg { color: var(--t4); }
+.lab-armoreff { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.lab-armoreff__line { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.lab-armoreff__note { font-size: 10px; color: var(--t3); }
+
+/* 职业技能卡 */
+.lab-skillgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+.lab-skillcard {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; min-width: 0;
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--bg-2); cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.lab-skillcard:hover { border-color: var(--gold-line); background: var(--bg-3); }
+.lab-skillcard.is-on { border-color: var(--gold); background: var(--gold-dim); }
+.lab-skillcard__name { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--t1); flex-wrap: wrap; }
+.lab-skillcard__meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 10px; color: var(--t3); }
+.lab-skillcard__sum { font-size: 10.5px; color: var(--t2); line-height: 1.45; }
+.lab-skillcard__foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.lab-skillcard__src { font-size: 9.5px; color: var(--t4); }
+
+/* 圣物碎片槽 */
+.lab-relicslots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+.lab-relicslot {
+  display: flex; flex-direction: column; gap: 4px; min-height: 78px; min-width: 0;
+  padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--r-md);
+  background: var(--bg-2); cursor: pointer; text-align: left;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.lab-relicslot:hover { border-color: var(--gold-line); background: var(--bg-3); }
+.lab-relicslot.is-on { border-style: solid; border-color: var(--gold-line); background: var(--gold-dim); }
+.lab-relicslot__head { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--t3); }
+.lab-relicslot__name { font-size: 12px; font-weight: 600; color: var(--t1); }
+.lab-relicslot__eff { font-size: 10.5px; color: var(--t2); line-height: 1.45; }
+
+/* 推荐面板 */
+.lab-reclist { display: flex; flex-direction: column; gap: 6px; }
+.lab-recard {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--bg-2);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.lab-recard.is-click { cursor: pointer; }
+.lab-recard.is-click:hover { border-color: var(--gold-line); background: var(--bg-3); }
+.lab-recard__head { display: flex; align-items: center; gap: 8px; }
+.lab-recard__title { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; font-weight: 600; color: var(--t1); min-width: 0; }
+.lab-recard__score { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--gold-2); font-variant-numeric: tabular-nums; }
+.lab-recard__sub { font-size: 10.5px; color: var(--t3); }
+.lab-recard__meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.lab-recard__lines { display: flex; flex-direction: column; gap: 2px; font-size: 10.5px; color: var(--t2); line-height: 1.5; min-width: 0; }
+.lab-recard__line { overflow: hidden; text-overflow: ellipsis; }
+.lab-recard__pieces { display: flex; flex-wrap: wrap; gap: 4px; }
+.lab-recard__acts { display: flex; justify-content: flex-end; gap: 4px; margin-top: 2px; }
+.lab-recn__head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.lab-recn__title { font-size: 12px; font-weight: 600; color: var(--t1); }
+.lab-recn__foot { margin-top: 7px; font-size: 10px; line-height: 1.55; color: var(--t3); }
+.lab-recload { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 96px; color: var(--t3); font-size: 11.5px; }
+.lab-recload svg { animation: labSpin 1.1s linear infinite; }
+
+/* 缺件抽屉行 */
+.lab-missrow { display: flex; align-items: center; gap: var(--sp-2); padding: 6px 0; border-top: 1px solid var(--line); }
+.lab-missrow:first-of-type { border-top: 0; }
+.lab-missrow__name { flex: 1; min-width: 0; font-size: 12px; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 特性表（分类页内） */
+.lab-trrow {
+  display: grid; grid-template-columns: 150px minmax(0, 1.5fr) minmax(0, .9fr) auto;
+  gap: var(--sp-2); align-items: center; padding: 6px 12px; border-top: 1px solid var(--line);
+}
+.lab-trrow:first-child { border-top: 0; }
+.lab-trrow:hover { background: var(--bg-2); }
+.lab-trrow__name { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--t1); }
+.lab-trrow__name .lab-crow__en { font-weight: 400; }
+.lab-trrow__eff { min-width: 0; font-size: 11px; color: var(--t2); line-height: 1.45; }
+.lab-trrow__dims { display: flex; flex-wrap: wrap; gap: 4px; }
+.lab-trrow__ctrl { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+
+/* 移动端：行折成卡片 */
+@media (max-width: 1100px) {
+  .lab-wb__bottom { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  /* 纵向 flex + wrap 会让子项按 max-content 撑宽 → 必须 nowrap，否则 tab 条 / 工具栏超出视口 */
+  .lab-asm__bar { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: var(--sp-2); }
+  /* 纵向 flex 下 flex-basis 作用于高度：tab 条 / 工具栏必须收回自动高度，否则出现大片空白 */
+  .lab-asm__tabs { flex: 0 0 auto; }
+  .lab-asm__tools { margin-left: 0; flex: 0 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .lab-asm__field { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .lab-asm__field > span { white-space: nowrap; flex: none; }
+  .lab-asm__field .select { width: auto; min-width: 0; flex: 1 1 0; }
+  .lab-asm__tools > .chip, .lab-asm__tools > .btn { justify-self: start; }
+  .lab-asm__host { padding: var(--sp-2); }
+  .lab-cat__bar { display: none; }
+  .lab-crow {
+    display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+    padding: 10px 12px;
+  }
+  .lab-crow--empty .lab-crow__emptyhint { grid-column: auto; }
+  .lab-crow__acts { justify-content: flex-start; flex-wrap: wrap; }
+  .lab-crow__effect > span { -webkit-line-clamp: 4; }
+  .lab-skillgrid, .lab-relicslots { grid-template-columns: minmax(0, 1fr); }
+  .lab-trrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .lab-trrow__eff, .lab-trrow__dims { grid-column: 1 / -1; }
+  .lab-atab { padding: 8px 10px; }
+}
+
+/* 打印：装配台不需要交互按钮 */
+@media print {
+  .lab-asm__tools, .lab-cat__acts, .lab-crow__acts, .lab-atab__count { display: none !important; }
+  .lab-asm__host { padding: 0; }
+}

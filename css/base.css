@@ -167,3 +167,9 @@ code,kbd,pre{ font-family:var(--font-mono); }
   .topbar__stat{ display:none; }
   .wrap{ padding:var(--sp-3); }
 }
+/* 窄屏（≤420px）：导航计数徽章会把 4 域 + 2 图标挤出视口 → 隐藏计数（计数在实验室工具栏里另有展示）。
+   注意 .domnav__link.is-on span 的 display:inline 优先级更高，这里必须写同结构选择器才能盖住。 */
+@media (max-width:420px){
+  .domnav__link .domnav__count,
+  .domnav__link.is-on .domnav__count{ display:none; }
+}
